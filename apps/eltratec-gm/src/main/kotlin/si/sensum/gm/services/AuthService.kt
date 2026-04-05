@@ -1,0 +1,39 @@
+package si.sensum.gm.services
+
+import si.sensum.shared.auth.model.UserSession
+import si.sensum.shared.auth.service.TokenService
+import si.sensum.shared.auth.store.SessionStore
+import si.sensum.shared.models.api.LoginResponse
+import si.sensum.sws.SmartWebSoapClient
+import java.time.Instant
+
+class AuthService(
+    private val soapClient: SmartWebSoapClient,
+    private val tokenService: TokenService,
+    private val sessionStore: SessionStore
+) {
+
+    suspend fun login(username: String, password: String): LoginResponse {
+        val swsSession = soapClient.login(username, password)
+
+        val now = Instant.now()
+        val token = tokenService.generateToken()
+        val expiresAt = tokenService.expiry(now)
+
+        val session = UserSession(
+            gmToken = token,
+            swsCookieName = swsSession.cookieName,
+            swsCookieValue = swsSession.cookieValue,
+            username = username,
+            createdAt = now,
+            expiresAt = expiresAt
+        )
+
+        sessionStore.save(session)
+
+        return LoginResponse(
+            token = token,
+            expiresAt = expiresAt.toString()
+        )
+    }
+}

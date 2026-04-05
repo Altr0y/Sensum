@@ -1,0 +1,7 @@
+$kind: http-request
+description: |-
+  Basic health check for GM service.  
+  Used to verify that the Ktor application is running.
+url: "{{baseUrl}}/health"
+method: GET
+order: 1000

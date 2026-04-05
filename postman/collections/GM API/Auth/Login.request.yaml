@@ -1,0 +1,60 @@
+$kind: http-request
+description: |-
+  StartFragmentLogs in to GM authentication flow.
+
+  Current behavior:  
+  \- sends username and password to GM  
+  \- GM calls SWS login client  
+  \- GM generates internal bearer token  
+  \- GM stores token to SWS session mapping in memory  
+  \- GM returns token and expiry timestampEndFragment
+url: "{{baseUrl}}/api/v1/auth/login"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: "{\r
+
+    \  \"username\": \"test\",\r
+
+    \  \"password\": \"test123\"\r
+
+    }"
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"Response status is 200\", function () {\r
+
+      \    pm.response.to.have.status(200);\r
+
+      });\r
+
+      \r
+
+      const json = pm.response.json();\r
+
+      \r
+
+      pm.test(\"Response contains token\", function () {\r
+
+      \    pm.expect(json.token).to.exist;\r
+
+      });\r
+
+      \r
+
+      if (json.token) {\r
+
+      \    pm.environment.set(\"authToken\", json.token);\r
+
+      }\r
+
+      \r
+
+      if (json.expiresAt) {\r
+
+      \    pm.environment.set(\"authTokenExpiresAt\", json.expiresAt);\r
+
+      }"
+    language: text/javascript
+order: 1000
