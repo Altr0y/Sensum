@@ -7,11 +7,18 @@ import io.ktor.server.netty.*
 import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import kotlinx.serialization.Serializable
+import si.sensum.gm.routes.authRoutes
+import si.sensum.gm.services.AuthService
+import si.sensum.shared.auth.service.TokenService
+import si.sensum.shared.auth.store.InMemorySessionStore
+import si.sensum.shared.models.api.HealthResponse
+import si.sensum.sws.SmartWebSoapClientMock
+import java.time.Duration
 
 object ApiInfo {
     const val NAME = "Eltratec GM"
 }
+
 
 fun main() {
     embeddedServer(
@@ -27,15 +34,25 @@ fun Application.module() {
         json()
     }
 
+    val sessionStore = InMemorySessionStore()
+    val tokenService = TokenService(Duration.ofHours(8))
+    val soapClient = SmartWebSoapClientMock()
+    val authService = AuthService(
+        soapClient = soapClient,
+        tokenService = tokenService,
+        sessionStore = sessionStore
+    )
+
     routing {
         get("/health") {
-            call.respond(HealthResponse(status = "ok", service = "eltratec-gm"))
+            call.respond(
+                HealthResponse(
+                    status = "ok",
+                    service = "eltratec-gm"
+                )
+            )
         }
+
+        authRoutes(authService)
     }
 }
-
-@Serializable
-data class HealthResponse(
-    val status: String,
-    val service: String
-)
