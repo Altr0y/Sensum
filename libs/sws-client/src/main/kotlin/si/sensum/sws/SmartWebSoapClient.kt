@@ -1,7 +1,7 @@
 package si.sensum.sws
 
-import si.sensum.sws.model.SwsLoginResult
+import si.sensum.sws.model.SwsSession
 
 interface SmartWebSoapClient {
-    suspend fun login(username: String, password: String): SwsLoginResult
+    suspend fun login(username: String, password: String): SwsSession
 }

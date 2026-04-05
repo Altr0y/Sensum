@@ -14,7 +14,7 @@ class AuthService(
 ) {
 
     suspend fun login(username: String, password: String): LoginResponse {
-        val swsLoginResult = soapClient.login(username, password)
+        val swsSession = soapClient.login(username, password)
 
         val now = Instant.now()
         val token = tokenService.generateToken()
@@ -22,7 +22,8 @@ class AuthService(
 
         val session = UserSession(
             gmToken = token,
-            swsSessionId = swsLoginResult.sessionId,
+            swsCookieName = swsSession.cookieName,
+            swsCookieValue = swsSession.cookieValue,
             username = username,
             createdAt = now,
             expiresAt = expiresAt

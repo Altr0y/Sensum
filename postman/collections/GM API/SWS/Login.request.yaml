@@ -1,0 +1,68 @@
+$kind: http-request
+name: Login
+url: https://smart.eltratec.com/SmartWebDev/SmartWebService.asmx
+method: POST
+headers:
+  Content-Type: text/xml; charset=utf-8
+  SOAPAction: http://www.eltratec.com/Login
+body:
+  type: xml
+  content: "<soap:Envelope
+    xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\r
+
+    \               xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\"\r
+
+    \               xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\r
+
+    \  <soap:Body>\r
+
+    \    <Login xmlns=\"http://www.eltratec.com/\">\r
+
+    \        <UserName>{{swsUsername}}</UserName>\r
+
+    \        <Password>{{swsPassword}}</Password> \r
+
+    \    </Login>\r
+
+    \  </soap:Body>\r
+
+    </soap:Envelope>"
+scripts:
+  - type: afterResponse
+    code: "// dobi vse cookies iz response-a\r
+
+      const cookies = pm.cookies.toObject();\r
+
+      \r
+
+      console.log(\"All cookies:\", cookies);\r
+
+      \r
+
+      // vzemi prvi cookie (ali specifičnega, če veš ime)\r
+
+      for (let key in cookies) {\r
+
+      \    const cookieName = key;\r
+
+      \    const cookieValue = cookies[key];\r
+
+      \r
+
+      \    // shrani v environment\r
+
+      \    pm.environment.set(\"swsCookieName\", cookieName);\r
+
+      \    pm.environment.set(\"swsSessionId\", cookieValue);\r
+
+      \r
+
+      \    console.log(\"Saved cookie:\", cookieName, \"=\", cookieValue);\r
+
+      \r
+
+      \    break; // vzame samo prvi cookie\r
+
+      }"
+    language: text/javascript
+order: 1775367314725

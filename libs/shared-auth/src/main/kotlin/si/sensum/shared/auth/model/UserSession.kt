@@ -4,7 +4,8 @@ import java.time.Instant
 
 data class UserSession(
     val gmToken: String,
-    val swsSessionId: String,
+    val swsCookieName: String,
+    val swsCookieValue: String,
     val username: String,
     val createdAt: Instant,
     val expiresAt: Instant
