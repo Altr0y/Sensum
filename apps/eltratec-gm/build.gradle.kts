@@ -20,6 +20,10 @@ dependencies {
 
     testImplementation(kotlin("test"))
     testImplementation("io.ktor:ktor-server-test-host:3.4.2")
+
+    implementation(project(":libs:shared-models"))
+    implementation(project(":libs:shared-auth"))
+    implementation(project(":libs:sws-client"))
 }
 
 kotlin {
