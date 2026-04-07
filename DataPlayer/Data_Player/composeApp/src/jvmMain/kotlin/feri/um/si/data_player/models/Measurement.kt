@@ -1,15 +1,16 @@
 package feri.um.si.data_player.models
 
-import java.time.LocalDateTime
+import kotlinx.serialization.Serializable
 import java.time.OffsetDateTime
 
-//@Serializable
+@Serializable
 data class Measurement (
     val stationId: Long,
     val channelId: Int,
+    @Serializable(with = OffsetDateTimeSerializer::class)
     val dateTime: OffsetDateTime,
     val value: Double,
     val status: Int
 )
 
-//station, channel models
+//TODO: station, channel?
