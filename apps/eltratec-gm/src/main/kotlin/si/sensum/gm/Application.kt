@@ -31,6 +31,7 @@ fun main(args: Array<String>) {
     EngineMain.main(args)
 }
 
+@Suppress("unused")
 fun Application.module() {
     val log = Logger.log
     val config = environment.config
