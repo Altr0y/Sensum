@@ -5,6 +5,9 @@ import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import si.sensum.sws.model.SwsSession
+import si.sensum.sws.parser.extractLoginResult
+import si.sensum.sws.parser.extractSessionFromSetCookie
+import si.sensum.sws.xml.SwsXmlBuilder
 
 class SmartWebSoapClient(
     private val httpClient: HttpClient,
@@ -17,61 +20,41 @@ class SmartWebSoapClient(
             password = password
         )
 
-        println("=== SWS LOGIN REQUEST ===")
-        println("POST $baseUrl")
-        println("SOAPAction: \"${SwsConstants.LOGIN_ACTION}\"")
-        println("Content-Type: text/xml; charset=utf-8")
-        println(xmlBody)
+        println("[SWS] Login request -> $baseUrl")
 
         val response: HttpResponse = httpClient.post(baseUrl) {
             applySoapHeaders(SwsConstants.LOGIN_ACTION)
             setBody(xmlBody)
         }
 
-        println("=== REQUEST HEADERS ===")
-        println("Content-Type: text/xml; charset=utf-8")
-        println("SOAPAction: \"${SwsConstants.LOGIN_ACTION}\"")
-
         val responseBody = response.bodyAsText()
         val setCookieHeaders = response.headers.getAll(HttpHeaders.SetCookie).orEmpty()
 
-        println("=== RESPONSE HEADERS ===")
-        response.headers.entries().forEach { (name, values) ->
-            println("$name: ${values.joinToString()}")
-        }
+        println("[SWS] Login response <- status=${response.status.value}")
 
-        println("=== SWS LOGIN RESPONSE ===")
-        println("HTTP status: ${response.status}")
-        println("Set-Cookie headers: $setCookieHeaders")
-        println(responseBody)
+        if (response.status == HttpStatusCode.Unauthorized) {
+            println("[SWS] Login failed: invalid credentials")
+            throw SwsUnauthorizedException()
+        }
 
         if (!response.status.isSuccess()) {
-            error(
-                "SWS login HTTP call failed with status ${response.status.value}. " +
-                        "Response body: $responseBody"
+            println("[SWS] Login failed: HTTP ${response.status.value}")
+            throw SwsHttpException(
+                statusCode = response.status.value,
+                message = "SWS login failed with HTTP ${response.status.value}"
             )
         }
 
-        val rawSetCookie = setCookieHeaders.firstOrNull { it.contains("=") }
-            ?: error(
-                "SWS login returned no Set-Cookie header. " +
-                        "Status: ${response.status.value}, Response body: $responseBody"
-            )
-
-
-        val cookiePair = rawSetCookie.substringBefore(";").trim()
-        val separatorIndex = cookiePair.indexOf('=')
-
-        require(separatorIndex > 0) {
-            "Invalid Set-Cookie header format: $rawSetCookie"
+        val loginSucceeded = extractLoginResult(responseBody)
+        if (!loginSucceeded) {
+            println("[SWS] Login failed: invalid credentials")
+            throw SwsUnauthorizedException()
         }
 
-        val cookieName = cookiePair.substring(0, separatorIndex).trim()
-        val cookieValue = cookiePair.substring(separatorIndex + 1).trim()
+        val session = extractSessionFromSetCookie(setCookieHeaders)
 
-        return SwsSession(
-            cookieName = cookieName,
-            cookieValue = cookieValue
-        )
+        println("[SWS] Login success: cookie=${session.cookieName}")
+
+        return session
     }
 }

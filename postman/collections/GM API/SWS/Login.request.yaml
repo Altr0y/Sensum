@@ -18,9 +18,9 @@ body:
 
     \    <Login xmlns=\"http://www.eltratec.com/\">\r
 
-    \        <UserName>{{swsUsername}}</UserName>\r
+    \        <UserName>{swsUsername}</UserName>\r
 
-    \        <Password>{{swsPassword}}</Password> \r
+    \        <Password>{swsPassword}</Password> \r
 
     \    </Login>\r
 

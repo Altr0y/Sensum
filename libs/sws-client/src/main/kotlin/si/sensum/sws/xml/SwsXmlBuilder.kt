@@ -1,4 +1,6 @@
-package si.sensum.sws
+package si.sensum.sws.xml
+
+import si.sensum.sws.SwsConstants
 
 object SwsXmlBuilder {
 
