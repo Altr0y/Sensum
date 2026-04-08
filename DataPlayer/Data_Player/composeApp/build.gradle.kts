@@ -64,6 +64,9 @@ kotlin {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutinesSwing)
             implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
+            implementation("com.opencsv:opencsv:5.9")
+            implementation("org.json:json:20240303")
+            implementation("org.redundent:kotlin-xml-builder:1.9.1")
         }
     }
 }

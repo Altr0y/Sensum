@@ -9,6 +9,13 @@ import androidx.compose.ui.unit.dp
 import feri.um.si.data_player.conversions.JSONconverter
 import feri.um.si.data_player.conversions.XMLConverter
 import java.io.File
+import feri.um.si.data_player.conversions.CSVconverter
+import org.json.JSONArray
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Card
+import androidx.compose.foundation.layout.fillMaxWidth
 
 @Composable
 fun AppTest(){
@@ -24,10 +31,55 @@ fun AppTest(){
     val parsedBack = JSONconverter.jsonToMeasurements(json)
     println(parsedBack)
 
-    Column(modifier = Modifier.padding(16.dp)){
-        Text("Rows: ${measurements.size}")
-        for (measurement in measurements.take(5)) {
+    // CSV tests
+    val csv = File("TestData_010126_00-00_010126_01-00.csv").readText()
+    val newJson = CSVconverter.csvToJson(csv)
+    println("CSV TO JSON:\n$newJson")
+    val backToCsv = CSVconverter.jsonToCsv(newJson)
+    println("BACK TO CSV:\n$backToCsv")
+    val newXml = CSVconverter.csvToXml(csv)
+    println("CSV TO XML:\n$newXml")
+    val backToCsv2 = CSVconverter.xmlToCsv(newXml)
+    println("BACK TO CSV FROM XML:\n$backToCsv2")
+
+    val jsonArray = JSONArray(newJson)
+
+    LazyColumn(modifier = Modifier.padding(16.dp)) {
+        // kolegičin prikaz - nespremenjen
+        item {
+            Text(
+                text = "XML meritve (${measurements.size} vrstic):",
+                style = MaterialTheme.typography.headlineSmall
+            )
+        }
+        items(measurements.take(5)) { measurement ->
             Text(measurement.toString())
         }
+
+        // tvoj CSV prikaz
+        item {
+            Text(
+                text = "CSV podatki (${jsonArray.length()} vrstic):",
+                style = MaterialTheme.typography.headlineSmall,
+                modifier = Modifier.padding(top = 16.dp)
+            )
+        }
+        items(minOf(5, jsonArray.length())) { i ->
+            val obj = jsonArray.getJSONObject(i)
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp)
+            ) {
+                Column(modifier = Modifier.padding(8.dp)) {
+                    Text("Postaja: ${obj.optString("Station Name")}")
+                    Text("Kanal: ${obj.optString("Channel Name")}")
+                    Text("Čas: ${obj.optString("Date Time")}")
+                    Text("Vrednost: ${obj.optString("Value")}")
+                }
+            }
+        }
     }
+
+
 }
