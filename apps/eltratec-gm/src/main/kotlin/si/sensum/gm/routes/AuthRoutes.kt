@@ -5,11 +5,14 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import si.sensum.gm.services.AuthService
+import si.sensum.logging.Logger
 import si.sensum.shared.models.api.ApiErrorResponse
 import si.sensum.shared.models.api.LoginRequest
 import si.sensum.sws.SwsHttpException
 import si.sensum.sws.SwsInvalidResponseException
 import si.sensum.sws.SwsUnauthorizedException
+
+private val log = Logger.log
 
 fun Route.authRoutes(authService: AuthService) {
     route("/api/v1") {
@@ -22,23 +25,39 @@ fun Route.authRoutes(authService: AuthService) {
                     password = request.password
                 )
 
+                log.info { "[HTTP] Auth login success for user=${request.username}" }
+
                 call.respond(HttpStatusCode.OK, response)
+
             } catch (e: SwsUnauthorizedException) {
+                log.warn { "[HTTP] Unauthorized login for user=${request.username}: ${e.message}" }
+
                 call.respond(
                     HttpStatusCode.Unauthorized,
                     ApiErrorResponse(error = e.message ?: "Unauthorized")
                 )
+
             } catch (e: SwsInvalidResponseException) {
+                log.error { "[HTTP] Invalid SWS response for user=${request.username}: ${e.message}" }
+
                 call.respond(
                     HttpStatusCode.BadGateway,
                     ApiErrorResponse(error = e.message ?: "Invalid response from SWS")
                 )
+
             } catch (e: SwsHttpException) {
+                log.error {
+                    "[HTTP] SWS HTTP error for user=${request.username}: status=${e.statusCode}, message=${e.message}"
+                }
+
                 call.respond(
                     HttpStatusCode.BadGateway,
                     ApiErrorResponse(error = "SWS HTTP ${e.statusCode}: ${e.message ?: "SWS HTTP error"}")
                 )
-            } catch (_: Exception) {
+
+            } catch (e: Exception) {
+                log.error(e) { "[HTTP] Unexpected error for user=${request.username}" }
+
                 call.respond(
                     HttpStatusCode.InternalServerError,
                     ApiErrorResponse(error = "Internal server error")
