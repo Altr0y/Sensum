@@ -1,6 +1,6 @@
 package si.sensum.gm
 
-import io.ktor.serialization.kotlinx.json.*
+import io.ktor.client.HttpClient
 import io.ktor.server.application.*
 import io.ktor.server.netty.*
 import io.ktor.server.plugins.callid.*
