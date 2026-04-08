@@ -35,6 +35,11 @@ class SmartWebSoapClient(
         val responseBody = response.bodyAsText()
         val setCookieHeaders = response.headers.getAll(HttpHeaders.SetCookie).orEmpty()
 
+        println("=== RESPONSE HEADERS ===")
+        response.headers.entries().forEach { (name, values) ->
+            println("$name: ${values.joinToString()}")
+        }
+
         println("=== SWS LOGIN RESPONSE ===")
         println("HTTP status: ${response.status}")
         println("Set-Cookie headers: $setCookieHeaders")
@@ -47,22 +52,22 @@ class SmartWebSoapClient(
             )
         }
 
-        val rawSetCookie = setCookieHeaders.firstOrNull()
+        val rawSetCookie = setCookieHeaders.firstOrNull { it.contains("=") }
             ?: error(
                 "SWS login returned no Set-Cookie header. " +
                         "Status: ${response.status.value}, Response body: $responseBody"
             )
 
 
-        val cookiePair = rawSetCookie.substringBefore(";")
+        val cookiePair = rawSetCookie.substringBefore(";").trim()
         val separatorIndex = cookiePair.indexOf('=')
 
         require(separatorIndex > 0) {
             "Invalid Set-Cookie header format: $rawSetCookie"
         }
 
-        val cookieName = cookiePair.substring(0, separatorIndex)
-        val cookieValue = cookiePair.substring(separatorIndex + 1)
+        val cookieName = cookiePair.substring(0, separatorIndex).trim()
+        val cookieValue = cookiePair.substring(separatorIndex + 1).trim()
 
         return SwsSession(
             cookieName = cookieName,
