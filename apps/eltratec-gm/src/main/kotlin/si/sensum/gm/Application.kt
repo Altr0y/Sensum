@@ -1,6 +1,5 @@
 package si.sensum.gm
 
-import io.ktor.client.HttpClient
 import io.ktor.server.application.*
 import io.ktor.server.netty.*
 import io.ktor.server.plugins.callid.*
@@ -10,6 +9,7 @@ import io.ktor.server.request.httpMethod
 import io.ktor.server.request.path
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import io.ktor.serialization.kotlinx.json.*
 import org.slf4j.event.Level
 import si.sensum.gm.config.createHttpClient
 import si.sensum.gm.routes.authRoutes
