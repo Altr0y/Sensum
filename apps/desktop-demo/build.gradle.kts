@@ -10,6 +10,9 @@ version = "1.0-SNAPSHOT"
 dependencies {
     implementation(compose.desktop.currentOs)
     implementation(compose.material3)
+    implementation(project(":libs:data-transform"))
+    implementation(project(":libs:shared-models"))
+    implementation("org.json:json:20240303")
     testImplementation(kotlin("test"))
 }
 
