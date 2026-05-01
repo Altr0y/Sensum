@@ -4,7 +4,7 @@ import si.sensum.shared.models.measurements.Measurement
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
 
-object JSONconverter {
+object JsonConverter {
     private val json = Json{
         prettyPrint = true
         ignoreUnknownKeys = true

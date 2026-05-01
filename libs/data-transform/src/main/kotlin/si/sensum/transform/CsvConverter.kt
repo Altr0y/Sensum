@@ -22,7 +22,7 @@ private fun sanitizeXmlTag(header: String): String {
         .let { if (it[0].isDigit()) "_$it" else it }
 }
 
-object CSVconverter {
+object CsvConverter {
 
     //CSV -> JSON
     fun csvToJson(csv: String): String {

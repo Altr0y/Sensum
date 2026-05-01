@@ -6,7 +6,7 @@ import java.io.ByteArrayInputStream
 import java.time.OffsetDateTime
 import javax.xml.parsers.DocumentBuilderFactory
 
-object XMLconverter {
+object XmlConverter {
     fun xmlToMeasurements(xml: String): List<Measurement>{
         val factory = DocumentBuilderFactory.newInstance()
         factory.isNamespaceAware = false
