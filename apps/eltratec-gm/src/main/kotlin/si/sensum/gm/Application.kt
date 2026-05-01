@@ -14,6 +14,7 @@ import org.slf4j.event.Level
 import si.sensum.gm.config.createHttpClient
 import si.sensum.gm.routes.authRoutes
 import si.sensum.gm.services.AuthService
+import si.sensum.gm.auth.StaticGmTokenValidator
 import si.sensum.logging.Logger
 import si.sensum.shared.auth.service.TokenService
 import si.sensum.shared.auth.store.InMemorySessionStore
@@ -39,6 +40,11 @@ fun Application.module() {
     val swsBaseUrl = config.property("sws.baseUrl").getString()
     val swsTimeout = config.property("sws.timeoutMillis").getString().toLong()
     val tokenTtlHours = config.property("gm.auth.tokenTtlHours").getString().toLong()
+    val gmApiToken = config.property("gm.auth.apiToken").getString()
+
+    require(gmApiToken.isNotBlank()) {
+        "Missing GM API token (set GM_API_AUTH_TOKEN env variable)"
+    }
 
     require(swsBaseUrl.isNotBlank()) {
         "Missing SWS baseUrl (set SWS_BASE_URL env variable)"
@@ -93,6 +99,7 @@ fun Application.module() {
 
     val sessionStore = InMemorySessionStore()
     val tokenService = TokenService(Duration.ofHours(tokenTtlHours))
+    val gmTokenValidator = StaticGmTokenValidator(gmApiToken)
 
     val swsConfig = SwsConfig(
         baseUrl = swsBaseUrl,
@@ -122,6 +129,9 @@ fun Application.module() {
             )
         }
 
-        authRoutes(authService)
+        authRoutes(
+            authService = authService,
+            tokenValidator = gmTokenValidator
+        )
     }
 }
