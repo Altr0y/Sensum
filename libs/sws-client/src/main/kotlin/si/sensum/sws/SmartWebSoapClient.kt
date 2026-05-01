@@ -26,13 +26,13 @@ class SmartWebSoapClient(
             password = password
         )
 
-        val soapResponse = soapExecutor.executeWithHeaders(
+        val response = soapExecutor.executeWithHeaders(
             action = SwsConstants.LOGIN_ACTION,
             xmlBody = xmlBody,
             operationName = "Login"
         )
 
-        val loginSucceeded = extractLoginResult(soapResponse.body)
+        val loginSucceeded = extractLoginResult(response.body)
 
         if (!loginSucceeded) {
             log.warn { "[SWS] Login failed: SOAP response indicates invalid credentials" }
@@ -40,7 +40,7 @@ class SmartWebSoapClient(
         }
 
         val session = extractSessionFromSetCookie(
-            soapResponse.headers.getAll(HttpHeaders.SetCookie).orEmpty()
+            response.headers.getAll(HttpHeaders.SetCookie).orEmpty()
         )
 
         log.info { "[SWS] Login success: cookieName=${session.cookieName}" }
@@ -48,8 +48,15 @@ class SmartWebSoapClient(
         return session
     }
 
-    suspend fun getAllMeasurementsRaw(session: SwsSession): String {
-        val xmlBody = SwsXmlBuilder.buildGetAllMeasurementsRequest()
+    suspend fun getAllMeasurementsRaw(
+        session: SwsSession,
+        datetimeFrom: String,
+        datetimeTo: String
+    ): String {
+        val xmlBody = SwsXmlBuilder.buildGetAllMeasurementsRequest(
+            datetimeFrom = datetimeFrom,
+            datetimeTo = datetimeTo
+        )
 
         return soapExecutor.execute(
             action = SwsConstants.GET_ALL_MEASUREMENTS_ACTION,
