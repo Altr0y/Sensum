@@ -5,10 +5,11 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.*
 import io.ktor.server.response.*
 import si.sensum.shared.auth.bearer.BearerToken
+import si.sensum.shared.auth.bearer.TokenValidator
 import si.sensum.shared.models.api.ApiErrorResponse
 
 suspend fun ApplicationCall.requireGmBearerToken(
-    validator: GmTokenValidator
+    validator: TokenValidator
 ): Boolean {
     val token = BearerToken.extract(request.headers[HttpHeaders.Authorization])
 
