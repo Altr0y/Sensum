@@ -25,6 +25,13 @@ ${bodyContent.prependIndent("        ")}
         return buildEnvelope(body)
     }
 
+    fun buildGetAllMeasurementsRequest(): String {
+        val body =
+            """<GetAllMeasurements xmlns="${SwsConstants.SWS_NAMESPACE}" />"""
+
+        return buildEnvelope(body)
+    }
+
     private fun escapeXml(value: String): String =
         value
             .replace("&", "&amp;")
