@@ -1,8 +1,8 @@
 package si.sensum.demo
 
-import si.sensum.transform.CSVconverter
-import si.sensum.transform.JSONconverter
-import si.sensum.transform.XMLconverter
+import si.sensum.transform.CsvConverter
+import si.sensum.transform.JsonConverter
+import si.sensum.transform.XmlConverter
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
@@ -20,26 +20,26 @@ import androidx.compose.foundation.layout.fillMaxWidth
 @Composable
 fun AppTest(){
     val xml = File("test-data/measurements/measurement.xml").readText()
-    val measurements = XMLconverter.xmlToMeasurements(xml)
+    val measurements = XmlConverter.xmlToMeasurements(xml)
 
-    val backToXml = XMLconverter.measurementsToXml(measurements.take(3))
+    val backToXml = XmlConverter.measurementsToXml(measurements.take(3))
     println("BACK TO XML:\n$backToXml") //prints to console
 
-    val json = JSONconverter.measurementsToJson(measurements.take(3))
+    val json = JsonConverter.measurementsToJson(measurements.take(3))
     println(json)
 
-    val parsedBack = JSONconverter.jsonToMeasurements(json)
+    val parsedBack = JsonConverter.jsonToMeasurements(json)
     println(parsedBack)
 
     // CSV tests
     val csv = File("test-data/measurements/TestData_010126_00-00_010126_01-00.csv").readText()
-    val newJson = CSVconverter.csvToJson(csv)
+    val newJson = CsvConverter.csvToJson(csv)
     println("CSV TO JSON:\n$newJson")
-    val backToCsv = CSVconverter.jsonToCsv(newJson)
+    val backToCsv = CsvConverter.jsonToCsv(newJson)
     println("BACK TO CSV:\n$backToCsv")
-    val newXml = CSVconverter.csvToXml(csv)
+    val newXml = CsvConverter.csvToXml(csv)
     println("CSV TO XML:\n$newXml")
-    val backToCsv2 = CSVconverter.xmlToCsv(newXml)
+    val backToCsv2 = CsvConverter.xmlToCsv(newXml)
     println("BACK TO CSV FROM XML:\n$backToCsv2")
 
     val jsonArray = JSONArray(newJson)

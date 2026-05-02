@@ -1,5 +1,11 @@
 # Sensum
 
+Sensum is a data visualization and digital twin system developed in collaboration with Eltratec d.o.o. It integrates Grafana OSS with the existing SmartWebService (SWS) SOAP API to enable advanced visualization of field station data.
+
+---
+
+## Branching Strategy
+
 This repository uses a dual-track branching strategy — one track for Eltratec, one for FERI.
 
 ```
@@ -11,17 +17,106 @@ dev-feri       ← active development for FERI
 
 ---
 
+## Prerequisites
+
+- Java 21 (OpenJDK or equivalent)
+- Docker Desktop or Docker Engine + Docker Compose v2
+- IntelliJ IDEA (recommended)
+
+---
+
 ## Local Setup
 
-Clone the repository and set up tracking branches so each dev branch
-automatically pushes and pulls from its corresponding main branch.
+Clone the repository and set up tracking branches so each dev branch automatically pushes and pulls from its corresponding main branch.
 
 ```bash
 git clone https://github.com/Altr0y/Sensum.git
 cd Sensum
-
 git checkout -b dev-eltratec origin/dev-eltratec
 git checkout -b dev-feri origin/dev-feri
+```
+
+---
+
+## Environment Setup
+
+Copy the example environment file and fill in the required values:
+
+```bash
+cp .env.example .env
+```
+
+Required variables in `.env`:
+
+| Variable | Description |
+|---|---|
+| `SWS_BASE_URL` | SWS SOAP endpoint URL |
+| `SWS_USERNAME` | SWS login username |
+| `SWS_PASSWORD` | SWS login password |
+| `GM_API_AUTH_TOKEN` | Shared secret between API Gateway and GM |
+
+---
+
+## Running with Docker
+
+After the initial `docker compose ... up --build`, subsequent runs can also be managed through Docker Desktop by starting and stopping the relevant container group.
+
+### Eltratec Environment
+
+Contains only the GM Middleware and Grafana — intended for deployment at Eltratec or client sites.
+
+```bash
+docker compose -f docker-compose.eltratec.yml -p eltratec up --build
+```
+
+| Service | Port | Description |
+|---|---|---|
+| `eltratec-gm` | 8081 | Grafana Middleware (SOAP wrapper) |
+| `grafana` | 3000 | Grafana OSS dashboard |
+
+### FERI Environment
+
+Contains the full Sensum demo stack — intended for faculty demonstration and development.
+
+```bash
+docker compose -f docker-compose.feri.yml -p feri up --build
+```
+
+| Service | Port | Description |
+|---|---|---|
+| `postgres` | 5432 | PostgreSQL demo database |
+| `eltratec-gm` | 8081 | Grafana Middleware (SOAP wrapper) |
+| `backend-core` | 8082 | Backend Core service |
+| `api-gateway` | 8080 | API Gateway |
+| `grafana` | 3000 | Grafana OSS dashboard |
+
+### Stopping
+
+```bash
+# Stop Eltratec stack
+docker compose -f docker-compose.eltratec.yml -p eltratec down
+
+# Stop FERI stack
+docker compose -f docker-compose.feri.yml -p feri down
+
+# Stop and remove volumes (resets database)
+docker compose -f docker-compose.feri.yml -p feri down -v
+```
+
+> **Note:** Run only one environment at a time to avoid port conflicts.
+
+---
+
+## Running Locally (without Docker)
+
+```bash
+# Export environment variables
+export $(cat .env | grep -v '^#' | xargs)
+
+# Run individual services
+./gradlew :apps:eltratec-gm:run
+./gradlew :apps:backend-core:run
+./gradlew :apps:api-gateway:run
 ```
 
 ---
@@ -48,71 +143,22 @@ git push
 # then open a Pull Request: dev-feri → main-feri
 ```
 
----
-
-## Feature Branches
-
 For larger changes, create a feature branch off the appropriate dev branch:
-
 ```bash
-git checkout dev-eltratec
+git checkout dev-feri
 git checkout -b DEV-xx-short-description
-
 # ... make changes ...
-git add .
-git commit -m "DEV-xx feat: your message here"
 git push origin DEV-xx-short-description
-# then open a Pull Request: DEV-xx-short-description → dev-eltratec
+# then open a Pull Request: DEV-xx-short-description → dev-feri
 ```
 
----
-
-## Commit Message Format
-
-Commit messages must include the Jira issue key so that commits, branches,
-and pull requests are automatically linked to the corresponding Jira work item.
-
-```
-DEV-<number> <type>(<optional scope>): <description>
-```
-
-| Type | When to use |
-|---|---|
-| `feat` | New feature for the API or UI |
-| `fix` | Bug fix |
-| `refactor` | Code restructure without behavior change |
-| `perf` | Performance improvement |
-| `style` | Formatting only, no logic change |
-| `test` | Adding or fixing tests |
-| `docs` | Documentation only |
-| `build` | Dependencies, build tools, versions |
-| `ops` | CI/CD, deployment, infrastructure |
-| `chore` | Maintenance tasks, `.gitignore`, init |
-
-Examples:
-```
-DEV-42 feat(api): add sensor data endpoint
-DEV-55 fix(auth): redirect to login on expired session
-DEV-78 refactor(middleware): simplify SOAP-to-REST mapping
-DEV-12 docs(readme): update local setup instructions
-DEV-99 build: upgrade .NET dependencies to latest stable
-```
-
-### Breaking Changes
-
-Append `!` after the type and add a `BREAKING CHANGE` footer:
-
-```
-DEV-103 feat(grafana)!: replace polling with WebSocket streaming
-
-BREAKING CHANGE: clients must now connect via WebSocket instead of REST polling
-```
+For commit message format and naming conventions, refer to the [Conventional Commits specification](https://www.conventionalcommits.org/en/v1.0.0/) and [Kotlin coding conventions](https://kotlinlang.org/docs/coding-conventions.html).
 
 ---
 
 ## Pull Request Format
 
-PR titles must also include the Jira issue key so the PR is linked in Jira:
+PR titles must include the Jira issue key so the PR is linked in Jira:
 
 ```
 DEV-<number> <type>(<optional scope>): <description>

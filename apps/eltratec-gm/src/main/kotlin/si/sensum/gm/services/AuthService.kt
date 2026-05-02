@@ -16,21 +16,20 @@ class AuthService(
 
     private val log = Logger.log
 
+    fun findSession(token: String): UserSession? {
+        return sessionStore.findByToken(token)
+    }
+
     suspend fun login(username: String, password: String): LoginResponse {
-        // println("[GM] Login started for user=$username")
         log.info { "[GM] Login started for user=$username" }
 
         val swsSession = soapClient.login(username, password)
 
-        // println("[GM] SWS login success for user=$username")
         log.info { "[GM] SWS login success for user=$username" }
 
         val now = Instant.now()
         val token = tokenService.generateToken()
         val expiresAt = tokenService.expiry(now)
-
-        // println("[GM] Token generated for user=$username")
-        log.debug { "[GM] Token generated for user=$username, expiresAt=$expiresAt" }
 
         val session = UserSession(
             gmToken = token,
@@ -43,8 +42,8 @@ class AuthService(
 
         sessionStore.save(session)
 
-        // println("[GM] Session stored for user=$username")
         log.info { "[GM] Session stored for user=$username" }
+        log.debug { "[GM] Token generated for user=$username, expiresAt=$expiresAt" }
 
         return LoginResponse(
             token = token,

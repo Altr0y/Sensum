@@ -5,6 +5,8 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import si.sensum.gm.services.AuthService
+import si.sensum.gm.auth.requireGmBearerToken
+import si.sensum.shared.auth.bearer.TokenValidator
 import si.sensum.logging.Logger
 import si.sensum.shared.models.api.ApiErrorResponse
 import si.sensum.shared.models.api.LoginRequest
@@ -14,7 +16,10 @@ import si.sensum.sws.SwsUnauthorizedException
 
 private val log = Logger.log
 
-fun Route.authRoutes(authService: AuthService) {
+fun Route.authRoutes(
+    authService: AuthService,
+    tokenValidator: TokenValidator
+) {
     route("/api/v1") {
         post("/auth/login") {
             val request = call.receive<LoginRequest>()
@@ -63,6 +68,16 @@ fun Route.authRoutes(authService: AuthService) {
                     ApiErrorResponse(error = "Internal server error")
                 )
             }
+        }
+        get("/protected") {
+            if (!call.requireGmBearerToken(tokenValidator)) return@get
+
+            call.respond(
+                mapOf(
+                    "status" to "ok",
+                    "message" to "Authorized GM request"
+                )
+            )
         }
     }
 }
