@@ -1,0 +1,45 @@
+services:
+
+  # ===========================
+  # ELTRATEC GM MIDDLEWARE
+  # port: 8081
+  # ===========================
+  eltratec-gm:
+    build:
+      context: .
+      dockerfile: apps/eltratec-gm/Dockerfile
+    ports:
+      - "8081:8081"
+    environment:
+      GM_PORT: 8081
+      GM_HOST: "0.0.0.0"
+      SWS_BASE_URL: ${SWS_BASE_URL:-https://smart.eltratec.com/SmartWebDev/SmartWebService.asmx}
+      SWS_TIMEOUT_MILLIS: ${SWS_TIMEOUT_MILLIS:-10000}
+      GM_API_AUTH_TOKEN: ${GM_API_AUTH_TOKEN:-change-this-dev-token}
+      GM_AUTH_TOKEN_TTL_HOURS: 8
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  # ===========================
+  # GRAFANA OSS
+  # port: 3000
+  # ===========================
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ALLOW_EMBEDDING: "true"
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: "Viewer"
+    volumes:
+      - grafana_eltratec_data:/var/lib/grafana
+    depends_on:
+      eltratec-gm:
+        condition: service_healthy
+
+volumes:
+  grafana_eltratec_data:

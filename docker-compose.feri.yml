@@ -1,0 +1,127 @@
+services:
+
+  # ===========================
+  # BAZA - PostgreSQL
+  # ===========================
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: sensum
+      POSTGRES_USER: sensum
+      POSTGRES_PASSWORD: sensum
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sensum"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ===========================
+  # ELTRATEC GM MIDDLEWARE
+  # port: 8081
+  # (potreben ker api-gateway kliče GM za meritve)
+  # ===========================
+  eltratec-gm:
+    build:
+      context: .
+      dockerfile: apps/eltratec-gm/Dockerfile
+    ports:
+      - "8081:8081"
+    environment:
+      GM_PORT: 8081
+      GM_HOST: "0.0.0.0"
+      SWS_BASE_URL: ${SWS_BASE_URL:-https://smart.eltratec.com/SmartWebDev/SmartWebService.asmx}
+      SWS_TIMEOUT_MILLIS: ${SWS_TIMEOUT_MILLIS:-10000}
+      GM_API_AUTH_TOKEN: ${GM_API_AUTH_TOKEN:-change-this-dev-token}
+      GM_AUTH_TOKEN_TTL_HOURS: 8
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  # ===========================
+  # BACKEND CORE
+  # port: 8082
+  # ===========================
+  backend-core:
+    build:
+      context: .
+      dockerfile: apps/backend-core/Dockerfile
+    ports:
+      - "8082:8082"
+    environment:
+      BACKEND_CORE_PORT: 8082
+      BACKEND_CORE_HOST: "0.0.0.0"
+      BACKEND_CORE_DB_JDBC_URL: jdbc:postgresql://postgres:5432/sensum
+      BACKEND_CORE_DB_USER: sensum
+      BACKEND_CORE_DB_PASSWORD: sensum
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8082/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  # ===========================
+  # API GATEWAY
+  # port: 8080
+  # ===========================
+  api-gateway:
+    build:
+      context: .
+      dockerfile: apps/api-gateway/Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      API_GATEWAY_PORT: 8080
+      API_GATEWAY_HOST: "0.0.0.0"
+      GM_BASE_URL: http://eltratec-gm:8081
+      GM_API_AUTH_TOKEN: ${GM_API_AUTH_TOKEN:-change-this-dev-token}
+    depends_on:
+      eltratec-gm:
+        condition: service_healthy
+      backend-core:
+        condition: service_healthy
+
+  # ===========================
+  # GRAFANA OSS
+  # port: 3000
+  # ===========================
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ALLOW_EMBEDDING: "true"
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: "Viewer"
+    volumes:
+      - grafana_feri_data:/var/lib/grafana
+    depends_on:
+      - api-gateway
+
+  # ===========================
+  # NEXT.JS FRONTEND
+  # port: 3001
+  # (odkomentiraj ko bo implementiran)
+  # ===========================
+  # frontend:
+  #   build:
+  #     context: .
+  #     dockerfile: apps/frontend/Dockerfile
+  #   ports:
+  #     - "3001:3000"
+  #   environment:
+  #     NEXT_PUBLIC_API_URL: http://localhost:8080
+  #   depends_on:
+  #     - api-gateway
+
+volumes:
+  postgres_data:
+  grafana_feri_data:
