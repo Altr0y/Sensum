@@ -1,4 +1,4 @@
-package si.sensum.transform
+package si.sensum.sws.parser
 
 import org.w3c.dom.Element
 import si.sensum.shared.models.api.measurements.MeasurementDto
@@ -6,7 +6,7 @@ import java.io.ByteArrayInputStream
 import java.time.OffsetDateTime
 import javax.xml.parsers.DocumentBuilderFactory
 
-object XmlConverter {
+internal object SwsMeasurementsResponseParser {
 
     fun xmlToMeasurements(xml: String): List<MeasurementDto> {
         val factory = DocumentBuilderFactory.newInstance()
@@ -44,34 +44,9 @@ object XmlConverter {
         return result
     }
 
-    fun measurementsToXml(measurements: List<MeasurementDto>): String {
-        val rows = measurements.joinToString("\n") { measurement ->
-            """
-            <Measurements>
-                <StationID>${measurement.stationId}</StationID>
-                <ChannelID>${measurement.channelId}</ChannelID>
-                <DateTime>${measurement.dateTime}</DateTime>
-                <Value>${measurement.value}</Value>
-                <Status>${measurement.status}</Status>
-            </Measurements>
-            """.trimIndent()
-        }
-
-        return """
-        <?xml version="1.0" encoding="utf-8"?>
-        <DocumentElement>
-        $rows
-        </DocumentElement>
-        """.trimIndent()
-    }
-
     private fun Element.getTagValue(tagName: String): String? {
         val nodes = this.getElementsByTagName(tagName)
-
-        if (nodes.length == 0) {
-            return null
-        }
-
+        if (nodes.length == 0) return null
         return nodes.item(0)?.textContent?.trim()
     }
 }

@@ -1,6 +1,5 @@
 package si.sensum.gm.routes
 
-import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.*
 import io.ktor.server.response.*
@@ -27,16 +26,13 @@ fun Route.measurementRoutes(
                 cookieValue = userSession.swsCookieValue
             )
 
-            val xml = soapClient.getAllMeasurementsRaw(
+            val measurements = soapClient.getAllMeasurements(
                 session = swsSession,
                 datetimeFrom = query.datetimeFrom,
                 datetimeTo = query.datetimeTo
             )
 
-            call.respondText(
-                text = xml,
-                contentType = ContentType.Text.Xml
-            )
+            call.respond(measurements)
         }
     }
 }
@@ -53,8 +49,16 @@ private suspend fun ApplicationCall.extractMeasurementQueryOrRespond(): Measurem
         return null
     }
 
-    return MeasurementQuery(
-        datetimeFrom = datetimeFrom,
-        datetimeTo = datetimeTo
-    )
+    return try {
+        MeasurementQuery(
+            datetimeFrom = datetimeFrom,
+            datetimeTo = datetimeTo
+        )
+    } catch (e: Exception) {
+        respond(
+            HttpStatusCode.BadRequest,
+            ApiErrorResponse("Invalid datetime format. Use 2026-02-01T00:00:00 or 2026-02-01T00:00:00+01:00")
+        )
+        null
+    }
 }

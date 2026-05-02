@@ -6,7 +6,9 @@ import si.sensum.logging.Logger
 import si.sensum.sws.model.SwsSession
 import si.sensum.sws.parser.extractLoginResult
 import si.sensum.sws.parser.extractSessionFromSetCookie
+import si.sensum.sws.parser.SwsMeasurementsResponseParser
 import si.sensum.sws.xml.SwsXmlBuilder
+import si.sensum.shared.models.api.measurements.MeasurementDto
 
 class SmartWebSoapClient(
     httpClient: HttpClient,
@@ -64,5 +66,20 @@ class SmartWebSoapClient(
             session = session,
             operationName = "GetAllMeasurements"
         )
+    }
+
+    suspend fun getAllMeasurements(
+        session: SwsSession,
+        datetimeFrom: String,
+        datetimeTo: String
+    ): List<MeasurementDto> {
+
+        val xml = getAllMeasurementsRaw(
+            session = session,
+            datetimeFrom = datetimeFrom,
+            datetimeTo = datetimeTo
+        )
+
+        return SwsMeasurementsResponseParser.xmlToMeasurements(xml)
     }
 }

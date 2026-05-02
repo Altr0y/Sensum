@@ -1,25 +1,26 @@
 package si.sensum.transform
 
-import si.sensum.shared.models.measurements.Measurement
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
+import si.sensum.shared.models.api.measurements.MeasurementDto
 
 object JsonConverter {
-    private val json = Json{
+
+    private val json = Json {
         prettyPrint = true
         ignoreUnknownKeys = true
     }
 
-    fun jsonToMeasurements(jsonString: String): List<Measurement>{
+    fun jsonToMeasurements(jsonString: String): List<MeasurementDto> {
         return json.decodeFromString(
-            ListSerializer(Measurement.serializer()),
+            ListSerializer(MeasurementDto.serializer()),
             jsonString
         )
     }
 
-    fun measurementsToJson(measurements: List<Measurement>): String {
+    fun measurementsToJson(measurements: List<MeasurementDto>): String {
         return json.encodeToString(
-            ListSerializer(Measurement.serializer()),
+            ListSerializer(MeasurementDto.serializer()),
             measurements
         )
     }
