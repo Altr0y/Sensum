@@ -4,6 +4,8 @@ import io.ktor.server.application.*
 import org.jetbrains.exposed.v1.jdbc.Database
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import si.sensum.logging.Logger
+import org.jetbrains.exposed.v1.jdbc.SchemaUtils
+import si.sensum.backend.users.UserTable
 
 fun Application.configureDatabases() {
     val config = environment.config
@@ -19,7 +21,7 @@ fun Application.configureDatabases() {
     )
 
     transaction {
-        exec("SELECT 1")
+        SchemaUtils.create(UserTable)
     }
 
     Logger.log.info { "[DB] PostgreSQL database connected with Exposed ORM" }

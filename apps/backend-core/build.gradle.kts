@@ -19,8 +19,9 @@ dependencies {
     implementation("io.ktor:ktor-server-content-negotiation:3.4.2")
     implementation("io.ktor:ktor-serialization-kotlinx-json:3.4.2")
     implementation("ch.qos.logback:logback-classic:1.5.32")
-    implementation("org.jetbrains.exposed:exposed-core:1.1.1")
-    implementation("org.jetbrains.exposed:exposed-jdbc:1.1.1")
+    implementation("org.jetbrains.exposed:exposed-core:1.2.0")
+    implementation("org.jetbrains.exposed:exposed-jdbc:1.2.0")
+    implementation("org.jetbrains.exposed:exposed-dao:1.2.0")
     implementation("org.postgresql:postgresql:42.7.11")
 
     implementation(project(":libs:shared-models"))
