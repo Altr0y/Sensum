@@ -2,6 +2,7 @@ package si.sensum.backend.database
 
 import io.ktor.server.application.*
 import org.jetbrains.exposed.v1.jdbc.Database
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import si.sensum.logging.Logger
 
 fun Application.configureDatabases() {
@@ -17,5 +18,9 @@ fun Application.configureDatabases() {
         password = password
     )
 
-    Logger.log.info { "[DB] PostgreSQL database configured" }
+    transaction {
+        exec("SELECT 1")
+    }
+
+    Logger.log.info { "[DB] PostgreSQL database connected with Exposed ORM" }
 }
