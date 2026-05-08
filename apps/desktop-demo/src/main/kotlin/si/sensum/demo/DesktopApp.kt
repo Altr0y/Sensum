@@ -1,29 +1,42 @@
 package si.sensum.demo
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import si.sensum.demo.components.DataLoader
-import si.sensum.demo.components.MeasurementChart
-import si.sensum.demo.components.DatabasePanel
-import androidx.compose.ui.graphics.Color
-
+import si.sensum.demo.components.*
+import androidx.compose.foundation.background
+import androidx.compose.material3.MaterialTheme
+import si.sensum.demo.model.Measurement
 @Composable
 fun App() {
-    MaterialTheme {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color(0xFFe9ecef))
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            DataLoader()
-            MeasurementChart()
-            DatabasePanel()
+    var sidebarExpanded by remember { mutableStateOf(false) }
+    var activeTab by remember { mutableStateOf(SideBarTab.DATA_LOADER) }
+    var measurements by remember { mutableStateOf<List<Measurement>>(emptyList()) }
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        TitleBar(
+            sidebarExpanded = sidebarExpanded,
+            onToggleSidebar = { sidebarExpanded = !sidebarExpanded }
+        )
+        Row(modifier = Modifier.fillMaxSize()) {
+            SideBar(
+                expanded = sidebarExpanded,
+                activeTab = activeTab,
+                onTabSelected = { activeTab = it }
+            )
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background)
+            ) {
+                when (activeTab) {
+                    SideBarTab.DATA_LOADER -> DataLoader(onMeasurementsLoaded = { measurements = it })
+                    SideBarTab.DATABASE_PANEL -> DatabasePanel(measurements = measurements)
+                    SideBarTab.MEASUREMENT_CHART -> MeasurementChart(measurements = measurements)
+                    SideBarTab.USER -> User()
+                    SideBarTab.INFO -> Info()
+                }
+            }
         }
     }
 }
