@@ -2,6 +2,7 @@ plugins {
     kotlin("jvm")
     id("org.jetbrains.compose")
     id("org.jetbrains.kotlin.plugin.compose")
+    id("org.jetbrains.compose.hot-reload")
 }
 
 group = "si.sensum.demo"
@@ -22,7 +23,7 @@ kotlin {
 
 compose.desktop {
     application {
-        mainClass = "si.sensum.demo.DesktopAppKt"
+        mainClass = "si.sensum.demo.MainKt"
     }
 }
 
