@@ -1,0 +1,15 @@
+$kind: collection
+description: |-
+  StartFragmentGrafana Middleware API for the Sensum / Eltratec project.  
+    
+  Current scope:  
+  \- authentication flow for GM  
+  \- login endpoint testing  
+  \- token retrieval for later protected endpoints  
+    
+  Base path:  
+  \- /api/v1  
+    
+  Current endpoints:  
+  \- POST /auth/login  
+  \- GET /healthEndFragment

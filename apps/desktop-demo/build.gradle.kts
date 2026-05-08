@@ -1,0 +1,32 @@
+plugins {
+    kotlin("jvm")
+    id("org.jetbrains.compose")
+    id("org.jetbrains.kotlin.plugin.compose")
+    id("org.jetbrains.compose.hot-reload")
+}
+
+group = "si.sensum.demo"
+version = "1.0-SNAPSHOT"
+
+dependencies {
+    implementation(compose.desktop.currentOs)
+    implementation(compose.material3)
+    implementation(project(":libs:data-transform"))
+    implementation(project(":libs:shared-models"))
+    implementation("org.json:json:20240303")
+    testImplementation(kotlin("test"))
+}
+
+kotlin {
+    jvmToolchain(21)
+}
+
+compose.desktop {
+    application {
+        mainClass = "si.sensum.demo.MainKt"
+    }
+}
+
+tasks.test {
+    useJUnitPlatform()
+}
