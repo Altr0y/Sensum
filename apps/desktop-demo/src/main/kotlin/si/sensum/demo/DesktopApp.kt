@@ -1,27 +1,29 @@
 package si.sensum.demo
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.window.Window
-import androidx.compose.ui.window.application
-
-object ApiInfo {
-    const val NAME = "Desktop Demo"
-}
-
-fun main() = application {
-    Window(
-        onCloseRequest = ::exitApplication,
-        title = "Sensum Desktop Demo"
-    ) {
-        App()
-    }
-}
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import si.sensum.demo.components.DataLoader
+import si.sensum.demo.components.MeasurementChart
+import si.sensum.demo.components.DatabasePanel
+import androidx.compose.ui.graphics.Color
 
 @Composable
 fun App() {
     MaterialTheme {
-        Text("Sensum Desktop Demo started.")
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color(0xFFe9ecef))
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            DataLoader()
+            MeasurementChart()
+            DatabasePanel()
+        }
     }
 }

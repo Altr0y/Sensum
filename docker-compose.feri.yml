@@ -38,7 +38,7 @@ services:
       GM_API_AUTH_TOKEN: ${GM_API_AUTH_TOKEN:-change-this-dev-token}
       GM_AUTH_TOKEN_TTL_HOURS: 8
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8081/health"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8081/health || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 3
