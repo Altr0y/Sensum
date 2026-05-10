@@ -16,6 +16,7 @@ dependencies {
     implementation("io.ktor:ktor-server-netty:3.4.2")
     implementation("io.ktor:ktor-server-call-logging:3.4.2")
     implementation("io.ktor:ktor-server-call-id:3.4.2")
+    implementation("io.ktor:ktor-server-status-pages:3.4.2")
     implementation("io.ktor:ktor-server-content-negotiation:3.4.2")
     implementation("io.ktor:ktor-serialization-kotlinx-json:3.4.2")
     implementation("ch.qos.logback:logback-classic:1.5.32")

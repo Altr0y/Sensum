@@ -22,4 +22,8 @@ class InMemorySessionStore : SessionStore {
             null
         }
     }
+
+    override fun deleteByToken(token: String) {
+        sessions.remove(token)
+    }
 }
