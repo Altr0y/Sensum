@@ -6,3 +6,6 @@ plugins {
 dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 }
+kotlin {
+    jvmToolchain(21)
+}
