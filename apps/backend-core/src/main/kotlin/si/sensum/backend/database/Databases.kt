@@ -3,8 +3,12 @@ package si.sensum.backend.database
 import io.ktor.server.application.*
 import org.jetbrains.exposed.v1.jdbc.Database
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
-import si.sensum.logging.Logger
 import org.jetbrains.exposed.v1.jdbc.SchemaUtils
+import si.sensum.backend.channels.ChannelTable
+import si.sensum.backend.customers.CustomerTable
+import si.sensum.backend.measurements.MeasurementTable
+import si.sensum.backend.stations.StationTable
+import si.sensum.backend.stations.UserStationTable
 import si.sensum.backend.users.UserTable
 
 fun Application.configureDatabases() {
@@ -21,8 +25,15 @@ fun Application.configureDatabases() {
     )
 
     transaction {
-        SchemaUtils.create(UserTable)
+        SchemaUtils.create(
+            CustomerTable,
+            UserTable,
+            StationTable,
+            UserStationTable,
+            ChannelTable,
+            MeasurementTable
+        )
     }
 
-    Logger.log.info { "[DB] PostgreSQL database connected with Exposed ORM" }
+    log.info("[DB] PostgreSQL database connected with Exposed ORM")
 }
