@@ -5,6 +5,7 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import si.sensum.gm.auth.requireGmBearerToken
+import si.sensum.gm.auth.resolveGmTokenOrRespond
 import si.sensum.gm.services.AuthService
 import si.sensum.shared.auth.bearer.TokenValidator
 import si.sensum.shared.models.api.LoginRequest
@@ -23,6 +24,20 @@ fun Route.authRoutes(
             )
 
             call.respond(HttpStatusCode.OK, response)
+        }
+
+        post("/logout") {
+            val token = call.resolveGmTokenOrRespond() ?: return@post
+
+            authService.logout(token)
+
+            call.respond(
+                HttpStatusCode.OK,
+                mapOf(
+                    "status" to "ok",
+                    "message" to "Logged out"
+                )
+            )
         }
     }
 

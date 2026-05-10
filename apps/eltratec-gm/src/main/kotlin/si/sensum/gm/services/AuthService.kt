@@ -5,6 +5,7 @@ import si.sensum.shared.auth.service.TokenService
 import si.sensum.shared.auth.store.SessionStore
 import si.sensum.shared.models.api.LoginResponse
 import si.sensum.sws.SmartWebSoapClient
+import si.sensum.sws.model.SwsSession
 import java.time.Instant
 
 class AuthService(
@@ -43,6 +44,24 @@ class AuthService(
                 token = token,
                 expiresAt = expiresAt.toString()
             )
+        }
+    }
+
+    suspend fun logout(token: String) {
+        return logged(
+            operation = "logout"
+        ) {
+            val userSession = sessionStore.findByToken(token)
+                ?: return@logged
+
+            val swsSession = SwsSession(
+                cookieName = userSession.swsCookieName,
+                cookieValue = userSession.swsCookieValue
+            )
+
+            soapClient.logout(swsSession)
+
+            sessionStore.deleteByToken(token)
         }
     }
 }
