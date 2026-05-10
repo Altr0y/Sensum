@@ -70,7 +70,7 @@ fun SideBar(
             Column(modifier = Modifier.padding(vertical = 8.dp)) {
                 NavItem(
                     icon = Res.drawable.user,
-                    label = "Profil",
+                    label = "Profile",
                     active = activeTab == SideBarTab.USER,
                     expanded = expanded,
                     onClick = { onTabSelected(SideBarTab.USER) }

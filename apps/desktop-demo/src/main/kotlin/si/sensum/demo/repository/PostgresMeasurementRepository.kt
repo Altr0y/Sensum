@@ -10,7 +10,7 @@ import java.sql.Timestamp
 class PostgresMeasurementRepository(
     host: String = "localhost",
     port: Int = 5432,
-    database: String = "postgres",
+    database: String = "sensum",
     user: String = "sensum",
     password: String = "sensum"
 ) : DatabaseRepository {
