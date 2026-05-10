@@ -4,5 +4,6 @@ import io.ktor.http.Headers
 
 data class SwsSoapResponse(
     val body: String,
-    val headers: Headers
+    val headers: Headers,
+    val statusCode: Int
 )

@@ -1,14 +1,18 @@
 package si.sensum.sws
 
-sealed class SwsLoginException(message: String) : RuntimeException(message)
+sealed class SwsException(message: String) : RuntimeException(message)
 
 class SwsUnauthorizedException(message: String = "Invalid SWS username or password") :
-    SwsLoginException(message)
+    SwsException(message)
 
 class SwsHttpException(
     val statusCode: Int,
     message: String
-) : SwsLoginException(message)
+) : SwsException(message)
+
+class SwsTimeoutException(
+    message: String = "SWS request timed out"
+) : SwsException(message)
 
 class SwsInvalidResponseException(message: String) :
-    SwsLoginException(message)
+    SwsException(message)
