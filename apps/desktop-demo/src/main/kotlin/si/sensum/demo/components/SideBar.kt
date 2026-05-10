@@ -9,8 +9,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.painterResource
+import si.sensum.demo.resources.Res
+import si.sensum.demo.resources.chart
+import si.sensum.demo.resources.data_load
+import si.sensum.demo.resources.database_panel
+import si.sensum.demo.resources.info
+import si.sensum.demo.resources.user
 
 enum class SideBarTab { DATA_LOADER, DATABASE_PANEL, MEASUREMENT_CHART, USER, INFO }
 
@@ -34,21 +41,23 @@ fun SideBar(
         ) {
             Column(modifier = Modifier.weight(1f).padding(vertical = 10.dp)) {
                 NavItem(
-                    icon = "images/data-load.svg",
+                    icon = Res.drawable.data_load,
                     label = "Data Loader",
                     active = activeTab == SideBarTab.DATA_LOADER,
                     expanded = expanded,
                     onClick = { onTabSelected(SideBarTab.DATA_LOADER) }
                 )
+
                 NavItem(
-                    icon = "images/database-panel.svg",
+                    icon = Res.drawable.database_panel,
                     label = "Database Panel",
                     active = activeTab == SideBarTab.DATABASE_PANEL,
                     expanded = expanded,
                     onClick = { onTabSelected(SideBarTab.DATABASE_PANEL) }
                 )
+
                 NavItem(
-                    icon = "images/chart.svg",
+                    icon = Res.drawable.chart,
                     label = "Measurement Chart",
                     active = activeTab == SideBarTab.MEASUREMENT_CHART,
                     expanded = expanded,
@@ -60,14 +69,15 @@ fun SideBar(
 
             Column(modifier = Modifier.padding(vertical = 8.dp)) {
                 NavItem(
-                    icon = "images/user.svg",
-                    label = "Profil",
+                    icon = Res.drawable.user,
+                    label = "Profile",
                     active = activeTab == SideBarTab.USER,
                     expanded = expanded,
                     onClick = { onTabSelected(SideBarTab.USER) }
                 )
+
                 NavItem(
-                    icon = "images/info.svg",
+                    icon = Res.drawable.info,
                     label = "Info",
                     active = activeTab == SideBarTab.INFO,
                     expanded = expanded,
@@ -80,7 +90,7 @@ fun SideBar(
 
 @Composable
 private fun NavItem(
-    icon: String,
+    icon: DrawableResource,
     label: String,
     active: Boolean,
     expanded: Boolean,
@@ -88,6 +98,7 @@ private fun NavItem(
 ) {
     val bgColor = if (active) MaterialTheme.colorScheme.surfaceVariant
     else MaterialTheme.colorScheme.surface
+
     val iconTint = if (active) SensumColors.Accent else SensumColors.Muted
 
     Box(
@@ -120,6 +131,7 @@ private fun NavItem(
                 tint = iconTint,
                 modifier = Modifier.size(35.dp)
             )
+
             if (expanded) {
                 Text(
                     text = label,

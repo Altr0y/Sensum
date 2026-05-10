@@ -10,7 +10,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import si.sensum.demo.model.Measurement
@@ -18,6 +17,15 @@ import si.sensum.demo.repository.PostgresMeasurementRepository
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
+import org.jetbrains.compose.resources.painterResource
+import si.sensum.demo.resources.Res
+import si.sensum.demo.resources.check
+import si.sensum.demo.resources.chevron_down
+import si.sensum.demo.resources.chevron_right
+import si.sensum.demo.resources.database_panel
+import si.sensum.demo.resources.edit
+import si.sensum.demo.resources.trash
+import si.sensum.demo.resources.x
 
 private val DT_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
 private val dbRepository = PostgresMeasurementRepository()
@@ -116,7 +124,7 @@ fun DatabasePanel(measurements: List<Measurement> = emptyList()) {
         // Content
         if (dbMeasurements.isEmpty() && !isLoading) {
             EmptyState(
-                icon = "images/database-panel.svg",
+                icon = Res.drawable.database_panel,
                 title = "No data in database",
                 subtitle = "Load measurements in Data Loader\nand press Save Loaded Data."
             )
@@ -176,7 +184,9 @@ fun DatabasePanel(measurements: List<Measurement> = emptyList()) {
                             dbRepository.insertAll(measurements).fold(
                                 onSuccess = {
                                     statusMsg = "Saved $it measurements."
-                                    dbRepository.getAll().onSuccess { dbMeasurements = it }
+                                    dbRepository.getAll().onSuccess {
+                                        dbMeasurements = it
+                                    }
                                 },
                                 onFailure = { statusMsg = "DB Error: ${it.message}" }
                             )
@@ -254,7 +264,7 @@ private fun ChannelAccordion(
                 ) {
                     Icon(
                         painter = painterResource(
-                            if (expanded) "images/chevron-down.svg" else "images/chevron-right.svg"
+                            if (expanded) Res.drawable.chevron_down else Res.drawable.chevron_right
                         ),
                         contentDescription = null,
                         tint = SensumColors.Accent,
@@ -334,7 +344,7 @@ private fun EditableRow(
                 IconButton(onClick = {
                     val dt = try {
                         LocalDateTime.parse(dtValue, DT_FORMAT)
-                    } catch (e: DateTimeParseException) {
+                    } catch (_: DateTimeParseException) {
                         null
                     }
                     val v = valValue.toDoubleOrNull()
@@ -345,7 +355,7 @@ private fun EditableRow(
                     }
                 }, modifier = Modifier.size(28.dp)) {
                     Icon(
-                        painterResource("images/check.svg"),
+                        painterResource(Res.drawable.check),
                         null,
                         tint = SensumColors.Success,
                         modifier = Modifier.size(16.dp)
@@ -353,7 +363,7 @@ private fun EditableRow(
                 }
                 IconButton(onClick = { editing = false }, modifier = Modifier.size(28.dp)) {
                     Icon(
-                        painterResource("images/x.svg"),
+                        painterResource(Res.drawable.x),
                         null,
                         tint = SensumColors.Error,
                         modifier = Modifier.size(16.dp)
@@ -367,7 +377,7 @@ private fun EditableRow(
             Row(Modifier.width(60.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 IconButton(onClick = { editing = true }, modifier = Modifier.size(28.dp)) {
                     Icon(
-                        painterResource("images/edit.svg"),
+                        painterResource(Res.drawable.edit),
                         null,
                         tint = SensumColors.Muted,
                         modifier = Modifier.size(16.dp)
@@ -375,7 +385,7 @@ private fun EditableRow(
                 }
                 IconButton(onClick = { measurement.id?.let { onDelete(it) } }, modifier = Modifier.size(28.dp)) {
                     Icon(
-                        painterResource("images/trash.svg"),
+                        painterResource(Res.drawable.trash),
                         null,
                         tint = SensumColors.Error,
                         modifier = Modifier.size(16.dp)

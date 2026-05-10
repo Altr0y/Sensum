@@ -4,5 +4,3 @@ build/
 .idea/
 *.iml
 .env
-Photos/
-DataPlayer/

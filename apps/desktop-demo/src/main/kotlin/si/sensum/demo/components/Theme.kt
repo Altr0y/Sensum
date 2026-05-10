@@ -10,45 +10,93 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.platform.Font
 import androidx.compose.ui.unit.sp
+import org.jetbrains.compose.resources.Font
+import si.sensum.demo.resources.Res
+import si.sensum.demo.resources.jetbrains_mono_bold
+import si.sensum.demo.resources.jetbrains_mono_extrabold
+import si.sensum.demo.resources.jetbrains_mono_light
+import si.sensum.demo.resources.jetbrains_mono_medium
+import si.sensum.demo.resources.jetbrains_mono_regular
+import si.sensum.demo.resources.jetbrains_mono_semibold
+import si.sensum.demo.resources.jetbrains_mono_thin
 
-val JetBrainsMonoFamily = FontFamily(
-    Font(resource = "fonts/JetBrainsMono-Thin.ttf", weight = FontWeight.Thin),
-    Font(resource = "fonts/JetBrainsMono-Light.ttf", weight = FontWeight.Light),
-    Font(resource = "fonts/JetBrainsMono-Regular.ttf", weight = FontWeight.Normal),
-    Font(resource = "fonts/JetBrainsMono-Medium.ttf", weight = FontWeight.Medium),
-    Font(resource = "fonts/JetBrainsMono-SemiBold.ttf", weight = FontWeight.SemiBold),
-    Font(resource = "fonts/JetBrainsMono-Bold.ttf", weight = FontWeight.Bold),
-    Font(resource = "fonts/JetBrainsMono-ExtraBold.ttf", weight = FontWeight.ExtraBold),
-)
+@Composable
+private fun jetBrainsMonoFamily(): FontFamily {
+    return FontFamily(
+        Font(resource = Res.font.jetbrains_mono_thin, weight = FontWeight.Thin),
+        Font(resource = Res.font.jetbrains_mono_light, weight = FontWeight.Light),
+        Font(resource = Res.font.jetbrains_mono_regular, weight = FontWeight.Normal),
+        Font(resource = Res.font.jetbrains_mono_medium, weight = FontWeight.Medium),
+        Font(resource = Res.font.jetbrains_mono_semibold, weight = FontWeight.SemiBold),
+        Font(resource = Res.font.jetbrains_mono_bold, weight = FontWeight.Bold),
+        Font(resource = Res.font.jetbrains_mono_extrabold, weight = FontWeight.ExtraBold),
+    )
+}
 
-private val SensumTypography = Typography(
-    bodySmall = TextStyle(fontFamily = JetBrainsMonoFamily, fontWeight = FontWeight.Normal, fontSize = 12.sp),
-    bodyMedium = TextStyle(fontFamily = JetBrainsMonoFamily, fontWeight = FontWeight.Normal, fontSize = 14.sp),
-    bodyLarge = TextStyle(fontFamily = JetBrainsMonoFamily, fontWeight = FontWeight.Normal, fontSize = 16.sp),
-    labelSmall = TextStyle(fontFamily = JetBrainsMonoFamily, fontWeight = FontWeight.Medium, fontSize = 11.sp),
-    labelMedium = TextStyle(fontFamily = JetBrainsMonoFamily, fontWeight = FontWeight.Medium, fontSize = 12.sp),
-    titleSmall = TextStyle(fontFamily = JetBrainsMonoFamily, fontWeight = FontWeight.SemiBold, fontSize = 14.sp),
-    titleMedium = TextStyle(fontFamily = JetBrainsMonoFamily, fontWeight = FontWeight.SemiBold, fontSize = 16.sp),
-    titleLarge = TextStyle(fontFamily = JetBrainsMonoFamily, fontWeight = FontWeight.Bold, fontSize = 20.sp),
-    headlineMedium = TextStyle(fontFamily = JetBrainsMonoFamily, fontWeight = FontWeight.Bold, fontSize = 24.sp),
-)
+@Composable
+private fun sensumTypography(): Typography {
+    val jetBrainsMonoFamily = jetBrainsMonoFamily()
+
+    return Typography(
+        bodySmall = TextStyle(
+            fontFamily = jetBrainsMonoFamily,
+            fontWeight = FontWeight.Normal,
+            fontSize = 12.sp
+        ),
+        bodyMedium = TextStyle(
+            fontFamily = jetBrainsMonoFamily,
+            fontWeight = FontWeight.Normal,
+            fontSize = 14.sp
+        ),
+        bodyLarge = TextStyle(
+            fontFamily = jetBrainsMonoFamily,
+            fontWeight = FontWeight.Normal,
+            fontSize = 16.sp
+        ),
+        labelSmall = TextStyle(
+            fontFamily = jetBrainsMonoFamily,
+            fontWeight = FontWeight.Medium,
+            fontSize = 11.sp
+        ),
+        labelMedium = TextStyle(
+            fontFamily = jetBrainsMonoFamily,
+            fontWeight = FontWeight.Medium,
+            fontSize = 12.sp
+        ),
+        titleSmall = TextStyle(
+            fontFamily = jetBrainsMonoFamily,
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 14.sp
+        ),
+        titleMedium = TextStyle(
+            fontFamily = jetBrainsMonoFamily,
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 16.sp
+        ),
+        titleLarge = TextStyle(
+            fontFamily = jetBrainsMonoFamily,
+            fontWeight = FontWeight.Bold,
+            fontSize = 20.sp
+        ),
+        headlineMedium = TextStyle(
+            fontFamily = jetBrainsMonoFamily,
+            fontWeight = FontWeight.Bold,
+            fontSize = 24.sp
+        ),
+    )
+}
 
 object SensumColors {
+    val Background = Color(0xFF1E1E1E)
+    val Surface = Color(0xFF2B2B2B)
+    val SurfaceVariant = Color(0xFF3C3F41)
+    val Border = Color(0xFF4A4D50)
 
-    // === Osnova  ===
-    val Background = Color(0xFF1E1E1E)  // glavno ozadje
-    val Surface = Color(0xFF2B2B2B)  // panel / card ozadje
-    val SurfaceVariant = Color(0xFF3C3F41)  // toolbar, sidebar
-    val Border = Color(0xFF4A4D50)  // ločilne črte
+    val OnBackground = Color(0xFFBBBBBB)
+    val OnSurface = Color(0xFFD4D4D4)
+    val Muted = Color(0xFF7A7E82)
 
-    // === Tekst ===
-    val OnBackground = Color(0xFFBBBBBB)  // navadni tekst
-    val OnSurface = Color(0xFFD4D4D4)  // poudarjen tekst
-    val Muted = Color(0xFF7A7E82)  // sekundarni / placeholder tekst
-
-    // === Akcenti ===
     val Accent = Color(0xFFE8A838)
     val AccentMuted = Color(0xFF7A4F10)
     val OnAccent = Color(0xFFFFFFFF)
@@ -79,7 +127,7 @@ private val SensumColorScheme = darkColorScheme(
 fun SensumTheme(content: @Composable () -> Unit) {
     MaterialTheme(
         colorScheme = SensumColorScheme,
-        typography = SensumTypography
+        typography = sensumTypography()
     ) {
         CompositionLocalProvider(
             LocalContentColor provides SensumColors.OnBackground,
