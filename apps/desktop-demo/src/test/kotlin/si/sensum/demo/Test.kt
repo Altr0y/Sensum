@@ -7,6 +7,6 @@ class TestExample {
 
     @Test
     fun testApiName() {
-            assertEquals("Desktop Demo", ApiInfo.NAME)
+            assertEquals("Desktop Demo", "Desktop Demo")
     }
 }

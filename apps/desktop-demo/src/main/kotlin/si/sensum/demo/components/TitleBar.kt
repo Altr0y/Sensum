@@ -9,8 +9,12 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.painterResource
+import si.sensum.demo.resources.Res
+import si.sensum.demo.resources.sidebar_collapse
+import si.sensum.demo.resources.sidebar_expand
+import si.sensum.demo.resources.eltratec_logo
 
 @Composable
 fun TitleBar(
@@ -32,8 +36,8 @@ fun TitleBar(
             IconButton(onClick = onToggleSidebar) {
                 Icon(
                     painter = painterResource(
-                        if (sidebarExpanded) "images/sidebar-collapse.svg"
-                        else "images/sidebar-expand.svg"
+                        if (sidebarExpanded) Res.drawable.sidebar_collapse
+                        else Res.drawable.sidebar_expand
                     ),
                     contentDescription = if (sidebarExpanded) "Collapse sidebar" else "Expand sidebar",
                     tint = SensumColors.Muted,
@@ -42,7 +46,7 @@ fun TitleBar(
             }
 
             Image(
-                painter = painterResource("images/EltratecLogo.png"),
+                painter = painterResource(Res.drawable.eltratec_logo),
                 contentDescription = "Eltratec logo",
                 modifier = Modifier.height(42.dp)
             )

@@ -17,7 +17,7 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 
-private val STATION_ID = 2241
+private const val STATION_ID = 2241
 private val CHANNELS = mapOf(
     127 to "L8001H - globina voda-radar [m]",
     128 to "L8001H - višina vode [m]",
@@ -225,7 +225,7 @@ private fun FilterChipToggle(label: String, selected: Boolean, onClick: () -> Un
 
 private fun parseDateTime(s: String): LocalDateTime? = try {
     LocalDateTime.parse(s, DATETIME_FORMAT)
-} catch (e: DateTimeParseException) {
+} catch (_: DateTimeParseException) {
     null
 }
 
