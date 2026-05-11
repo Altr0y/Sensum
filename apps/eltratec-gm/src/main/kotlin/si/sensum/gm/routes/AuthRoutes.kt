@@ -16,6 +16,8 @@ fun Route.authRoutes(
 ) {
     route("/auth") {
         post("/login") {
+            if (!call.requireGmBearerToken(tokenValidator)) return@post
+
             val request = call.receive<LoginRequest>()
 
             val response = authService.login(
