@@ -9,11 +9,13 @@ import si.sensum.backend.database.DatabaseTransaction
 class UserRepository {
 
     fun createUser(
+        customerId: Int,
         username: String,
         passwordHash: String,
         role: UserRole
     ): User = DatabaseTransaction.run {
         val insertStatement = UserTable.insert {
+            it[UserTable.customerId] = customerId
             it[UserTable.username] = username
             it[UserTable.passwordHash] = passwordHash
             it[UserTable.role] = role
@@ -21,6 +23,7 @@ class UserRepository {
 
         User(
             id = insertStatement[UserTable.id],
+            customerId = customerId,
             username = username,
             passwordHash = passwordHash,
             role = role
@@ -44,6 +47,7 @@ class UserRepository {
     private fun toUser(row: ResultRow): User {
         return User(
             id = row[UserTable.id],
+            customerId = row[UserTable.customerId],
             username = row[UserTable.username],
             passwordHash = row[UserTable.passwordHash],
             role = row[UserTable.role]

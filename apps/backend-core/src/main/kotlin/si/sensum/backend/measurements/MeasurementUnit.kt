@@ -1,6 +1,9 @@
 package si.sensum.backend.measurements
 
 enum class MeasurementUnit {
+    UNKNOWN,
     CELSIUS,
-    METERS
+    METERS,
+    PERCENT,
+    VOLT
 }
