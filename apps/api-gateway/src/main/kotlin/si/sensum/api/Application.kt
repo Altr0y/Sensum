@@ -11,12 +11,14 @@ import io.ktor.server.request.path
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import org.slf4j.event.Level
+import si.sensum.api.auth.StaticApiTokenValidator
+import si.sensum.api.backend.BackendClient
+import si.sensum.api.config.ApiGatewayConfig
 import si.sensum.api.config.createHttpClient
-import si.sensum.api.gm.GmClient
 import si.sensum.api.routes.authRoutes
+import si.sensum.api.routes.measurementRoutes
 import si.sensum.logging.Logger
 import si.sensum.shared.models.api.HealthResponse
-import si.sensum.api.config.ApiGatewayConfig
 import java.util.UUID
 
 object ApiInfo {
@@ -35,32 +37,43 @@ fun Application.module() {
 
     val httpClient = createHttpClient()
 
-    val gmClient = GmClient(
+    val backendClient = BackendClient(
         httpClient = httpClient,
-        baseUrl = appConfig.gmBaseUrl,
-        gmAuthToken = appConfig.gmAuthToken
+        baseUrl = appConfig.backendCoreBaseUrl
     )
 
-    configureRoutes(gmClient)
+    val apiTokenValidator = StaticApiTokenValidator(
+        expectedToken = appConfig.demoAuthToken
+    )
+
+    configureRoutes(
+        backendClient = backendClient,
+        tokenValidator = apiTokenValidator,
+        appConfig = appConfig
+    )
 }
 
 private fun Application.loadAppConfig(): ApiGatewayConfig {
     val config = environment.config
 
-    val gmBaseUrl = config.property("gm.baseUrl").getString()
-    val gmAuthToken = config.property("gm.authToken").getString()
+    val backendCoreBaseUrl = config.property("backendCore.baseUrl").getString()
+    val demoUsername = config.property("demo.username").getString()
+    val demoPassword = config.property("demo.password").getString()
+    val demoAuthToken = config.property("demo.authToken").getString()
 
-    require(gmBaseUrl.isNotBlank()) {
-        "Missing GM baseUrl. Set GM_BASE_URL env variable."
+    require(backendCoreBaseUrl.isNotBlank()) {
+        "Missing backendCore baseUrl. Set BACKEND_CORE_BASE_URL env variable."
     }
 
-    require(gmAuthToken.isNotBlank()) {
-        "Missing GM auth token. Set GM_API_AUTH_TOKEN env variable."
+    require(demoAuthToken.isNotBlank()) {
+        "Missing demo auth token. Set DEMO_AUTH_TOKEN env variable."
     }
 
     return ApiGatewayConfig(
-        gmBaseUrl = gmBaseUrl,
-        gmAuthToken = gmAuthToken
+        backendCoreBaseUrl = backendCoreBaseUrl,
+        demoUsername = demoUsername,
+        demoPassword = demoPassword,
+        demoAuthToken = demoAuthToken
     )
 }
 
@@ -108,7 +121,9 @@ private fun Application.installPlugins() {
 }
 
 private fun Application.configureRoutes(
-    gmClient: GmClient
+    backendClient: BackendClient,
+    tokenValidator: StaticApiTokenValidator,
+    appConfig: ApiGatewayConfig
 ) {
     routing {
         get("/health") {
@@ -120,6 +135,15 @@ private fun Application.configureRoutes(
             )
         }
 
-        authRoutes(gmClient)
+        authRoutes(
+            demoUsername = appConfig.demoUsername,
+            demoPassword = appConfig.demoPassword,
+            demoAuthToken = appConfig.demoAuthToken
+        )
+
+        measurementRoutes(
+            backendClient = backendClient,
+            tokenValidator = tokenValidator
+        )
     }
 }

@@ -13,7 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import si.sensum.demo.model.Measurement
-import si.sensum.demo.repository.PostgresMeasurementRepository
+//import si.sensum.demo.repository.PostgresMeasurementRepository
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
@@ -26,29 +26,33 @@ import si.sensum.demo.resources.database_panel
 import si.sensum.demo.resources.edit
 import si.sensum.demo.resources.trash
 import si.sensum.demo.resources.x
+import si.sensum.demo.api.SensumApiClient
 
+private val apiClient = SensumApiClient()
 private val DT_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
-private val dbRepository = PostgresMeasurementRepository()
+//private val dbRepository = PostgresMeasurementRepository()
 
 @Composable
 fun DatabasePanel(measurements: List<Measurement> = emptyList()) {
     val scope = rememberCoroutineScope()
 
-    var dbMeasurements by remember { mutableStateOf<List<Measurement>>(emptyList()) }
+    var dbMeasurements by remember(measurements) {
+        mutableStateOf(measurements)
+    }
     var isLoading by remember { mutableStateOf(false) }
     var statusMsg by remember { mutableStateOf("") }
     var showSaveDialog by remember { mutableStateOf(false) }
     var showDeleteAllDialog by remember { mutableStateOf(false) }
 
     // Naloži iz DB ob zagonu
-    LaunchedEffect(Unit) {
-        isLoading = true
-        dbRepository.getAll().fold(
-            onSuccess = { dbMeasurements = it },
-            onFailure = { statusMsg = "DB Error: ${it.message}" }
-        )
-        isLoading = false
-    }
+//    LaunchedEffect(Unit) {
+//        isLoading = true
+//        dbRepository.getAll().fold(
+//            onSuccess = { dbMeasurements = it },
+//            onFailure = { statusMsg = "DB Error: ${it.message}" }
+//        )
+//        isLoading = false
+//    }
 
     val grouped = dbMeasurements.groupBy { it.channelId }.toSortedMap()
 
@@ -87,10 +91,13 @@ fun DatabasePanel(measurements: List<Measurement> = emptyList()) {
                 onClick = {
                     scope.launch {
                         isLoading = true
-                        dbRepository.getAll().fold(
-                            onSuccess = { dbMeasurements = it; statusMsg = "Refreshed." },
-                            onFailure = { statusMsg = "DB Error: ${it.message}" }
-                        )
+                        try {
+                            apiClient.login()
+                            dbMeasurements = apiClient.getMeasurements()
+                            statusMsg = "Refreshed."
+                        } catch (e: Exception) {
+                            statusMsg = "API Error: ${e.message}"
+                        }
                         isLoading = false
                     }
                 }
@@ -141,26 +148,28 @@ fun DatabasePanel(measurements: List<Measurement> = emptyList()) {
                         entries = entries,
                         onUpdate = { updated ->
                             scope.launch {
-                                dbRepository.update(updated).fold(
-                                    onSuccess = {
-                                        dbMeasurements = dbMeasurements.map { m ->
-                                            if (m.id == it.id) it else m
-                                        }
-                                        statusMsg = "Updated."
-                                    },
-                                    onFailure = { statusMsg = "DB Error: ${it.message}" }
-                                )
+                                try {
+                                    apiClient.login()
+                                    val saved = apiClient.updateMeasurement(updated)
+                                    dbMeasurements = dbMeasurements.map { m ->
+                                        if (m.id == saved.id) saved else m
+                                    }
+                                    statusMsg = "Updated."
+                                } catch (e: Exception) {
+                                    statusMsg = "API Error: ${e.message}"
+                                }
                             }
                         },
                         onDelete = { id ->
                             scope.launch {
-                                dbRepository.delete(id).fold(
-                                    onSuccess = {
-                                        dbMeasurements = dbMeasurements.filter { it.id != id }
-                                        statusMsg = "Deleted."
-                                    },
-                                    onFailure = { statusMsg = "DB Error: ${it.message}" }
-                                )
+                                try {
+                                    apiClient.login()
+                                    apiClient.deleteMeasurement(id)
+                                    dbMeasurements = dbMeasurements.filter { it.id != id }
+                                    statusMsg = "Deleted."
+                                } catch (e: Exception) {
+                                    statusMsg = "API Error: ${e.message}"
+                                }
                             }
                         }
                     )
@@ -181,15 +190,16 @@ fun DatabasePanel(measurements: List<Measurement> = emptyList()) {
                         showSaveDialog = false
                         scope.launch {
                             isLoading = true
-                            dbRepository.insertAll(measurements).fold(
-                                onSuccess = {
-                                    statusMsg = "Saved $it measurements."
-                                    dbRepository.getAll().onSuccess {
-                                        dbMeasurements = it
-                                    }
-                                },
-                                onFailure = { statusMsg = "DB Error: ${it.message}" }
-                            )
+
+                            try {
+                                apiClient.login()
+                                val savedCount = apiClient.createMeasurements(measurements)
+                                statusMsg = "Saved $savedCount measurements."
+                                dbMeasurements = apiClient.getMeasurements()
+                            } catch (e: Exception) {
+                                statusMsg = "API Error: ${e.message}"
+                            }
+
                             isLoading = false
                         }
                     },
@@ -215,10 +225,16 @@ fun DatabasePanel(measurements: List<Measurement> = emptyList()) {
                         showDeleteAllDialog = false
                         scope.launch {
                             isLoading = true
-                            dbRepository.deleteAll().fold(
-                                onSuccess = { dbMeasurements = emptyList(); statusMsg = "All deleted." },
-                                onFailure = { statusMsg = "DB Error: ${it.message}" }
-                            )
+
+                            try {
+                                apiClient.login()
+                                apiClient.deleteAllMeasurements()
+                                dbMeasurements = emptyList()
+                                statusMsg = "All deleted."
+                            } catch (e: Exception) {
+                                statusMsg = "API Error: ${e.message}"
+                            }
+
                             isLoading = false
                         }
                     },

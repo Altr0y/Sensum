@@ -10,12 +10,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import si.sensum.demo.model.Measurement
-import si.sensum.demo.model.MeasurementRequest
-import si.sensum.demo.model.StationChannelPair
-import si.sensum.demo.repository.MockMeasurementRepository
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
+import si.sensum.demo.api.SensumApiClient
+import si.sensum.demo.model.StationChannelPair
+import si.sensum.shared.models.api.measurements.StationChannelPairDto
 
 private const val STATION_ID = 2241
 private val CHANNELS = mapOf(
@@ -30,7 +30,10 @@ private val CHANNELS = mapOf(
     135 to "L8001H - 4 [-]"
 )
 private val DATETIME_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
-private val repository = MockMeasurementRepository()
+private val API_DATETIME_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")
+//private val repository = MockMeasurementRepository()
+
+private val apiClient = SensumApiClient()
 
 @Composable
 fun DataLoader(onMeasurementsLoaded: (List<Measurement>) -> Unit = {}) {
@@ -166,19 +169,41 @@ fun DataLoader(onMeasurementsLoaded: (List<Measurement>) -> Unit = {}) {
 
                     scope.launch {
                         isLoading = true
-                        statusMsg = ""
-                        val result = repository.getMeasurements(
-                            MeasurementRequest(pairs, from, to)
-                        )
-                        result.fold(
-                            onSuccess = {
-                                statusMsg = "Loaded ${it.size} measurements."
-                                onMeasurementsLoaded(it)
-                            },
-                            onFailure = {
-                                statusMsg = "Error: ${it.message}"
+                        statusMsg = "Calling API..."
+
+                        try {
+                            val selectedPairs = pairs.map {
+                                StationChannelPairDto(
+                                    stationId = it.stationId.toLong(),
+                                    channelId = it.channelId
+                                )
                             }
-                        )
+
+                            apiClient.login()
+
+                            val refreshResponse = apiClient.refreshMeasurements(
+                                stationChannelPairs = selectedPairs,
+                                datetimeFrom = from.format(API_DATETIME_FORMAT),
+                                datetimeTo = to.format(API_DATETIME_FORMAT)
+                            )
+
+                            val selectedChannelIds: Set<Int> = selectedPairs
+                                .map { pair: StationChannelPairDto -> pair.channelId }
+                                .toSet()
+
+                            val loadedMeasurements = apiClient.getMeasurements()
+                                .filter { it.channelId in selectedChannelIds }
+
+                            statusMsg =
+                                "Loaded ${loadedMeasurements.size} measurements. " +
+                                        "Inserted: ${refreshResponse.insertedCount}, " +
+                                        "Deleted: ${refreshResponse.deletedCount}"
+
+                            onMeasurementsLoaded(loadedMeasurements)
+                        } catch (e: Exception) {
+                            statusMsg = "Error: ${e.message}"
+                        }
+
                         isLoading = false
                     }
                 },

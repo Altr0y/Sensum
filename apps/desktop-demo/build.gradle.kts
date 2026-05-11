@@ -15,6 +15,11 @@ dependencies {
     implementation(compose.material3)
     implementation(compose.components.resources)
 
+    implementation("io.ktor:ktor-client-core:3.4.2")
+    implementation("io.ktor:ktor-client-cio:3.4.2")
+    implementation("io.ktor:ktor-client-content-negotiation:3.4.2")
+    implementation("io.ktor:ktor-serialization-kotlinx-json:3.4.2")
+
     implementation(project(":libs:data-transform"))
     implementation(project(":libs:shared-models"))
 
