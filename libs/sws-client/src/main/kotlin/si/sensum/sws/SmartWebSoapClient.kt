@@ -5,6 +5,7 @@ import si.sensum.shared.models.api.measurements.MeasurementDto
 import si.sensum.sws.auth.SwsAuthClient
 import si.sensum.sws.measurements.SwsMeasurementsClient
 import si.sensum.sws.model.SwsSession
+import si.sensum.shared.models.api.measurements.StationChannelPairDto
 
 class SmartWebSoapClient(
     httpClient: HttpClient,
@@ -45,6 +46,20 @@ class SmartWebSoapClient(
     ): List<MeasurementDto> {
         return measurementsClient.getAllMeasurements(
             session = session,
+            datetimeFrom = datetimeFrom,
+            datetimeTo = datetimeTo
+        )
+    }
+
+    suspend fun getMeasurementsByStationChannelPairs(
+        session: SwsSession,
+        stationChannelPairs: List<StationChannelPairDto>,
+        datetimeFrom: String,
+        datetimeTo: String
+    ): List<MeasurementDto> {
+        return measurementsClient.getMeasurementsByStationChannelPairs(
+            session = session,
+            stationChannelPairs = stationChannelPairs,
             datetimeFrom = datetimeFrom,
             datetimeTo = datetimeTo
         )

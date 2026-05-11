@@ -5,6 +5,9 @@ import si.sensum.shared.models.api.measurements.MeasurementDto
 import java.io.ByteArrayInputStream
 import java.time.OffsetDateTime
 import javax.xml.parsers.DocumentBuilderFactory
+import java.time.LocalDateTime
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 
 internal object SwsMeasurementsResponseParser {
 
@@ -25,7 +28,7 @@ internal object SwsMeasurementsResponseParser {
                 val stationId = node.getTagValue("StationID")?.toLongOrNull() ?: continue
                 val channelId = node.getTagValue("ChannelID")?.toIntOrNull() ?: continue
                 val dateTimeString = node.getTagValue("DateTime") ?: continue
-                val dateTime = OffsetDateTime.parse(dateTimeString)
+                val dateTime = parseSwsDateTime(dateTimeString)
                 val value = node.getTagValue("Value")?.toDoubleOrNull() ?: continue
                 val status = node.getTagValue("Status")?.toIntOrNull() ?: continue
 
@@ -48,5 +51,20 @@ internal object SwsMeasurementsResponseParser {
         val nodes = this.getElementsByTagName(tagName)
         if (nodes.length == 0) return null
         return nodes.item(0)?.textContent?.trim()
+    }
+}
+
+private fun parseSwsDateTime(value: String): OffsetDateTime {
+    val text = value.trim()
+
+    return runCatching {
+        OffsetDateTime.parse(text)
+    }.getOrElse {
+        val localDateTime = LocalDateTime.parse(
+            text,
+            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+        )
+
+        localDateTime.atOffset(ZoneOffset.UTC)
     }
 }
