@@ -24,6 +24,9 @@ dependencies {
     implementation("org.jetbrains.exposed:exposed-dao:1.2.0")
     implementation("org.postgresql:postgresql:42.7.11")
     implementation("org.jetbrains.exposed:exposed-kotlin-datetime:1.2.0")
+    implementation("io.ktor:ktor-client-core:3.4.2")
+    implementation("io.ktor:ktor-client-cio:3.4.2")
+    implementation("io.ktor:ktor-client-content-negotiation:3.4.2")
     implementation(project(":libs:shared-models"))
     implementation(project(":libs:logging"))
 

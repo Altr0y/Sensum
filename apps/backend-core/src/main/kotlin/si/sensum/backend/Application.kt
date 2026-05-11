@@ -11,9 +11,15 @@ import io.ktor.server.request.path
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import org.slf4j.event.Level
+import si.sensum.backend.config.BackendConfig
+import si.sensum.backend.config.createHttpClient
+import si.sensum.backend.database.configureDatabases
+import si.sensum.backend.gm.GmClient
+import si.sensum.backend.measurements.MeasurementRefreshService
+import si.sensum.backend.measurements.MeasurementRepository
+import si.sensum.backend.measurements.measurementRoutes
 import si.sensum.logging.Logger
 import si.sensum.shared.models.api.HealthResponse
-import si.sensum.backend.database.configureDatabases
 import java.util.UUID
 
 object ApiInfo {
@@ -26,12 +32,23 @@ fun main(args: Array<String>) {
 
 @Suppress("unused")
 fun Application.module() {
-    configureDatabases()
+    val backendConfig = loadBackendConfig()
 
+    configureDatabases()
     installPlugins()
-    configureRoutes()
+    configureRoutes(backendConfig)
 }
 
+private fun Application.loadBackendConfig(): BackendConfig {
+    val config = environment.config
+
+    return BackendConfig(
+        gmBaseUrl = config.property("gm.baseUrl").getString(),
+        gmApiAuthToken = config.property("gm.apiAuthToken").getString(),
+        swsUsername = config.propertyOrNull("sws.username")?.getString().orEmpty(),
+        swsPassword = config.propertyOrNull("sws.password")?.getString().orEmpty()
+    )
+}
 private fun Application.installPlugins() {
     install(ContentNegotiation) {
         json()
@@ -75,7 +92,26 @@ private fun Application.installPlugins() {
     }
 }
 
-private fun Application.configureRoutes() {
+private fun Application.configureRoutes(
+    backendConfig: BackendConfig
+) {
+    val httpClient = createHttpClient()
+
+    val gmClient = GmClient(
+        httpClient = httpClient,
+        baseUrl = backendConfig.gmBaseUrl,
+        gmApiAuthToken = backendConfig.gmApiAuthToken
+    )
+
+    val measurementRepository = MeasurementRepository()
+
+    val measurementRefreshService = MeasurementRefreshService(
+        gmClient = gmClient,
+        measurementRepository = measurementRepository,
+        swsUsername = backendConfig.swsUsername,
+        swsPassword = backendConfig.swsPassword
+    )
+
     routing {
         get("/health") {
             call.respond(
@@ -85,5 +121,10 @@ private fun Application.configureRoutes() {
                 )
             )
         }
+
+        measurementRoutes(
+            repository = measurementRepository,
+            refreshService = measurementRefreshService
+        )
     }
 }
