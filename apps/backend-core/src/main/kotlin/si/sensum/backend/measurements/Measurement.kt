@@ -3,12 +3,9 @@ package si.sensum.backend.measurements
 import kotlinx.datetime.LocalDateTime
 
 data class Measurement(
-    val id: Int? = null,
-    val stationId: Long,
-    val stationName: String,
+    val id: Long,
     val channelId: Int,
-    val channelName: String,
     val dateTime: LocalDateTime,
-    val value: Double,
-    val status: Int
+    val value: Float,
+    val status: Boolean
 )
