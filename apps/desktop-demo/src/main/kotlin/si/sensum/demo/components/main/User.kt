@@ -1,4 +1,4 @@
-package si.sensum.demo.components
+package si.sensum.demo.components.main
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
@@ -9,6 +9,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import si.sensum.demo.components.theme.SensumColors
+import si.sensum.demo.components.theme.SensumThemeColors
 
 @Composable
 fun User() {
@@ -27,10 +29,10 @@ fun User() {
         Text(
             "Local demo login placeholder",
             style = MaterialTheme.typography.bodyMedium,
-            color = SensumColors.Muted
+            color = SensumThemeColors.muted
         )
 
-        HorizontalDivider(color = SensumColors.Border)
+        HorizontalDivider(color = SensumThemeColors.border)
 
         Surface(
             modifier = Modifier.widthIn(max = 420.dp),
@@ -80,9 +82,9 @@ fun User() {
                                     "Logged in as $username."
                                 }
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = SensumColors.Accent)
+                        colors = ButtonDefaults.buttonColors(containerColor = SensumThemeColors.accent)
                     ) {
-                        Text("Login", color = SensumColors.OnAccent)
+                        Text("Login", color = SensumThemeColors.onAccent)
                     }
 
                     OutlinedButton(
@@ -92,7 +94,7 @@ fun User() {
                             loginMessage = ""
                         }
                     ) {
-                        Text("Clear", color = SensumColors.Muted)
+                        Text("Clear", color = SensumThemeColors.muted)
                     }
                 }
 
@@ -101,9 +103,9 @@ fun User() {
                         text = loginMessage,
                         style = MaterialTheme.typography.bodyMedium,
                         color = if (loginMessage.startsWith("Logged")) {
-                            SensumColors.Success
+                            SensumThemeColors.success
                         } else {
-                            SensumColors.Error
+                            SensumThemeColors.error
                         }
                     )
                 }

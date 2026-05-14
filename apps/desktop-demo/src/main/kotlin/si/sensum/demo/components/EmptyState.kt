@@ -11,6 +11,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
+import si.sensum.demo.components.theme.SensumColors
+import si.sensum.demo.components.theme.SensumThemeColors
 
 @Composable
 fun EmptyState(
@@ -29,18 +31,18 @@ fun EmptyState(
             Icon(
                 painter = painterResource(icon),
                 contentDescription = null,
-                tint = SensumColors.Border,
+                tint = SensumThemeColors.border,
                 modifier = Modifier.size(64.dp)
             )
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleMedium,
-                color = SensumColors.Muted
+                color = SensumThemeColors.muted
             )
             Text(
                 text = subtitle,
                 style = MaterialTheme.typography.bodyMedium,
-                color = SensumColors.Border,
+                color = SensumThemeColors.border,
                 textAlign = TextAlign.Center
             )
         }

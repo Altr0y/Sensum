@@ -1,10 +1,12 @@
-package si.sensum.demo.components
+package si.sensum.demo.components.main
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import si.sensum.demo.components.theme.SensumColors
+import si.sensum.demo.components.theme.SensumThemeColors
 
 @Composable
 fun Info() {
@@ -19,10 +21,10 @@ fun Info() {
         Text(
             "Sensum Desktop Demo",
             style = MaterialTheme.typography.bodyMedium,
-            color = SensumColors.Muted
+            color = SensumThemeColors.muted
         )
 
-        HorizontalDivider(color = SensumColors.Border)
+        HorizontalDivider(color = SensumThemeColors.border)
 
         AboutCard(
             title = "Project",
@@ -58,12 +60,12 @@ private fun AboutCard(
             Text(
                 title,
                 style = MaterialTheme.typography.titleMedium,
-                color = SensumColors.OnSurface
+                color = SensumThemeColors.onSurface
             )
             Text(
                 text,
                 style = MaterialTheme.typography.bodyMedium,
-                color = SensumColors.OnBackground
+                color = SensumThemeColors.onBackground
             )
         }
     }

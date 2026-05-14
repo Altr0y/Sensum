@@ -1,4 +1,4 @@
-package si.sensum.demo.components
+package si.sensum.demo.components.main
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -13,6 +13,9 @@ import org.jetbrains.letsPlot.ggplot
 import org.jetbrains.letsPlot.label.ggtitle
 import org.jetbrains.letsPlot.label.labs
 import org.jetbrains.letsPlot.compose.PlotPanel
+import si.sensum.demo.components.EmptyState
+import si.sensum.demo.components.theme.SensumColors
+import si.sensum.demo.components.theme.SensumThemeColors
 
 @Composable
 fun MeasurementChart(measurements: List<Measurement> = emptyList()) {
@@ -36,13 +39,13 @@ fun MeasurementChart(measurements: List<Measurement> = emptyList()) {
             style = MaterialTheme.typography.titleLarge
         )
 
-        HorizontalDivider(color = SensumColors.Border)
+        HorizontalDivider(color = SensumThemeColors.border)
 
         if (measurements.isEmpty()) {
             Text(
                 text = "No measurements loaded.",
                 style = MaterialTheme.typography.bodyMedium,
-                color = SensumColors.Muted
+                color = SensumThemeColors.muted
             )
             return@Column
         }
