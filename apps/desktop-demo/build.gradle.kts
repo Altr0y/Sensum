@@ -22,6 +22,13 @@ dependencies {
     implementation("org.postgresql:postgresql:42.7.3")
 
     testImplementation(kotlin("test"))
+
+    implementation("org.jetbrains.lets-plot:lets-plot-kotlin-kernel:4.12.1")
+    implementation("org.jetbrains.lets-plot:lets-plot-common:4.8.2")
+    implementation("org.jetbrains.lets-plot:canvas:4.8.2")
+    implementation("org.jetbrains.lets-plot:plot-raster:4.8.2")
+    implementation("org.jetbrains.lets-plot:lets-plot-compose:3.0.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.2")
 }
 
 kotlin {

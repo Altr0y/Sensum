@@ -1,4 +1,4 @@
-package si.sensum.demo.components
+package si.sensum.demo.components.main
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
@@ -12,20 +12,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.painterResource
+import si.sensum.demo.components.EmptyState
+import si.sensum.demo.components.theme.SensumColors
+import si.sensum.demo.components.theme.SensumThemeColors
 import si.sensum.demo.model.Measurement
 import si.sensum.demo.repository.PostgresMeasurementRepository
+import si.sensum.demo.resources.*
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
-import org.jetbrains.compose.resources.painterResource
-import si.sensum.demo.resources.Res
-import si.sensum.demo.resources.check
-import si.sensum.demo.resources.chevron_down
-import si.sensum.demo.resources.chevron_right
-import si.sensum.demo.resources.database_panel
-import si.sensum.demo.resources.edit
-import si.sensum.demo.resources.trash
-import si.sensum.demo.resources.x
 
 private val DT_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
 private val dbRepository = PostgresMeasurementRepository()
@@ -63,10 +59,10 @@ fun DatabasePanel(measurements: List<Measurement> = emptyList()) {
         Text(
             "${dbMeasurements.size} measurements across ${grouped.size} channels",
             style = MaterialTheme.typography.bodyMedium,
-            color = SensumColors.Muted
+            color = SensumThemeColors.muted
         )
 
-        HorizontalDivider(color = SensumColors.Border)
+        HorizontalDivider(color = SensumThemeColors.border)
 
         // Toolbar
         Row(
@@ -77,9 +73,9 @@ fun DatabasePanel(measurements: List<Measurement> = emptyList()) {
             Button(
                 onClick = { showSaveDialog = true },
                 enabled = measurements.isNotEmpty(),
-                colors = ButtonDefaults.buttonColors(containerColor = SensumColors.Accent)
+                colors = ButtonDefaults.buttonColors(containerColor = SensumThemeColors.accent)
             ) {
-                Text("Save Loaded Data", color = SensumColors.OnAccent)
+                Text("Save Loaded Data", color = SensumThemeColors.onAccent)
             }
 
             // Osveži iz DB
@@ -95,7 +91,7 @@ fun DatabasePanel(measurements: List<Measurement> = emptyList()) {
                     }
                 }
             ) {
-                Text("Refresh", color = SensumColors.Muted)
+                Text("Refresh", color = SensumThemeColors.muted)
             }
 
             // Izbriši vse
@@ -103,23 +99,23 @@ fun DatabasePanel(measurements: List<Measurement> = emptyList()) {
                 onClick = { showDeleteAllDialog = true },
                 enabled = dbMeasurements.isNotEmpty()
             ) {
-                Text("Delete All", color = SensumColors.Error)
+                Text("Delete All", color = SensumThemeColors.error)
             }
 
             if (isLoading) CircularProgressIndicator(
                 modifier = Modifier.size(18.dp),
-                color = SensumColors.Accent,
+                color = SensumThemeColors.accent,
                 strokeWidth = 2.dp
             )
 
             if (statusMsg.isNotEmpty()) Text(
                 text = statusMsg,
                 style = MaterialTheme.typography.bodyMedium,
-                color = if (statusMsg.startsWith("DB Error")) SensumColors.Error else SensumColors.Success
+                color = if (statusMsg.startsWith("DB Error")) SensumThemeColors.error else SensumThemeColors.success
             )
         }
 
-        HorizontalDivider(color = SensumColors.Border)
+        HorizontalDivider(color = SensumThemeColors.border)
 
         // Content
         if (dbMeasurements.isEmpty() && !isLoading) {
@@ -193,8 +189,8 @@ fun DatabasePanel(measurements: List<Measurement> = emptyList()) {
                             isLoading = false
                         }
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = SensumColors.Accent)
-                ) { Text("Save", color = SensumColors.OnAccent) }
+                    colors = ButtonDefaults.buttonColors(containerColor = SensumThemeColors.accent)
+                ) { Text("Save", color = SensumThemeColors.onAccent) }
             },
             dismissButton = {
                 OutlinedButton(onClick = { showSaveDialog = false }) { Text("Cancel") }
@@ -222,8 +218,8 @@ fun DatabasePanel(measurements: List<Measurement> = emptyList()) {
                             isLoading = false
                         }
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = SensumColors.Error)
-                ) { Text("Delete All", color = SensumColors.OnAccent) }
+                    colors = ButtonDefaults.buttonColors(containerColor = SensumThemeColors.error)
+                ) { Text("Delete All", color = SensumThemeColors.onAccent) }
             },
             dismissButton = {
                 OutlinedButton(onClick = { showDeleteAllDialog = false }) { Text("Cancel") }
@@ -267,19 +263,19 @@ private fun ChannelAccordion(
                             if (expanded) Res.drawable.chevron_down else Res.drawable.chevron_right
                         ),
                         contentDescription = null,
-                        tint = SensumColors.Accent,
+                        tint = SensumThemeColors.accent,
                         modifier = Modifier.size(18.dp)
                     )
                     Text(
                         "$channelId — $channelName",
                         style = MaterialTheme.typography.titleSmall,
-                        color = SensumColors.OnSurface
+                        color = SensumThemeColors.onSurface
                     )
                 }
                 Text(
                     "${entries.size} rows",
                     style = MaterialTheme.typography.labelMedium,
-                    color = SensumColors.Muted
+                    color = SensumThemeColors.muted
                 )
             }
 
@@ -298,7 +294,7 @@ private fun ChannelAccordion(
                         Spacer(Modifier.width(60.dp))
                     }
 
-                    HorizontalDivider(color = SensumColors.Border)
+                    HorizontalDivider(color = SensumThemeColors.border)
 
                     entries.forEachIndexed { i, m ->
                         EditableRow(
@@ -357,7 +353,7 @@ private fun EditableRow(
                     Icon(
                         painterResource(Res.drawable.check),
                         null,
-                        tint = SensumColors.Success,
+                        tint = SensumThemeColors.success,
                         modifier = Modifier.size(16.dp)
                     )
                 }
@@ -365,7 +361,7 @@ private fun EditableRow(
                     Icon(
                         painterResource(Res.drawable.x),
                         null,
-                        tint = SensumColors.Error,
+                        tint = SensumThemeColors.error,
                         modifier = Modifier.size(16.dp)
                     )
                 }
@@ -379,7 +375,7 @@ private fun EditableRow(
                     Icon(
                         painterResource(Res.drawable.edit),
                         null,
-                        tint = SensumColors.Muted,
+                        tint = SensumThemeColors.muted,
                         modifier = Modifier.size(16.dp)
                     )
                 }
@@ -387,7 +383,7 @@ private fun EditableRow(
                     Icon(
                         painterResource(Res.drawable.trash),
                         null,
-                        tint = SensumColors.Error,
+                        tint = SensumThemeColors.error,
                         modifier = Modifier.size(16.dp)
                     )
                 }
@@ -402,14 +398,14 @@ private fun InlineField(value: String, modifier: Modifier, onValueChange: (Strin
         value = value,
         onValueChange = onValueChange,
         modifier = modifier.padding(end = 4.dp),
-        textStyle = MaterialTheme.typography.bodySmall.copy(color = SensumColors.OnSurface),
+        textStyle = MaterialTheme.typography.bodySmall.copy(color = SensumThemeColors.onSurface),
         singleLine = true,
         colors = TextFieldDefaults.colors(
             focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
             unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-            focusedIndicatorColor = SensumColors.Accent,
-            unfocusedIndicatorColor = SensumColors.Border,
-            cursorColor = SensumColors.Accent
+            focusedIndicatorColor = SensumThemeColors.accent,
+            unfocusedIndicatorColor = SensumThemeColors.border,
+            cursorColor = SensumThemeColors.accent
         )
     )
 }
@@ -420,7 +416,7 @@ private fun RowScope.TableCell(text: String, weight: Float) {
         text = text,
         modifier = Modifier.weight(weight),
         style = MaterialTheme.typography.bodySmall,
-        color = SensumColors.OnSurface
+        color = SensumThemeColors.onSurface
     )
 }
 
@@ -430,6 +426,6 @@ private fun RowScope.TableHeaderCell(text: String, weight: Float) {
         text = text,
         modifier = Modifier.weight(weight),
         style = MaterialTheme.typography.labelMedium,
-        color = SensumColors.Accent
+        color = SensumThemeColors.accent
     )
 }

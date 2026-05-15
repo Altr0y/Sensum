@@ -12,12 +12,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
-import si.sensum.demo.resources.Res
-import si.sensum.demo.resources.chart
-import si.sensum.demo.resources.data_load
-import si.sensum.demo.resources.database_panel
-import si.sensum.demo.resources.info
-import si.sensum.demo.resources.user
+import si.sensum.demo.components.theme.SensumColors
+import si.sensum.demo.components.theme.SensumThemeColors
+import si.sensum.demo.resources.*
 
 enum class SideBarTab { DATA_LOADER, DATABASE_PANEL, MEASUREMENT_CHART, USER, INFO }
 
@@ -65,7 +62,7 @@ fun SideBar(
                 )
             }
 
-            HorizontalDivider(color = SensumColors.Border, thickness = 2.dp)
+            HorizontalDivider(color = SensumThemeColors.border, thickness = 2.dp)
 
             Column(modifier = Modifier.padding(vertical = 8.dp)) {
                 NavItem(
@@ -99,7 +96,7 @@ private fun NavItem(
     val bgColor = if (active) MaterialTheme.colorScheme.surfaceVariant
     else MaterialTheme.colorScheme.surface
 
-    val iconTint = if (active) SensumColors.Accent else SensumColors.Muted
+    val iconTint = if (active) SensumThemeColors.accent else SensumThemeColors.muted
 
     Box(
         modifier = Modifier
@@ -114,7 +111,7 @@ private fun NavItem(
                     .width(3.dp)
                     .fillMaxHeight()
                     .padding(vertical = 6.dp)
-                    .background(SensumColors.Accent)
+                    .background(SensumThemeColors.accent)
             )
         }
 
@@ -136,7 +133,7 @@ private fun NavItem(
                 Text(
                     text = label,
                     style = MaterialTheme.typography.titleSmall,
-                    color = if (active) SensumColors.OnSurface else SensumColors.Muted
+                    color = if (active) SensumThemeColors.onSurface else SensumThemeColors.muted
                 )
             }
         }
