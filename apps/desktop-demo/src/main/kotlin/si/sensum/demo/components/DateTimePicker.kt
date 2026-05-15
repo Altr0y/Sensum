@@ -15,7 +15,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import org.jetbrains.compose.resources.painterResource
-import si.sensum.demo.components.theme.SensumColors
 import si.sensum.demo.components.theme.SensumThemeColors
 import si.sensum.demo.resources.Res
 import si.sensum.demo.resources.calendar
@@ -36,7 +35,6 @@ fun DateTimePicker(
 ) {
     var showPopup by remember { mutableStateOf(false) }
 
-    // Interno stanje — neodvisno od value
     var displayMonth by remember { mutableStateOf(YearMonth.from(value)) }
     var selectedDate by remember { mutableStateOf(value.toLocalDate()) }
     var hourText by remember { mutableStateOf(value.hour.toString().padStart(2, '0')) }
@@ -52,7 +50,6 @@ fun DateTimePicker(
                 .border(1.dp, if (showPopup) SensumThemeColors.accent else SensumThemeColors.border, RoundedCornerShape(6.dp))
                 .background(MaterialTheme.colorScheme.surface)
                 .clickable {
-                    // Inicializiraj interno stanje ob odprtju
                     displayMonth = YearMonth.from(value)
                     selectedDate = value.toLocalDate()
                     hourText = value.hour.toString().padStart(2, '0')
@@ -67,7 +64,7 @@ fun DateTimePicker(
                 painter = painterResource(Res.drawable.calendar),
                 contentDescription = null,
                 tint = if (showPopup) SensumThemeColors.accent else SensumThemeColors.muted,
-                modifier = Modifier.size(16.dp)
+                modifier = Modifier.size(18.dp)
             )
             Text(
                 text = value.format(DISPLAY_FORMAT),
@@ -80,13 +77,13 @@ fun DateTimePicker(
             Dialog(onDismissRequest = { showPopup = false }) {
                 Box(
                     modifier = Modifier
-                        .width(280.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .border(1.dp, SensumThemeColors.border, RoundedCornerShape(8.dp))
+                        .width(400.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .border(1.dp, SensumThemeColors.border, RoundedCornerShape(12.dp))
                         .background(MaterialTheme.colorScheme.surface)
-                        .padding(12.dp)
+                        .padding(20.dp)
                 ) {
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
 
                         // Mesec navigacija
                         Row(
@@ -96,28 +93,28 @@ fun DateTimePicker(
                         ) {
                             IconButton(
                                 onClick = { displayMonth = displayMonth.minusMonths(1) },
-                                modifier = Modifier.size(28.dp)
+                                modifier = Modifier.size(36.dp)
                             ) {
                                 Icon(
                                     painter = painterResource(Res.drawable.chevron_left),
                                     null,
                                     tint = SensumThemeColors.muted,
-                                    modifier = Modifier.size(16.dp)
+                                    modifier = Modifier.size(20.dp)
                                 )
                             }
                             Text(
                                 "${displayMonth.month.name.lowercase().replaceFirstChar { it.uppercase() }} ${displayMonth.year}",
-                                style = MaterialTheme.typography.titleSmall
+                                style = MaterialTheme.typography.titleMedium
                             )
                             IconButton(
                                 onClick = { displayMonth = displayMonth.plusMonths(1) },
-                                modifier = Modifier.size(28.dp)
+                                modifier = Modifier.size(36.dp)
                             ) {
                                 Icon(
                                     painter = painterResource(Res.drawable.chevron_right),
                                     null,
                                     tint = SensumThemeColors.muted,
-                                    modifier = Modifier.size(16.dp)
+                                    modifier = Modifier.size(20.dp)
                                 )
                             }
                         }
@@ -146,7 +143,7 @@ fun DateTimePicker(
                                 for (col in 0..6) {
                                     val dayNum = row * 7 + col - firstDayOfWeek + 1
                                     if (dayNum < 1 || dayNum > daysInMonth) {
-                                        Spacer(Modifier.weight(1f))
+                                        Spacer(Modifier.weight(1f).aspectRatio(1f))
                                     } else {
                                         val date = displayMonth.atDay(dayNum)
                                         val isSelected = date == selectedDate
@@ -154,7 +151,8 @@ fun DateTimePicker(
                                             modifier = Modifier
                                                 .weight(1f)
                                                 .aspectRatio(1f)
-                                                .clip(RoundedCornerShape(4.dp))
+                                                .padding(2.dp)
+                                                .clip(RoundedCornerShape(6.dp))
                                                 .background(
                                                     if (isSelected) SensumThemeColors.accent
                                                     else MaterialTheme.colorScheme.surface
@@ -164,7 +162,7 @@ fun DateTimePicker(
                                         ) {
                                             Text(
                                                 "$dayNum",
-                                                style = MaterialTheme.typography.bodySmall,
+                                                style = MaterialTheme.typography.bodyMedium,
                                                 color = if (isSelected) SensumThemeColors.onAccent else SensumThemeColors.onSurface
                                             )
                                         }
@@ -178,13 +176,13 @@ fun DateTimePicker(
                         // Ura in minute
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
                             Icon(
                                 painter = painterResource(Res.drawable.clock),
                                 null,
                                 tint = SensumThemeColors.muted,
-                                modifier = Modifier.size(16.dp)
+                                modifier = Modifier.size(20.dp)
                             )
                             BasicTextField(
                                 value = hourText,
@@ -193,15 +191,15 @@ fun DateTimePicker(
                                 },
                                 modifier = Modifier
                                     .weight(1f)
-                                    .border(1.dp, SensumThemeColors.accent, RoundedCornerShape(4.dp))
-                                    .padding(8.dp),
+                                    .border(1.dp, SensumThemeColors.accent, RoundedCornerShape(6.dp))
+                                    .padding(10.dp),
                                 singleLine = true,
-                                textStyle = MaterialTheme.typography.bodyMedium.copy(
+                                textStyle = MaterialTheme.typography.bodyLarge.copy(
                                     textAlign = TextAlign.Center,
                                     color = SensumThemeColors.onSurface
                                 )
                             )
-                            Text(":", style = MaterialTheme.typography.titleMedium, color = SensumThemeColors.muted)
+                            Text(":", style = MaterialTheme.typography.titleLarge, color = SensumThemeColors.muted)
                             BasicTextField(
                                 value = minuteText,
                                 onValueChange = {
@@ -209,23 +207,21 @@ fun DateTimePicker(
                                 },
                                 modifier = Modifier
                                     .weight(1f)
-                                    .border(1.dp, SensumThemeColors.border, RoundedCornerShape(4.dp))
-                                    .padding(8.dp),
+                                    .border(1.dp, SensumThemeColors.border, RoundedCornerShape(6.dp))
+                                    .padding(10.dp),
                                 singleLine = true,
-                                textStyle = MaterialTheme.typography.bodyMedium.copy(
+                                textStyle = MaterialTheme.typography.bodyLarge.copy(
                                     textAlign = TextAlign.Center,
                                     color = SensumThemeColors.onSurface
                                 )
                             )
-
-                            // OK — šele tukaj pokličemo onValueChange
                             TextButton(onClick = {
                                 val h = hourText.toIntOrNull()?.coerceIn(0, 23) ?: 0
                                 val m = minuteText.toIntOrNull()?.coerceIn(0, 59) ?: 0
                                 onValueChange(selectedDate.atTime(h, m))
                                 showPopup = false
                             }) {
-                                Text("OK", color = SensumThemeColors.accent)
+                                Text("OK", color = SensumThemeColors.accent, style = MaterialTheme.typography.titleSmall)
                             }
                         }
                     }

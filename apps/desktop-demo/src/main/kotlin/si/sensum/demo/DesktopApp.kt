@@ -39,7 +39,7 @@ fun App(
                 when (activeTab) {
                     SideBarTab.DATA_LOADER       -> DataLoader(onMeasurementsLoaded = { measurements = it })
                     SideBarTab.DATABASE_PANEL    -> DatabasePanel(measurements = measurements)
-                    SideBarTab.MEASUREMENT_CHART -> MeasurementChart(measurements = measurements)
+                    SideBarTab.MEASUREMENT_CHART -> MeasurementChart()
                     SideBarTab.USER              -> User()
                     SideBarTab.INFO              -> Info()
                 }
