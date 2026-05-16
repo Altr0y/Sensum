@@ -4,22 +4,22 @@ import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import io.ktor.server.netty.*
 import io.ktor.server.plugins.callid.*
-import io.ktor.server.plugins.calllogging.*
 import io.ktor.server.plugins.contentnegotiation.*
-import io.ktor.server.request.httpMethod
-import io.ktor.server.request.path
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import org.slf4j.event.Level
-import si.sensum.api.auth.StaticApiTokenValidator
+import io.ktor.server.auth.*
+import io.ktor.server.auth.jwt.*
 import si.sensum.api.backend.BackendClient
 import si.sensum.api.config.ApiGatewayConfig
 import si.sensum.api.config.createHttpClient
 import si.sensum.api.routes.authRoutes
 import si.sensum.api.routes.measurementRoutes
-import si.sensum.logging.Logger
 import si.sensum.shared.models.api.HealthResponse
+import si.sensum.shared.auth.jwt.JwtConfig
+import si.sensum.shared.auth.jwt.JwtTokenService
 import java.util.UUID
+import si.sensum.api.plugins.installApiErrorHandling
+import si.sensum.logging.installHttpRequestLogging
 
 object ApiInfo {
     const val NAME = "API Gateway"
@@ -33,7 +33,20 @@ fun main(args: Array<String>) {
 fun Application.module() {
     val appConfig = loadAppConfig()
 
+    val jwtTokenService = JwtTokenService(
+        config = JwtConfig(
+            secret = appConfig.jwtSecret,
+            issuer = appConfig.jwtIssuer,
+            audience = appConfig.jwtAudience,
+            ttlSeconds = appConfig.jwtTtlSeconds
+        )
+    )
+
     installPlugins()
+    installJwtAuthentication(
+        appConfig = appConfig,
+        jwtTokenService = jwtTokenService
+    )
 
     val httpClient = createHttpClient()
 
@@ -42,13 +55,9 @@ fun Application.module() {
         baseUrl = appConfig.backendCoreBaseUrl
     )
 
-    val apiTokenValidator = StaticApiTokenValidator(
-        expectedToken = appConfig.demoAuthToken
-    )
-
     configureRoutes(
         backendClient = backendClient,
-        tokenValidator = apiTokenValidator,
+        jwtTokenService = jwtTokenService,
         appConfig = appConfig
     )
 }
@@ -57,27 +66,79 @@ private fun Application.loadAppConfig(): ApiGatewayConfig {
     val config = environment.config
 
     val backendCoreBaseUrl = config.property("backendCore.baseUrl").getString()
-    val demoUsername = config.property("demo.username").getString()
-    val demoPassword = config.property("demo.password").getString()
-    val demoAuthToken = config.property("demo.authToken").getString()
+
+    val authUsername = config.property("auth.username").getString()
+    val authPassword = config.property("auth.password").getString()
+
+    val jwtSecret = config.property("jwt.secret").getString()
+    val jwtIssuer = config.property("jwt.issuer").getString()
+    val jwtAudience = config.property("jwt.audience").getString()
+    val jwtRealm = config.property("jwt.realm").getString()
+    val jwtTtlSeconds = config.property("jwt.ttlSeconds").getString().toLong()
 
     require(backendCoreBaseUrl.isNotBlank()) {
         "Missing backendCore baseUrl. Set BACKEND_CORE_BASE_URL env variable."
     }
 
-    require(demoAuthToken.isNotBlank()) {
-        "Missing demo auth token. Set DEMO_AUTH_TOKEN env variable."
+    require(authUsername.isNotBlank()) {
+        "Missing auth username. Set API_AUTH_USERNAME env variable."
+    }
+
+    require(authPassword.isNotBlank()) {
+        "Missing auth password. Set API_AUTH_PASSWORD env variable."
+    }
+
+    require(jwtSecret.length >= 32) {
+        "JWT secret must be at least 32 characters long."
     }
 
     return ApiGatewayConfig(
         backendCoreBaseUrl = backendCoreBaseUrl,
-        demoUsername = demoUsername,
-        demoPassword = demoPassword,
-        demoAuthToken = demoAuthToken
+        authUsername = authUsername,
+        authPassword = authPassword,
+        jwtSecret = jwtSecret,
+        jwtIssuer = jwtIssuer,
+        jwtAudience = jwtAudience,
+        jwtRealm = jwtRealm,
+        jwtTtlSeconds = jwtTtlSeconds
     )
 }
 
+private fun Application.installJwtAuthentication(
+    appConfig: ApiGatewayConfig,
+    jwtTokenService: JwtTokenService
+) {
+    install(Authentication) {
+        jwt("auth-jwt") {
+            realm = appConfig.jwtRealm
+
+            verifier(jwtTokenService.verifier())
+
+            validate { credential ->
+                val username = credential.payload.getClaim("username").asString()
+
+                if (!username.isNullOrBlank()) {
+                    JWTPrincipal(credential.payload)
+                } else {
+                    null
+                }
+            }
+
+            challenge { _, _ ->
+                call.respond(
+                    io.ktor.http.HttpStatusCode.Unauthorized,
+                    si.sensum.shared.models.api.ApiErrorResponse(
+                        error = "Token is not valid or has expired"
+                    )
+                )
+            }
+        }
+    }
+}
+
 private fun Application.installPlugins() {
+    installApiErrorHandling()
+
     install(ContentNegotiation) {
         json()
     }
@@ -87,42 +148,14 @@ private fun Application.installPlugins() {
         verify { callId -> callId.isNotBlank() }
         replyToHeader("X-Request-Id")
     }
-
-    install(CallLogging) {
-        level = Level.INFO
-
-        filter { call ->
-            call.request.path().startsWith("/api/") || call.request.path() == "/health"
-        }
-
-        format { call ->
-            val method = call.request.httpMethod.value
-            val normalizedPath = "/" + call.request.path().trimStart('/')
-            "$method $normalizedPath"
-        }
-
-        callIdMdc("requestId")
-    }
-
-    intercept(ApplicationCallPipeline.Monitoring) {
-        val start = System.currentTimeMillis()
-
-        proceed()
-
-        val duration = System.currentTimeMillis() - start
-        val status = call.response.status()?.value ?: 0
-        val method = call.request.httpMethod.value
-        val normalizedPath = "/" + call.request.path().trimStart('/')
-
-        Logger.log.info {
-            "[HTTP] $method $normalizedPath status=$status duration=${duration}ms"
-        }
-    }
+    installHttpRequestLogging(
+        serviceName = "api-gateway"
+    )
 }
 
 private fun Application.configureRoutes(
     backendClient: BackendClient,
-    tokenValidator: StaticApiTokenValidator,
+    jwtTokenService: JwtTokenService,
     appConfig: ApiGatewayConfig
 ) {
     routing {
@@ -136,14 +169,15 @@ private fun Application.configureRoutes(
         }
 
         authRoutes(
-            demoUsername = appConfig.demoUsername,
-            demoPassword = appConfig.demoPassword,
-            demoAuthToken = appConfig.demoAuthToken
+            authUsername = appConfig.authUsername,
+            authPassword = appConfig.authPassword,
+            jwtTokenService = jwtTokenService
         )
 
-        measurementRoutes(
-            backendClient = backendClient,
-            tokenValidator = tokenValidator
-        )
+        authenticate("auth-jwt") {
+            measurementRoutes(
+                backendClient = backendClient
+            )
+        }
     }
 }

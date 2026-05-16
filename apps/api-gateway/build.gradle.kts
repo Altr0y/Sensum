@@ -16,9 +16,12 @@ dependencies {
     implementation("io.ktor:ktor-server-netty:3.4.2")
     implementation("io.ktor:ktor-server-content-negotiation:3.4.2")
     implementation("io.ktor:ktor-serialization-kotlinx-json:3.4.2")
-    implementation("io.ktor:ktor-server-call-logging:3.4.2")
     implementation("io.ktor:ktor-server-call-id:3.4.2")
-    implementation(project(":libs:logging"))
+    implementation("io.ktor:ktor-server-status-pages:3.4.2")
+
+    implementation("io.ktor:ktor-server-auth:3.4.2")
+    implementation("io.ktor:ktor-server-auth-jwt:3.4.2")
+
 
     implementation("io.ktor:ktor-client-core:3.4.2")
     implementation("io.ktor:ktor-client-cio:3.4.2")
@@ -31,6 +34,8 @@ dependencies {
     implementation(project(":libs:logging"))
 
     testImplementation(kotlin("test"))
+    testImplementation("io.ktor:ktor-server-test-host:3.4.2")
+    testImplementation("io.ktor:ktor-client-mock:3.4.2")
 
     constraints {
         implementation("io.netty:netty-codec-http:4.2.11.Final") {
@@ -38,6 +43,15 @@ dependencies {
         }
         implementation("io.netty:netty-codec-http2:4.2.11.Final") {
             because("Fixes CVE-2026-33871")
+        }
+        implementation("com.fasterxml.jackson.core:jackson-core:2.21.3") {
+            because("Avoid vulnerable transitive jackson-core 2.15.4 reported as WS-2026-0003")
+        }
+        implementation("com.fasterxml.jackson.core:jackson-databind:2.21.3") {
+            because("Keep Jackson databind aligned with patched jackson-core")
+        }
+        implementation("com.fasterxml.jackson.core:jackson-annotations:2.21") {
+            because("Use existing Jackson annotations version for Jackson 2.21 line")
         }
     }
 }
