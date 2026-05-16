@@ -3,31 +3,47 @@ package si.sensum.backend.gm
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.*
+import si.sensum.shared.auth.jwt.JwtTokenService
+import si.sensum.shared.auth.jwt.JwtUser
 import si.sensum.shared.models.api.LoginRequest
 import si.sensum.shared.models.api.LoginResponse
 import si.sensum.shared.models.api.measurements.MeasurementDto
-import io.ktor.client.statement.bodyAsText
-import si.sensum.shared.models.api.measurements.RefreshMeasurementsRequest
+import si.sensum.shared.models.api.measurements.MeasurementsByStationChannelPairsRequest
 
 class GmClient(
     private val httpClient: HttpClient,
     private val baseUrl: String,
-    private val gmApiAuthToken: String
+    private val serviceJwtTokenService: JwtTokenService
 ) {
     suspend fun login(username: String, password: String): LoginResponse {
-        return httpClient.post("$baseUrl/api/v1/auth/login") {
-            header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
-            header(HttpHeaders.Authorization, "Bearer $gmApiAuthToken")
+        val serviceToken = serviceJwtTokenService.generateToken(
+            JwtUser(
+                username = "backend-core",
+                role = "SERVICE",
+                serviceName = "backend-core"
+            )
+        )
+
+        val response = httpClient.post("$baseUrl/api/v1/gm/auth/login") {
+            contentType(ContentType.Application.Json)
+            header(HttpHeaders.Authorization, "Bearer $serviceToken")
             setBody(LoginRequest(username, password))
-        }.body()
+        }
+
+        if (!response.status.isSuccess()) {
+            error("GM login failed: HTTP ${response.status.value}\n${response.bodyAsText()}")
+        }
+
+        return response.body()
     }
 
     suspend fun getMeasurements(
         gmSessionToken: String,
-        request: RefreshMeasurementsRequest
+        request: MeasurementsByStationChannelPairsRequest
     ): List<MeasurementDto> {
-        val response = httpClient.post("$baseUrl/api/v1/measurements/by-station-channel-pairs") {
+        val response = httpClient.post("$baseUrl/api/v1/gm/measurements/by-station-channel-pairs") {
             contentType(ContentType.Application.Json)
             header(HttpHeaders.Authorization, "Bearer $gmSessionToken")
             setBody(request)

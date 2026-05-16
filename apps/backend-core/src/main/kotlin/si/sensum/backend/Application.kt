@@ -4,13 +4,9 @@ import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import io.ktor.server.netty.*
 import io.ktor.server.plugins.callid.*
-import io.ktor.server.plugins.calllogging.*
 import io.ktor.server.plugins.contentnegotiation.*
-import io.ktor.server.request.httpMethod
-import io.ktor.server.request.path
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import org.slf4j.event.Level
 import si.sensum.backend.config.BackendConfig
 import si.sensum.backend.config.createHttpClient
 import si.sensum.backend.database.configureDatabases
@@ -18,9 +14,12 @@ import si.sensum.backend.gm.GmClient
 import si.sensum.backend.measurements.MeasurementRefreshService
 import si.sensum.backend.measurements.MeasurementRepository
 import si.sensum.backend.measurements.measurementRoutes
-import si.sensum.logging.Logger
 import si.sensum.shared.models.api.HealthResponse
 import java.util.UUID
+import si.sensum.shared.auth.jwt.JwtConfig
+import si.sensum.shared.auth.jwt.JwtTokenService
+import si.sensum.backend.plugins.installBackendErrorHandling
+import si.sensum.logging.installHttpRequestLogging
 
 object ApiInfo {
     const val NAME = "Backend Core"
@@ -44,12 +43,17 @@ private fun Application.loadBackendConfig(): BackendConfig {
 
     return BackendConfig(
         gmBaseUrl = config.property("gm.baseUrl").getString(),
-        gmApiAuthToken = config.property("gm.apiAuthToken").getString(),
+        gmServiceJwtSecret = config.property("gm.serviceJwt.secret").getString(),
+        gmServiceJwtIssuer = config.property("gm.serviceJwt.issuer").getString(),
+        gmServiceJwtAudience = config.property("gm.serviceJwt.audience").getString(),
+        gmServiceJwtTtlSeconds = config.property("gm.serviceJwt.ttlSeconds").getString().toLong(),
         swsUsername = config.propertyOrNull("sws.username")?.getString().orEmpty(),
         swsPassword = config.propertyOrNull("sws.password")?.getString().orEmpty()
     )
 }
 private fun Application.installPlugins() {
+    installBackendErrorHandling()
+
     install(ContentNegotiation) {
         json()
     }
@@ -60,36 +64,9 @@ private fun Application.installPlugins() {
         replyToHeader("X-Request-Id")
     }
 
-    install(CallLogging) {
-        level = Level.INFO
-
-        filter { call ->
-            call.request.path().startsWith("/api/") || call.request.path() == "/health"
-        }
-
-        format { call ->
-            val method = call.request.httpMethod.value
-            val normalizedPath = "/" + call.request.path().trimStart('/')
-            "$method $normalizedPath"
-        }
-
-        callIdMdc("requestId")
-    }
-
-    intercept(ApplicationCallPipeline.Monitoring) {
-        val start = System.currentTimeMillis()
-
-        proceed()
-
-        val duration = System.currentTimeMillis() - start
-        val status = call.response.status()?.value ?: 0
-        val method = call.request.httpMethod.value
-        val normalizedPath = "/" + call.request.path().trimStart('/')
-
-        Logger.log.info {
-            "[HTTP] $method $normalizedPath status=$status duration=${duration}ms"
-        }
-    }
+    installHttpRequestLogging(
+        serviceName = "backend-core"
+    )
 }
 
 private fun Application.configureRoutes(
@@ -97,10 +74,19 @@ private fun Application.configureRoutes(
 ) {
     val httpClient = createHttpClient()
 
+    val gmServiceJwtTokenService = JwtTokenService(
+        config = JwtConfig(
+            secret = backendConfig.gmServiceJwtSecret,
+            issuer = backendConfig.gmServiceJwtIssuer,
+            audience = backendConfig.gmServiceJwtAudience,
+            ttlSeconds = backendConfig.gmServiceJwtTtlSeconds
+        )
+    )
+
     val gmClient = GmClient(
         httpClient = httpClient,
         baseUrl = backendConfig.gmBaseUrl,
-        gmApiAuthToken = backendConfig.gmApiAuthToken
+        serviceJwtTokenService = gmServiceJwtTokenService
     )
 
     val measurementRepository = MeasurementRepository()
