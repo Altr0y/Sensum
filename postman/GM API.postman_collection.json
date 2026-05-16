@@ -1,0 +1,950 @@
+{
+  "info": {
+    "_postman_id": "f7d7248c-365a-4dcf-80e1-3fe5fbf03be0",
+    "name": "GM API",
+    "description": "StartFragmentGrafana Middleware API for the Sensum / Eltratec project.  \n  \nCurrent scope:  \n\\- authentication flow for GM  \n\\- login endpoint testing  \n\\- token retrieval for later protected endpoints  \n  \nBase path:  \n\\- /api/v1  \n  \nCurrent endpoints:  \n\\- POST /auth/login  \n\\- GET /healthEndFragment",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "53761523"
+  },
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health"
+              ]
+            },
+            "description": "Basic health check for GM service.  \nUsed to verify that the Ktor application is running."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Login",
+      "item": [
+        {
+          "name": "Logout",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{gmSessionToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{gmBaseUrl}}/api/v1/gm/auth/logout",
+              "host": [
+                "{{gmBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gm",
+                "auth",
+                "logout"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "No Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"username\": \"{{gmUsername}}\",\r\n  \"password\": \"{{gmPassword}}\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{gmBaseUrl}}/api/v1/gm/auth/login",
+              "host": [
+                "{{gmBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gm",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Wrong Token",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "abc.invalid.token",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"username\": \"{{gmUsername}}\",\r\n  \"password\": \"{{gmPassword}}\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{gmBaseUrl}}/api/v1/gm/auth/login",
+              "host": [
+                "{{gmBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gm",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Success",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "if (json.token) {\r",
+                  "    pm.environment.set(\"gmSessionToken\", json.token);\r",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "function base64Url(source) {\r",
+                  "    return CryptoJS.enc.Base64.stringify(source)\r",
+                  "        .replace(/=+$/, \"\")\r",
+                  "        .replace(/\\+/g, \"-\")\r",
+                  "        .replace(/\\//g, \"_\");\r",
+                  "}\r",
+                  "\r",
+                  "const secret = pm.environment.get(\"gmServiceJwtSecret\");\r",
+                  "const issuer = pm.environment.get(\"gmServiceJwtIssuer\");\r",
+                  "const audience = pm.environment.get(\"gmServiceJwtAudience\");\r",
+                  "\r",
+                  "if (!secret) {\r",
+                  "    throw new Error(\"Missing gmServiceJwtSecret in Postman environment.\");\r",
+                  "}\r",
+                  "\r",
+                  "if (!issuer) {\r",
+                  "    throw new Error(\"Missing gmServiceJwtIssuer in Postman environment.\");\r",
+                  "}\r",
+                  "\r",
+                  "if (!audience) {\r",
+                  "    throw new Error(\"Missing gmServiceJwtAudience in Postman environment.\");\r",
+                  "}\r",
+                  "\r",
+                  "const now = Math.floor(Date.now() / 1000);\r",
+                  "\r",
+                  "const header = {\r",
+                  "    alg: \"HS256\",\r",
+                  "    typ: \"JWT\"\r",
+                  "};\r",
+                  "\r",
+                  "const payload = {\r",
+                  "    iss: issuer,\r",
+                  "    aud: audience,\r",
+                  "    sub: \"backend-core\",\r",
+                  "    username: \"backend-core\",\r",
+                  "    role: \"SERVICE\",\r",
+                  "    service: \"backend-core\",\r",
+                  "    iat: now,\r",
+                  "    exp: now + 3600\r",
+                  "};\r",
+                  "\r",
+                  "const encodedHeader = base64Url(\r",
+                  "    CryptoJS.enc.Utf8.parse(JSON.stringify(header))\r",
+                  ");\r",
+                  "\r",
+                  "const encodedPayload = base64Url(\r",
+                  "    CryptoJS.enc.Utf8.parse(JSON.stringify(payload))\r",
+                  ");\r",
+                  "\r",
+                  "const signature = base64Url(\r",
+                  "    CryptoJS.HmacSHA256(`${encodedHeader}.${encodedPayload}`, secret)\r",
+                  ");\r",
+                  "\r",
+                  "const token = `${encodedHeader}.${encodedPayload}.${signature}`;\r",
+                  "\r",
+                  "pm.environment.set(\"gmServiceToken\", token);\r",
+                  "\r",
+                  "console.log(\"Generated gmServiceToken:\", token);\r",
+                  "console.log(\"JWT issuer:\", issuer);\r",
+                  "console.log(\"JWT audience:\", audience);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{gmServiceToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"username\": \"{{swsUsername}}\",\r\n  \"password\": \"{{swsPassword}}\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{gmBaseUrl}}/api/v1/gm/auth/login",
+              "host": [
+                "{{gmBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gm",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Invalid Password",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"GM login success\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "pm.environment.set(\"gmSessionToken\", json.token);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{gmServiceToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"username\": \"{{gmUsername}}\",\r\n  \"password\": \"wrongPass\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{gmBaseUrl}}/api/v1/gm/auth/login",
+              "host": [
+                "{{gmBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gm",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Missing Password",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"GM login success\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "pm.environment.set(\"gmSessionToken\", json.token);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{gmServiceToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"username\": \"{{gmUsername}}\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{gmBaseUrl}}/api/v1/gm/auth/login",
+              "host": [
+                "{{gmBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gm",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Measurements",
+      "item": [
+        {
+          "name": "Missing GM Session Token",
+          "request": {
+            "method": "GET",
+            "header": []
+          },
+          "response": []
+        },
+        {
+          "name": "All",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{gmSessionToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gmBaseUrl}}/api/v1/gm/measurements?datetimeFrom={{datetimeFrom}}&datetimeTo={{datetimeTo}}",
+              "host": [
+                "{{gmBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gm",
+                "measurements"
+              ],
+              "query": [
+                {
+                  "key": "datetimeFrom",
+                  "value": "{{datetimeFrom}}"
+                },
+                {
+                  "key": "datetimeTo",
+                  "value": "{{datetimeTo}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "All Detailed",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{gmSessionToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gmBaseUrl}}/api/v1/gm/measurements?datetimeFrom={{datetimeFrom}}&datetimeTo={{datetimeTo}}",
+              "host": [
+                "{{gmBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gm",
+                "measurements"
+              ],
+              "query": [
+                {
+                  "key": "datetimeFrom",
+                  "value": "{{datetimeFrom}}"
+                },
+                {
+                  "key": "datetimeTo",
+                  "value": "{{datetimeTo}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Station Measurements",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{gmSessionToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gmBaseUrl}}/api/v1/gm/stations/{{stationId}}/measurements?datetimeFrom={{datetimeFrom}}&datetimeTo={{datetimeTo}}",
+              "host": [
+                "{{gmBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gm",
+                "stations",
+                "{{stationId}}",
+                "measurements"
+              ],
+              "query": [
+                {
+                  "key": "datetimeFrom",
+                  "value": "{{datetimeFrom}}"
+                },
+                {
+                  "key": "datetimeTo",
+                  "value": "{{datetimeTo}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Station Measurements Detailed",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{gmSessionToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gmBaseUrl}}/api/v1/gm/stations/{{stationId}}/measurements?datetimeFrom={{datetimeFrom}}&datetimeTo={{datetimeTo}}",
+              "host": [
+                "{{gmBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gm",
+                "stations",
+                "{{stationId}}",
+                "measurements"
+              ],
+              "query": [
+                {
+                  "key": "datetimeFrom",
+                  "value": "{{datetimeFrom}}"
+                },
+                {
+                  "key": "datetimeTo",
+                  "value": "{{datetimeTo}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Channel Measurements",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{gmSessionToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gmBaseUrl}}/api/v1/gm/measurements?datetimeFrom={{datetimeFrom}}&datetimeTo={{datetimeTo}}",
+              "host": [
+                "{{gmBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gm",
+                "measurements"
+              ],
+              "query": [
+                {
+                  "key": "datetimeFrom",
+                  "value": "{{datetimeFrom}}"
+                },
+                {
+                  "key": "datetimeTo",
+                  "value": "{{datetimeTo}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Channel Measurements Detailed",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{gmSessionToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gmBaseUrl}}/api/v1/gm/measurements?datetimeFrom={{datetimeFrom}}&datetimeTo={{datetimeTo}}",
+              "host": [
+                "{{gmBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gm",
+                "measurements"
+              ],
+              "query": [
+                {
+                  "key": "datetimeFrom",
+                  "value": "{{datetimeFrom}}"
+                },
+                {
+                  "key": "datetimeTo",
+                  "value": "{{datetimeTo}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "All - After Logout",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{gmSessionToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gmBaseUrl}}/api/v1/gm/measurements?datetimeFrom={{datetimeFrom}}&datetimeTo={{datetimeTo}}",
+              "host": [
+                "{{gmBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gm",
+                "measurements"
+              ],
+              "query": [
+                {
+                  "key": "datetimeFrom",
+                  "value": "{{datetimeFrom}}"
+                },
+                {
+                  "key": "datetimeTo",
+                  "value": "{{datetimeTo}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "By Station/Channel Pairs",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{gmSessionToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"stationChannelPairs\": [\r\n    {\r\n      \"stationId\": 2241,\r\n      \"channelId\": 127\r\n    }\r\n  ],\r\n  \"datetimeFrom\": \"{{datetimeFrom}}\",\r\n  \"datetimeTo\": \"{{datetimeTo}}\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{gmBaseUrl}}/api/v1/gm/measurements/by-station-channel-pairs",
+              "host": [
+                "{{gmBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gm",
+                "measurements",
+                "by-station-channel-pairs"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "By Station/Channel Pairs - Invalid Body",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{gmSessionToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"datetimeFrom\": \"{{datetimeFrom}}\",\r\n  \"datetimeTo\": \"{{datetimeTo}}\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{gmBaseUrl}}/api/v1/gm/measurements/by-station-channel-pairs",
+              "host": [
+                "{{gmBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gm",
+                "measurements",
+                "by-station-channel-pairs"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Invalid GM Session Token",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "wrongToken",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gmBaseUrl}}/api/v1/gm/measurements?datetimeFrom={{datetimeFrom}}&datetimeTo={{datetimeTo}}",
+              "host": [
+                "{{gmBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gm",
+                "measurements"
+              ],
+              "query": [
+                {
+                  "key": "datetimeFrom",
+                  "value": "{{datetimeFrom}}"
+                },
+                {
+                  "key": "datetimeTo",
+                  "value": "{{datetimeTo}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Missing Query Params",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{gmSessionToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gmBaseUrl}}/api/v1/gm/measurements",
+              "host": [
+                "{{gmBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gm",
+                "measurements"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Stations",
+      "item": [
+        {
+          "name": "All",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{gmSessionToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gmBaseUrl}}/api/v1/gm/measurements?datetimeFrom={{datetimeFrom}}&datetimeTo={{datetimeTo}}",
+              "host": [
+                "{{gmBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gm",
+                "measurements"
+              ],
+              "query": [
+                {
+                  "key": "datetimeFrom",
+                  "value": "{{datetimeFrom}}"
+                },
+                {
+                  "key": "datetimeTo",
+                  "value": "{{datetimeTo}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Channels",
+      "item": [
+        {
+          "name": "All",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{gmSessionToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gmBaseUrl}}/api/v1/gm/measurements?datetimeFrom={{datetimeFrom}}&datetimeTo={{datetimeTo}}",
+              "host": [
+                "{{gmBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gm",
+                "measurements"
+              ],
+              "query": [
+                {
+                  "key": "datetimeFrom",
+                  "value": "{{datetimeFrom}}"
+                },
+                {
+                  "key": "datetimeTo",
+                  "value": "{{datetimeTo}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

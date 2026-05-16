@@ -1,0 +1,212 @@
+{
+  "info": {
+    "_postman_id": "d6a6da43-3180-4428-a687-00dc64c7cad9",
+    "name": "SWS",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "53761523"
+  },
+  "item": [
+    {
+      "name": "Login",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const setCookieHeader = pm.response.headers.get(\"Set-Cookie\");\r",
+              "\r",
+              "if (!setCookieHeader) {\r",
+              "    throw new Error(\"Login response does not contain Set-Cookie header.\");\r",
+              "}\r",
+              "\r",
+              "const swsCookie = setCookieHeader.split(\";\")[0];\r",
+              "\r",
+              "pm.environment.set(\"swsCookie\", swsCookie);\r",
+              "\r",
+              "console.log(\"Saved swsCookie:\", swsCookie);"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "text/xml; charset=utf-8",
+            "type": "text"
+          },
+          {
+            "key": "SOAPAction",
+            "value": "\"http://www.eltratec.com/Login\"",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n<soap:Envelope \r\n    xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" \r\n    xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" \r\n    xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\r\n  <soap:Body>\r\n    <Login xmlns=\"http://www.eltratec.com/\">\r\n      <UserName>{{swsUsername}}</UserName>\r\n      <Password>{{swsPassword}}</Password>\r\n    </Login>\r\n  </soap:Body>\r\n</soap:Envelope>",
+          "options": {
+            "raw": {
+              "language": "xml"
+            }
+          }
+        },
+        "url": {
+          "raw": "https://smart.eltratec.com/SmartWebDev/SmartWebService.asmx",
+          "protocol": "https",
+          "host": [
+            "smart",
+            "eltratec",
+            "com"
+          ],
+          "path": [
+            "SmartWebDev",
+            "SmartWebService.asmx"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "GetChannelMeasurements",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "text/xml; charset=utf-8",
+            "type": "text"
+          },
+          {
+            "key": "SOAPAction",
+            "value": "\"http://www.eltratec.com/GetChannelMeasurements\"",
+            "type": "text"
+          },
+          {
+            "key": "Cookie",
+            "value": "{{swsCookie}}",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n<soap:Envelope \r\n    xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" \r\n    xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" \r\n    xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\r\n  <soap:Body>\r\n    <GetChannelMeasurements xmlns=\"http://www.eltratec.com/\">\r\n      <StationID>2241</StationID>\r\n      <ChannelID>8</ChannelID>\r\n      <datetimeFrom>2026-02-01T00:00:00</datetimeFrom>\r\n      <datetimeTo>2026-02-01T01:00:00</datetimeTo>\r\n    </GetChannelMeasurements>\r\n  </soap:Body>\r\n</soap:Envelope>",
+          "options": {
+            "raw": {
+              "language": "xml"
+            }
+          }
+        },
+        "url": {
+          "raw": "https://smart.eltratec.com/SmartWebDev/SmartWebService.asmx",
+          "protocol": "https",
+          "host": [
+            "smart",
+            "eltratec",
+            "com"
+          ],
+          "path": [
+            "SmartWebDev",
+            "SmartWebService.asmx"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "GetStations",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "text/xml; charset=utf-8",
+            "type": "text"
+          },
+          {
+            "key": "SOAPAction",
+            "value": "\"http://www.eltratec.com/GetStations\"",
+            "type": "text"
+          },
+          {
+            "key": "Cookie",
+            "value": "{{swsCookie}}",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n<soap:Envelope \r\n    xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" \r\n    xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" \r\n    xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\r\n  <soap:Body>\r\n    <GetStations xmlns=\"http://www.eltratec.com/\" />\r\n  </soap:Body>\r\n</soap:Envelope>",
+          "options": {
+            "raw": {
+              "language": "xml"
+            }
+          }
+        },
+        "url": {
+          "raw": "https://smart.eltratec.com/SmartWebDev/SmartWebService.asmx",
+          "protocol": "https",
+          "host": [
+            "smart",
+            "eltratec",
+            "com"
+          ],
+          "path": [
+            "SmartWebDev",
+            "SmartWebService.asmx"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "GetChannels",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "text/xml; charset=utf-8",
+            "type": "text"
+          },
+          {
+            "key": "SOAPAction",
+            "value": "\"http://www.eltratec.com/GetChannels\"",
+            "type": "text"
+          },
+          {
+            "key": "Cookie",
+            "value": "{{swsCookie}}",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n<soap:Envelope \r\n    xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" \r\n    xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" \r\n    xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\r\n  <soap:Body>\r\n    <GetChannels xmlns=\"http://www.eltratec.com/\">\r\n      <StationID>2241</StationID>\r\n    </GetChannels>\r\n  </soap:Body>\r\n</soap:Envelope>",
+          "options": {
+            "raw": {
+              "language": "xml"
+            }
+          }
+        },
+        "url": {
+          "raw": "https://smart.eltratec.com/SmartWebDev/SmartWebService.asmx",
+          "protocol": "https",
+          "host": [
+            "smart",
+            "eltratec",
+            "com"
+          ],
+          "path": [
+            "SmartWebDev",
+            "SmartWebService.asmx"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}
