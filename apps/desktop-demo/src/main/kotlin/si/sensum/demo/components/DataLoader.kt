@@ -11,8 +11,8 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import si.sensum.demo.model.Measurement
 import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
+import si.sensum.shared.models.datetime.ApiDateTime
 import si.sensum.demo.api.SensumApiClient
 import si.sensum.demo.model.StationChannelPair
 import si.sensum.shared.models.api.measurements.StationChannelPairDto
@@ -29,8 +29,8 @@ private val CHANNELS = mapOf(
     134 to "L8001H - Nivo [-]",
     135 to "L8001H - 4 [-]"
 )
-private val DATETIME_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
-private val API_DATETIME_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")
+private val DATETIME_FORMAT = ApiDateTime.FORMATTER
+private val API_DATETIME_FORMAT = ApiDateTime.FORMATTER
 //private val repository = MockMeasurementRepository()
 
 private val apiClient = SensumApiClient()
@@ -45,8 +45,8 @@ fun DataLoader(onMeasurementsLoaded: (List<Measurement>) -> Unit = {}) {
         }
     }
 
-    var datetimeFrom by remember { mutableStateOf("2026-01-01 00:00:00") }
-    var datetimeTo by remember { mutableStateOf("2026-01-01 01:00:00") }
+    var datetimeFrom by remember { mutableStateOf("2026-01-01T00:00:00") }
+    var datetimeTo by remember { mutableStateOf("2026-01-01T01:00:00") }
     var fromError by remember { mutableStateOf(false) }
     var toError by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
@@ -114,14 +114,14 @@ fun DataLoader(onMeasurementsLoaded: (List<Measurement>) -> Unit = {}) {
                 value = datetimeFrom,
                 onValueChange = { datetimeFrom = it; fromError = false },
                 label = { Text("From") },
-                placeholder = { Text("yyyy-MM-dd HH:mm:ss") },
+                placeholder = { Text(ApiDateTime.EXAMPLE) },
                 isError = fromError,
                 singleLine = true,
                 modifier = Modifier.weight(1f),
                 colors = outlinedTextFieldColors(),
                 supportingText = {
                     Text(
-                        if (fromError) "Invalid format!" else "Format: yyyy-MM-dd HH:mm:ss",
+                        if (fromError) "Invalid format!" else "Format: ${ApiDateTime.DESCRIPTION}",
                         color = if (fromError) SensumColors.Error else SensumColors.Muted
                     )
                 }
@@ -130,14 +130,14 @@ fun DataLoader(onMeasurementsLoaded: (List<Measurement>) -> Unit = {}) {
                 value = datetimeTo,
                 onValueChange = { datetimeTo = it; toError = false },
                 label = { Text("To") },
-                placeholder = { Text("yyyy-MM-dd HH:mm:ss") },
+                placeholder = { Text(ApiDateTime.EXAMPLE) },
                 isError = toError,
                 singleLine = true,
                 modifier = Modifier.weight(1f),
                 colors = outlinedTextFieldColors(),
                 supportingText = {
                     Text(
-                        if (toError) "Invalid format!" else "Format: yyyy-MM-dd HH:mm:ss",
+                        if (toError) "Invalid format!" else "Format: ${ApiDateTime.DESCRIPTION}",
                         color = if (toError) SensumColors.Error else SensumColors.Muted
                     )
                 }
@@ -248,10 +248,12 @@ private fun FilterChipToggle(label: String, selected: Boolean, onClick: () -> Un
     )
 }
 
-private fun parseDateTime(s: String): LocalDateTime? = try {
-    LocalDateTime.parse(s, DATETIME_FORMAT)
-} catch (_: DateTimeParseException) {
-    null
+private fun parseDateTime(value: String): LocalDateTime? {
+    return try {
+        ApiDateTime.parse(value)
+    } catch (_: DateTimeParseException) {
+        null
+    }
 }
 
 @Composable

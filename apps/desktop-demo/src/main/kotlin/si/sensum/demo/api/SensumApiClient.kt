@@ -11,8 +11,8 @@ import si.sensum.demo.model.Measurement
 import si.sensum.shared.models.api.LoginRequest
 import si.sensum.shared.models.api.LoginResponse
 import si.sensum.shared.models.api.measurements.MeasurementDto
-import si.sensum.shared.models.api.measurements.RefreshMeasurementsRequest
-import si.sensum.shared.models.api.measurements.RefreshMeasurementsResponse
+import si.sensum.shared.models.api.measurements.MeasurementsByStationChannelPairsRequest
+import si.sensum.shared.models.api.measurements.MeasurementsByStationChannelPairsResponse
 import io.ktor.client.statement.bodyAsText
 import si.sensum.shared.models.api.measurements.StationChannelPairDto
 
@@ -31,7 +31,7 @@ class SensumApiClient(
     suspend fun login(): LoginResponse {
         val response = client.post("$baseUrl/api/v1/auth/login") {
             contentType(ContentType.Application.Json)
-            setBody(LoginRequest(username = "demo", password = "demo"))
+            setBody(LoginRequest(username = "sensum", password = "sensum"))
         }.body<LoginResponse>()
 
         authToken = response.token
@@ -42,12 +42,12 @@ class SensumApiClient(
         stationChannelPairs: List<StationChannelPairDto>,
         datetimeFrom: String,
         datetimeTo: String
-    ): RefreshMeasurementsResponse {
+    ): MeasurementsByStationChannelPairsResponse {
         val response = client.post("$baseUrl/api/v1/measurements/refresh") {
             contentType(ContentType.Application.Json)
             header(HttpHeaders.Authorization, "Bearer ${authToken ?: error("Not logged in")}")
             setBody(
-                RefreshMeasurementsRequest(
+                MeasurementsByStationChannelPairsRequest(
                     stationChannelPairs = stationChannelPairs,
                     datetimeFrom = datetimeFrom,
                     datetimeTo = datetimeTo
