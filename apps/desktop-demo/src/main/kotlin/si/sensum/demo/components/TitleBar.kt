@@ -2,24 +2,22 @@ package si.sensum.demo.components
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
-import si.sensum.demo.resources.Res
-import si.sensum.demo.resources.sidebar_collapse
-import si.sensum.demo.resources.sidebar_expand
-import si.sensum.demo.resources.eltratec_logo
+import si.sensum.demo.components.theme.SensumThemeColors
+import si.sensum.demo.resources.*
+
 
 @Composable
 fun TitleBar(
     sidebarExpanded: Boolean,
-    onToggleSidebar: () -> Unit
+    onToggleSidebar: () -> Unit,
+    isDark: Boolean,
+    onToggleTheme: () -> Unit
 ) {
     Surface(
         color = MaterialTheme.colorScheme.surface,
@@ -40,8 +38,19 @@ fun TitleBar(
                         else Res.drawable.sidebar_expand
                     ),
                     contentDescription = if (sidebarExpanded) "Collapse sidebar" else "Expand sidebar",
-                    tint = SensumColors.Muted,
+                    tint = SensumThemeColors.muted,
                     modifier = Modifier.size(40.dp)
+                )
+            }
+
+            IconButton(onClick = onToggleTheme) {
+                Icon(
+                    painter = painterResource(
+                        if (isDark) Res.drawable.sun else Res.drawable.moon
+                    ),
+                    contentDescription = "Toggle theme",
+                    tint = SensumThemeColors.muted,
+                    modifier = Modifier.size(20.dp)
                 )
             }
 

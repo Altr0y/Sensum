@@ -1,4 +1,4 @@
-package si.sensum.demo.components
+package si.sensum.demo.components.main
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
@@ -12,47 +12,39 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.painterResource
+import si.sensum.demo.components.EmptyState
+import si.sensum.demo.components.theme.SensumColors
+import si.sensum.demo.components.theme.SensumThemeColors
 import si.sensum.demo.model.Measurement
-//import si.sensum.demo.repository.PostgresMeasurementRepository
+import si.sensum.demo.repository.PostgresMeasurementRepository
+import si.sensum.demo.resources.*
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
-import org.jetbrains.compose.resources.painterResource
-import si.sensum.demo.resources.Res
-import si.sensum.demo.resources.check
-import si.sensum.demo.resources.chevron_down
-import si.sensum.demo.resources.chevron_right
-import si.sensum.demo.resources.database_panel
-import si.sensum.demo.resources.edit
-import si.sensum.demo.resources.trash
-import si.sensum.demo.resources.x
-import si.sensum.demo.api.SensumApiClient
 
-private val apiClient = SensumApiClient()
 private val DT_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
-//private val dbRepository = PostgresMeasurementRepository()
+private val dbRepository = PostgresMeasurementRepository()
 
 @Composable
 fun DatabasePanel(measurements: List<Measurement> = emptyList()) {
     val scope = rememberCoroutineScope()
 
-    var dbMeasurements by remember(measurements) {
-        mutableStateOf(measurements)
-    }
+    var dbMeasurements by remember { mutableStateOf<List<Measurement>>(emptyList()) }
     var isLoading by remember { mutableStateOf(false) }
     var statusMsg by remember { mutableStateOf("") }
     var showSaveDialog by remember { mutableStateOf(false) }
     var showDeleteAllDialog by remember { mutableStateOf(false) }
 
     // Naloži iz DB ob zagonu
-//    LaunchedEffect(Unit) {
-//        isLoading = true
-//        dbRepository.getAll().fold(
-//            onSuccess = { dbMeasurements = it },
-//            onFailure = { statusMsg = "DB Error: ${it.message}" }
-//        )
-//        isLoading = false
-//    }
+    LaunchedEffect(Unit) {
+        isLoading = true
+        dbRepository.getAll().fold(
+            onSuccess = { dbMeasurements = it },
+            onFailure = { statusMsg = "DB Error: ${it.message}" }
+        )
+        isLoading = false
+    }
 
     val grouped = dbMeasurements.groupBy { it.channelId }.toSortedMap()
 
@@ -67,10 +59,10 @@ fun DatabasePanel(measurements: List<Measurement> = emptyList()) {
         Text(
             "${dbMeasurements.size} measurements across ${grouped.size} channels",
             style = MaterialTheme.typography.bodyMedium,
-            color = SensumColors.Muted
+            color = SensumThemeColors.muted
         )
 
-        HorizontalDivider(color = SensumColors.Border)
+        HorizontalDivider(color = SensumThemeColors.border)
 
         // Toolbar
         Row(
@@ -81,9 +73,9 @@ fun DatabasePanel(measurements: List<Measurement> = emptyList()) {
             Button(
                 onClick = { showSaveDialog = true },
                 enabled = measurements.isNotEmpty(),
-                colors = ButtonDefaults.buttonColors(containerColor = SensumColors.Accent)
+                colors = ButtonDefaults.buttonColors(containerColor = SensumThemeColors.accent)
             ) {
-                Text("Save Loaded Data", color = SensumColors.OnAccent)
+                Text("Save Loaded Data", color = SensumThemeColors.onAccent)
             }
 
             // Osveži iz DB
@@ -91,18 +83,15 @@ fun DatabasePanel(measurements: List<Measurement> = emptyList()) {
                 onClick = {
                     scope.launch {
                         isLoading = true
-                        try {
-                            apiClient.login()
-                            dbMeasurements = apiClient.getMeasurements()
-                            statusMsg = "Refreshed."
-                        } catch (e: Exception) {
-                            statusMsg = "API Error: ${e.message}"
-                        }
+                        dbRepository.getAll().fold(
+                            onSuccess = { dbMeasurements = it; statusMsg = "Refreshed." },
+                            onFailure = { statusMsg = "DB Error: ${it.message}" }
+                        )
                         isLoading = false
                     }
                 }
             ) {
-                Text("Refresh", color = SensumColors.Muted)
+                Text("Refresh", color = SensumThemeColors.muted)
             }
 
             // Izbriši vse
@@ -110,23 +99,23 @@ fun DatabasePanel(measurements: List<Measurement> = emptyList()) {
                 onClick = { showDeleteAllDialog = true },
                 enabled = dbMeasurements.isNotEmpty()
             ) {
-                Text("Delete All", color = SensumColors.Error)
+                Text("Delete All", color = SensumThemeColors.error)
             }
 
             if (isLoading) CircularProgressIndicator(
                 modifier = Modifier.size(18.dp),
-                color = SensumColors.Accent,
+                color = SensumThemeColors.accent,
                 strokeWidth = 2.dp
             )
 
             if (statusMsg.isNotEmpty()) Text(
                 text = statusMsg,
                 style = MaterialTheme.typography.bodyMedium,
-                color = if (statusMsg.startsWith("DB Error")) SensumColors.Error else SensumColors.Success
+                color = if (statusMsg.startsWith("DB Error")) SensumThemeColors.error else SensumThemeColors.success
             )
         }
 
-        HorizontalDivider(color = SensumColors.Border)
+        HorizontalDivider(color = SensumThemeColors.border)
 
         // Content
         if (dbMeasurements.isEmpty() && !isLoading) {
@@ -148,28 +137,26 @@ fun DatabasePanel(measurements: List<Measurement> = emptyList()) {
                         entries = entries,
                         onUpdate = { updated ->
                             scope.launch {
-                                try {
-                                    apiClient.login()
-                                    val saved = apiClient.updateMeasurement(updated)
-                                    dbMeasurements = dbMeasurements.map { m ->
-                                        if (m.id == saved.id) saved else m
-                                    }
-                                    statusMsg = "Updated."
-                                } catch (e: Exception) {
-                                    statusMsg = "API Error: ${e.message}"
-                                }
+                                dbRepository.update(updated).fold(
+                                    onSuccess = {
+                                        dbMeasurements = dbMeasurements.map { m ->
+                                            if (m.id == it.id) it else m
+                                        }
+                                        statusMsg = "Updated."
+                                    },
+                                    onFailure = { statusMsg = "DB Error: ${it.message}" }
+                                )
                             }
                         },
                         onDelete = { id ->
                             scope.launch {
-                                try {
-                                    apiClient.login()
-                                    apiClient.deleteMeasurement(id)
-                                    dbMeasurements = dbMeasurements.filter { it.id != id }
-                                    statusMsg = "Deleted."
-                                } catch (e: Exception) {
-                                    statusMsg = "API Error: ${e.message}"
-                                }
+                                dbRepository.delete(id).fold(
+                                    onSuccess = {
+                                        dbMeasurements = dbMeasurements.filter { it.id != id }
+                                        statusMsg = "Deleted."
+                                    },
+                                    onFailure = { statusMsg = "DB Error: ${it.message}" }
+                                )
                             }
                         }
                     )
@@ -190,21 +177,20 @@ fun DatabasePanel(measurements: List<Measurement> = emptyList()) {
                         showSaveDialog = false
                         scope.launch {
                             isLoading = true
-
-                            try {
-                                apiClient.login()
-                                val savedCount = apiClient.createMeasurements(measurements)
-                                statusMsg = "Saved $savedCount measurements."
-                                dbMeasurements = apiClient.getMeasurements()
-                            } catch (e: Exception) {
-                                statusMsg = "API Error: ${e.message}"
-                            }
-
+                            dbRepository.insertAll(measurements).fold(
+                                onSuccess = {
+                                    statusMsg = "Saved $it measurements."
+                                    dbRepository.getAll().onSuccess {
+                                        dbMeasurements = it
+                                    }
+                                },
+                                onFailure = { statusMsg = "DB Error: ${it.message}" }
+                            )
                             isLoading = false
                         }
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = SensumColors.Accent)
-                ) { Text("Save", color = SensumColors.OnAccent) }
+                    colors = ButtonDefaults.buttonColors(containerColor = SensumThemeColors.accent)
+                ) { Text("Save", color = SensumThemeColors.onAccent) }
             },
             dismissButton = {
                 OutlinedButton(onClick = { showSaveDialog = false }) { Text("Cancel") }
@@ -225,21 +211,15 @@ fun DatabasePanel(measurements: List<Measurement> = emptyList()) {
                         showDeleteAllDialog = false
                         scope.launch {
                             isLoading = true
-
-                            try {
-                                apiClient.login()
-                                apiClient.deleteAllMeasurements()
-                                dbMeasurements = emptyList()
-                                statusMsg = "All deleted."
-                            } catch (e: Exception) {
-                                statusMsg = "API Error: ${e.message}"
-                            }
-
+                            dbRepository.deleteAll().fold(
+                                onSuccess = { dbMeasurements = emptyList(); statusMsg = "All deleted." },
+                                onFailure = { statusMsg = "DB Error: ${it.message}" }
+                            )
                             isLoading = false
                         }
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = SensumColors.Error)
-                ) { Text("Delete All", color = SensumColors.OnAccent) }
+                    colors = ButtonDefaults.buttonColors(containerColor = SensumThemeColors.error)
+                ) { Text("Delete All", color = SensumThemeColors.onAccent) }
             },
             dismissButton = {
                 OutlinedButton(onClick = { showDeleteAllDialog = false }) { Text("Cancel") }
@@ -283,19 +263,19 @@ private fun ChannelAccordion(
                             if (expanded) Res.drawable.chevron_down else Res.drawable.chevron_right
                         ),
                         contentDescription = null,
-                        tint = SensumColors.Accent,
+                        tint = SensumThemeColors.accent,
                         modifier = Modifier.size(18.dp)
                     )
                     Text(
                         "$channelId — $channelName",
                         style = MaterialTheme.typography.titleSmall,
-                        color = SensumColors.OnSurface
+                        color = SensumThemeColors.onSurface
                     )
                 }
                 Text(
                     "${entries.size} rows",
                     style = MaterialTheme.typography.labelMedium,
-                    color = SensumColors.Muted
+                    color = SensumThemeColors.muted
                 )
             }
 
@@ -314,7 +294,7 @@ private fun ChannelAccordion(
                         Spacer(Modifier.width(60.dp))
                     }
 
-                    HorizontalDivider(color = SensumColors.Border)
+                    HorizontalDivider(color = SensumThemeColors.border)
 
                     entries.forEachIndexed { i, m ->
                         EditableRow(
@@ -373,7 +353,7 @@ private fun EditableRow(
                     Icon(
                         painterResource(Res.drawable.check),
                         null,
-                        tint = SensumColors.Success,
+                        tint = SensumThemeColors.success,
                         modifier = Modifier.size(16.dp)
                     )
                 }
@@ -381,7 +361,7 @@ private fun EditableRow(
                     Icon(
                         painterResource(Res.drawable.x),
                         null,
-                        tint = SensumColors.Error,
+                        tint = SensumThemeColors.error,
                         modifier = Modifier.size(16.dp)
                     )
                 }
@@ -395,7 +375,7 @@ private fun EditableRow(
                     Icon(
                         painterResource(Res.drawable.edit),
                         null,
-                        tint = SensumColors.Muted,
+                        tint = SensumThemeColors.muted,
                         modifier = Modifier.size(16.dp)
                     )
                 }
@@ -403,7 +383,7 @@ private fun EditableRow(
                     Icon(
                         painterResource(Res.drawable.trash),
                         null,
-                        tint = SensumColors.Error,
+                        tint = SensumThemeColors.error,
                         modifier = Modifier.size(16.dp)
                     )
                 }
@@ -418,14 +398,14 @@ private fun InlineField(value: String, modifier: Modifier, onValueChange: (Strin
         value = value,
         onValueChange = onValueChange,
         modifier = modifier.padding(end = 4.dp),
-        textStyle = MaterialTheme.typography.bodySmall.copy(color = SensumColors.OnSurface),
+        textStyle = MaterialTheme.typography.bodySmall.copy(color = SensumThemeColors.onSurface),
         singleLine = true,
         colors = TextFieldDefaults.colors(
             focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
             unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-            focusedIndicatorColor = SensumColors.Accent,
-            unfocusedIndicatorColor = SensumColors.Border,
-            cursorColor = SensumColors.Accent
+            focusedIndicatorColor = SensumThemeColors.accent,
+            unfocusedIndicatorColor = SensumThemeColors.border,
+            cursorColor = SensumThemeColors.accent
         )
     )
 }
@@ -436,7 +416,7 @@ private fun RowScope.TableCell(text: String, weight: Float) {
         text = text,
         modifier = Modifier.weight(weight),
         style = MaterialTheme.typography.bodySmall,
-        color = SensumColors.OnSurface
+        color = SensumThemeColors.onSurface
     )
 }
 
@@ -446,6 +426,6 @@ private fun RowScope.TableHeaderCell(text: String, weight: Float) {
         text = text,
         modifier = Modifier.weight(weight),
         style = MaterialTheme.typography.labelMedium,
-        color = SensumColors.Accent
+        color = SensumThemeColors.accent
     )
 }
