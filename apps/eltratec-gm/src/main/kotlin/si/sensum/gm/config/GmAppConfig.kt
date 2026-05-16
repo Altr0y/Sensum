@@ -2,12 +2,15 @@ package si.sensum.gm.config
 
 import si.sensum.sws.SwsConfig
 
-data class GmAppConfig(
+internal data class GmAppConfig(
     val sws: SwsConfig,
     val auth: GmAuthConfig
 )
 
-data class GmAuthConfig(
+internal data class GmAuthConfig(
     val tokenTtlHours: Long,
-    val apiToken: String
+    val serviceJwtSecret: String,
+    val serviceJwtIssuer: String,
+    val serviceJwtAudience: String,
+    val serviceJwtRealm: String
 )

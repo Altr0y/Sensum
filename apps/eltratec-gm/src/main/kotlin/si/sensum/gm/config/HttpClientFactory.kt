@@ -1,10 +1,10 @@
 package si.sensum.gm.config
 
-import io.ktor.client.*
-import io.ktor.client.engine.cio.*
-import io.ktor.client.plugins.*
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.cio.CIO
+import io.ktor.client.plugins.HttpTimeout
 
-fun createHttpClient(timeoutMillis: Long): HttpClient {
+internal fun createHttpClient(timeoutMillis: Long): HttpClient {
     return HttpClient(CIO) {
         install(HttpTimeout) {
             requestTimeoutMillis = timeoutMillis

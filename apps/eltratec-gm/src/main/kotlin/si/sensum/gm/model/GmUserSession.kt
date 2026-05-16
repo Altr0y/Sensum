@@ -1,8 +1,8 @@
-package si.sensum.shared.auth.model
+package si.sensum.gm.model
 
 import java.time.Instant
 
-data class UserSession(
+internal data class GmUserSession(
     val gmToken: String,
     val swsCookieName: String,
     val swsCookieValue: String,

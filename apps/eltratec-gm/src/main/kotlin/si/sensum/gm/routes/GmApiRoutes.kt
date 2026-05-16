@@ -1,5 +1,5 @@
 package si.sensum.gm.routes
 
-object GmApiRoutes {
-    const val BASE = "/api/v1"
+internal object GmApiRoutes {
+    const val BASE = "/api/v1/gm"
 }

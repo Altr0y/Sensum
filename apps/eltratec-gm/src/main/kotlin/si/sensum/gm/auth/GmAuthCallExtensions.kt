@@ -2,16 +2,15 @@ package si.sensum.gm.auth
 
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
-import io.ktor.server.application.*
-import io.ktor.server.response.*
+import io.ktor.server.application.ApplicationCall
+import io.ktor.server.response.respond
 import si.sensum.gm.services.AuthService
 import si.sensum.shared.auth.bearer.BearerToken
-import si.sensum.shared.auth.model.UserSession
+import si.sensum.gm.model.GmUserSession
 import si.sensum.shared.models.api.ApiErrorResponse
+import si.sensum.sws.model.SwsSession
 
-suspend fun ApplicationCall.resolveUserSessionOrRespond(
-    authService: AuthService
-): UserSession? {
+internal suspend fun ApplicationCall.resolveGmTokenOrRespond(): String? {
     val token = BearerToken.extract(request.headers[HttpHeaders.Authorization])
 
     if (token == null) {
@@ -19,6 +18,13 @@ suspend fun ApplicationCall.resolveUserSessionOrRespond(
         return null
     }
 
+    return token
+}
+
+internal suspend fun ApplicationCall.resolveUserSessionOrRespond(
+    authService: AuthService
+): GmUserSession? {
+    val token = resolveGmTokenOrRespond() ?: return null
     val session = authService.findSession(token)
 
     if (session == null) {
@@ -27,6 +33,13 @@ suspend fun ApplicationCall.resolveUserSessionOrRespond(
     }
 
     return session
+}
+
+internal suspend fun ApplicationCall.resolveSwsSessionOrRespond(
+    authService: AuthService
+): SwsSession? {
+    val userSession = resolveUserSessionOrRespond(authService) ?: return null
+    return userSession.toSwsSession()
 }
 
 private suspend fun ApplicationCall.respondUnauthorized(message: String) {
