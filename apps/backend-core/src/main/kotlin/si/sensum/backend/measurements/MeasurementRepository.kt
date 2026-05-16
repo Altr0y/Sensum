@@ -10,6 +10,7 @@ import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
+import si.sensum.backend.channels.ChannelTable
 import si.sensum.backend.database.DatabaseTransaction
 import si.sensum.shared.models.api.measurements.MeasurementDto
 import java.time.OffsetDateTime
@@ -29,11 +30,10 @@ class MeasurementRepository {
 
     fun create(dto: MeasurementDto): MeasurementDto = DatabaseTransaction.run {
         val inserted = MeasurementTable.insert {
-            it[stationId] = dto.stationId
             it[channelId] = dto.channelId
             it[dateTime] = dto.toDbDateTime()
-            it[value] = dto.value
-            it[status] = dto.status
+            it[value] = dto.value.toFloat()
+            it[status] = dto.status != 0
         }
 
         dto.copy(id = inserted[MeasurementTable.id])
@@ -45,11 +45,10 @@ class MeasurementRepository {
 
     fun update(id: Long, dto: MeasurementDto): MeasurementDto? = DatabaseTransaction.run {
         val updatedCount = MeasurementTable.update({ MeasurementTable.id eq id }) {
-            it[stationId] = dto.stationId
             it[channelId] = dto.channelId
             it[dateTime] = dto.toDbDateTime()
-            it[value] = dto.value
-            it[status] = dto.status
+            it[value] = dto.value.toFloat()
+            it[status] = dto.status != 0
         }
 
         if (updatedCount == 0) {
@@ -79,11 +78,10 @@ class MeasurementRepository {
 
             measurements.forEach { dto ->
                 MeasurementTable.insert {
-                    it[stationId] = dto.stationId
                     it[channelId] = dto.channelId
                     it[dateTime] = dto.toDbDateTime()
-                    it[value] = dto.value
-                    it[status] = dto.status
+                    it[value] = dto.value.toFloat()
+                    it[status] = dto.status != 0
                 }
             }
 
@@ -91,14 +89,25 @@ class MeasurementRepository {
         }
 
     private fun toDto(row: ResultRow): MeasurementDto {
+        val channelId = row[MeasurementTable.channelId]
+
         return MeasurementDto(
             id = row[MeasurementTable.id],
-            stationId = row[MeasurementTable.stationId],
-            channelId = row[MeasurementTable.channelId],
+            stationId = findStationIdForChannel(channelId),
+            channelId = channelId,
             dateTime = row[MeasurementTable.dateTime].toDtoDateTime(),
-            value = row[MeasurementTable.value],
-            status = row[MeasurementTable.status]
+            value = row[MeasurementTable.value].toDouble(),
+            status = if (row[MeasurementTable.status]) 1 else 0
         )
+    }
+
+    private fun findStationIdForChannel(channelId: Int): Long {
+        return ChannelTable
+            .selectAll()
+            .where { ChannelTable.id eq channelId }
+            .map { row -> row[ChannelTable.stationId] }
+            .singleOrNull()
+            ?: 0L
     }
 
     private fun MeasurementDto.toDbDateTime(): kotlinx.datetime.LocalDateTime {
