@@ -1,9 +1,12 @@
 package si.sensum.shared.auth.store
 
-import si.sensum.shared.auth.model.UserSession
+interface SessionStore<T : Any> {
+    fun save(
+        token: String,
+        session: T
+    )
 
-interface SessionStore {
-    fun save(session: UserSession)
-    fun findByToken(token: String): UserSession?
+    fun findByToken(token: String): T?
+
     fun deleteByToken(token: String)
 }

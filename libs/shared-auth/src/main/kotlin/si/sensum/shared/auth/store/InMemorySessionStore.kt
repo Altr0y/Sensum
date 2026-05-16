@@ -1,21 +1,25 @@
 package si.sensum.shared.auth.store
 
-import si.sensum.shared.auth.model.UserSession
 import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
 
-class InMemorySessionStore : SessionStore {
+class InMemorySessionStore<T : Any>(
+    private val expiresAt: (T) -> Instant
+) : SessionStore<T> {
 
-    private val sessions = ConcurrentHashMap<String, UserSession>()
+    private val sessions = ConcurrentHashMap<String, T>()
 
-    override fun save(session: UserSession) {
-        sessions[session.gmToken] = session
+    override fun save(
+        token: String,
+        session: T
+    ) {
+        sessions[token] = session
     }
 
-    override fun findByToken(token: String): UserSession? {
+    override fun findByToken(token: String): T? {
         val session = sessions[token] ?: return null
 
-        return if (session.expiresAt.isAfter(Instant.now())) {
+        return if (expiresAt(session).isAfter(Instant.now())) {
             session
         } else {
             sessions.remove(token)

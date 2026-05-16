@@ -1,6 +1,5 @@
-package si.sensum.gm.logging
+package si.sensum.logging
 
-import si.sensum.logging.Logger
 import kotlin.system.measureTimeMillis
 
 suspend fun <T> loggedServiceCall(
@@ -9,14 +8,11 @@ suspend fun <T> loggedServiceCall(
     details: String? = null,
     block: suspend () -> T
 ): T {
-    val logPrefix = buildString {
-        append("[$service] $operation")
-
-        if (!details.isNullOrBlank()) {
-            append(" ")
-            append(details)
-        }
-    }
+    val logPrefix = buildServiceLogPrefix(
+        service = service,
+        operation = operation,
+        details = details
+    )
 
     Logger.log.info {
         "$logPrefix started"
@@ -33,16 +29,35 @@ suspend fun <T> loggedServiceCall(
     val finalResult = result
         ?: error("Service call result was not initialized")
 
-    return finalResult
+    finalResult
         .onSuccess {
             Logger.log.info {
                 "$logPrefix completed duration=${duration}ms"
             }
         }
         .onFailure { error ->
-            Logger.log.error {
+            Logger.log.warn {
                 "$logPrefix failed duration=${duration}ms message=${error.message ?: error::class.simpleName}"
             }
         }
-        .getOrThrow()
+
+    return finalResult.getOrThrow()
+}
+
+private fun buildServiceLogPrefix(
+    service: String,
+    operation: String,
+    details: String?
+): String {
+    return buildString {
+        append("[")
+        append(service)
+        append("] operation=")
+        append(operation)
+
+        if (!details.isNullOrBlank()) {
+            append(" ")
+            append(details)
+        }
+    }
 }
