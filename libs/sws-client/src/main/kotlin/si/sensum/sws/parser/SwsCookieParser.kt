@@ -3,32 +3,63 @@ package si.sensum.sws.parser
 import si.sensum.sws.SwsInvalidResponseException
 import si.sensum.sws.model.SwsSession
 
-internal fun extractSessionFromSetCookie(setCookieHeaders: List<String>): SwsSession {
-    val rawSetCookie = setCookieHeaders.firstOrNull { it.contains("=") }
-        ?: throw SwsInvalidResponseException(
-            "SWS login succeeded but no Set-Cookie header was returned"
-        )
+internal object SwsCookieParser {
 
-    val cookiePair = rawSetCookie.substringBefore(";").trim()
-    val separatorIndex = cookiePair.indexOf('=')
+    fun extractSessionFromSetCookie(
+        setCookieHeaders: List<String>
+    ): SwsSession {
+        val cookiePair = findCookiePair(setCookieHeaders)
+        val cookie = parseCookiePair(cookiePair)
 
-    if (separatorIndex <= 0) {
-        throw SwsInvalidResponseException(
-            "Invalid Set-Cookie header format returned by SWS"
-        )
-    }
-
-    val cookieName = cookiePair.substring(0, separatorIndex).trim()
-    val cookieValue = cookiePair.substring(separatorIndex + 1).trim()
-
-    if (cookieName.isBlank() || cookieValue.isBlank()) {
-        throw SwsInvalidResponseException(
-            "SWS returned empty cookie name or value"
+        return SwsSession(
+            cookieName = cookie.name,
+            cookieValue = cookie.value
         )
     }
 
-    return SwsSession(
-        cookieName = cookieName,
-        cookieValue = cookieValue
+    private fun findCookiePair(
+        setCookieHeaders: List<String>
+    ): String {
+        return setCookieHeaders
+            .asSequence()
+            .map { header -> header.substringBefore(";").trim() }
+            .firstOrNull { cookiePair -> cookiePair.isValidCookiePairCandidate() }
+            ?: throw SwsInvalidResponseException(
+                "SWS login succeeded but no valid Set-Cookie header was returned"
+            )
+    }
+
+    private fun String.isValidCookiePairCandidate(): Boolean {
+        val separatorIndex = indexOf('=')
+
+        return isNotBlank() &&
+                separatorIndex > 0 &&
+                separatorIndex < lastIndex
+    }
+
+    private fun parseCookiePair(cookiePair: String): SwsCookie {
+        val separatorIndex = cookiePair.indexOf('=')
+
+        val cookie = SwsCookie(
+            name = cookiePair.substring(0, separatorIndex).trim(),
+            value = cookiePair.substring(separatorIndex + 1).trim()
+        )
+
+        validateCookie(cookie)
+
+        return cookie
+    }
+
+    private fun validateCookie(cookie: SwsCookie) {
+        if (cookie.name.isBlank() || cookie.value.isBlank()) {
+            throw SwsInvalidResponseException(
+                "SWS returned empty cookie name or value"
+            )
+        }
+    }
+
+    private data class SwsCookie(
+        val name: String,
+        val value: String
     )
 }

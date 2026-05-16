@@ -32,10 +32,35 @@ internal class SwsSoapExecutor(
         operation: SwsSoapOperation,
         session: SwsSession? = null
     ): SwsSoapResponse {
-        log.info { "[SWS] ${operation.name} request -> $baseUrl" }
-        log.debug { "[SWS] ${operation.name} request envelopeLength=${operation.xmlEnvelope.length}" }
+        logRequest(operation)
 
-        val response: HttpResponse = try {
+        val httpResponse = sendRequest(
+            operation = operation,
+            session = session
+        )
+
+        val responseBody = readResponseBody(
+            operation = operation,
+            response = httpResponse
+        )
+
+        SwsSoapResponseValidator.validate(
+            status = httpResponse.status,
+            operationName = operation.name,
+            responseBody = responseBody
+        )
+
+        return SwsSoapResponse(
+            body = responseBody,
+            headers = httpResponse.headers
+        )
+    }
+
+    private suspend fun sendRequest(
+        operation: SwsSoapOperation,
+        session: SwsSession?
+    ): HttpResponse {
+        return try {
             httpClient.post(baseUrl) {
                 applySoapHeaders(
                     action = operation.action,
@@ -48,30 +73,43 @@ internal class SwsSoapExecutor(
 
                 setBody(operation.xmlEnvelope)
             }
-        } catch (e: HttpRequestTimeoutException) {
+        } catch (error: HttpRequestTimeoutException) {
             log.error {
-                "[SWS] ${operation.name} timed out url=$baseUrl message=${e.message}"
+                "[SWS] ${operation.name} timed out url=$baseUrl message=${error.message}"
             }
 
             throw SwsTimeoutException(
                 message = "SWS ${operation.name} timed out"
             )
         }
+    }
 
+    private suspend fun readResponseBody(
+        operation: SwsSoapOperation,
+        response: HttpResponse
+    ): String {
         val responseBody = response.bodyAsText()
 
+        logResponse(
+            operation = operation,
+            response = response,
+            responseBody = responseBody
+        )
+
+        return responseBody
+    }
+
+    private fun logRequest(operation: SwsSoapOperation) {
+        log.info { "[SWS] ${operation.name} request -> $baseUrl" }
+        log.debug { "[SWS] ${operation.name} request envelopeLength=${operation.xmlEnvelope.length}" }
+    }
+
+    private fun logResponse(
+        operation: SwsSoapOperation,
+        response: HttpResponse,
+        responseBody: String
+    ) {
         log.info { "[SWS] ${operation.name} response <- status=${response.status.value}" }
         log.debug { "[SWS] ${operation.name} response bodyLength=${responseBody.length}" }
-
-        SwsSoapResponseValidator.validate(
-            status = response.status,
-            operationName = operation.name
-        )
-
-        return SwsSoapResponse(
-            body = responseBody,
-            headers = response.headers,
-            statusCode = response.status.value
-        )
     }
 }

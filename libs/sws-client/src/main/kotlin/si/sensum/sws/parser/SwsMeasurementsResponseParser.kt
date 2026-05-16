@@ -2,69 +2,41 @@ package si.sensum.sws.parser
 
 import org.w3c.dom.Element
 import si.sensum.shared.models.api.measurements.MeasurementDto
-import java.io.ByteArrayInputStream
+import si.sensum.shared.models.datetime.ApiDateTime
+import si.sensum.sws.SwsInvalidResponseException
 import java.time.OffsetDateTime
-import javax.xml.parsers.DocumentBuilderFactory
-import java.time.LocalDateTime
-import java.time.ZoneOffset
-import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeParseException
 
 internal object SwsMeasurementsResponseParser {
 
     fun xmlToMeasurements(xml: String): List<MeasurementDto> {
-        val factory = DocumentBuilderFactory.newInstance()
-        factory.isNamespaceAware = false
-
-        val builder = factory.newDocumentBuilder()
-        val document = builder.parse(ByteArrayInputStream(xml.toByteArray(Charsets.UTF_8)))
-
-        val measurementNodes = document.getElementsByTagName("Measurements")
-        val result = mutableListOf<MeasurementDto>()
-
-        for (i in 0 until measurementNodes.length) {
-            val node = measurementNodes.item(i)
-
-            if (node is Element) {
-                val stationId = node.getTagValue("StationID")?.toLongOrNull() ?: continue
-                val channelId = node.getTagValue("ChannelID")?.toIntOrNull() ?: continue
-                val dateTimeString = node.getTagValue("DateTime") ?: continue
-                val dateTime = parseSwsDateTime(dateTimeString)
-                val value = node.getTagValue("Value")?.toDoubleOrNull() ?: continue
-                val status = node.getTagValue("Status")?.toIntOrNull() ?: continue
-
-                result.add(
-                    MeasurementDto(
-                        stationId = stationId,
-                        channelId = channelId,
-                        dateTime = dateTime,
-                        value = value,
-                        status = status
-                    )
-                )
-            }
-        }
-
-        return result
-    }
-
-    private fun Element.getTagValue(tagName: String): String? {
-        val nodes = this.getElementsByTagName(tagName)
-        if (nodes.length == 0) return null
-        return nodes.item(0)?.textContent?.trim()
-    }
-}
-
-private fun parseSwsDateTime(value: String): OffsetDateTime {
-    val text = value.trim()
-
-    return runCatching {
-        OffsetDateTime.parse(text)
-    }.getOrElse {
-        val localDateTime = LocalDateTime.parse(
-            text,
-            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+        val document = SwsXmlDocumentParser.parse(
+            xml = xml,
+            responseName = "measurements"
         )
 
-        localDateTime.atOffset(ZoneOffset.UTC)
+        return document
+            .elementsByTagName("Measurements")
+            .map(::parseMeasurement)
+    }
+
+    private fun parseMeasurement(element: Element): MeasurementDto {
+        return MeasurementDto(
+            stationId = element.requireLongTag("StationID"),
+            channelId = element.requireIntTag("ChannelID"),
+            dateTime = parseDateTime(element.requireTag("DateTime")),
+            value = element.requireDoubleTag("Value"),
+            status = element.requireIntTag("Status")
+        )
+    }
+
+    private fun parseDateTime(value: String): OffsetDateTime {
+        return try {
+            ApiDateTime.parseFlexibleOffset(value)
+        } catch (_: DateTimeParseException) {
+            throw SwsInvalidResponseException(
+                "Invalid SWS DateTime value: '$value'. Expected date-time with optional offset, for example ${ApiDateTime.OFFSET_EXAMPLE}, ${ApiDateTime.LOCAL_EXAMPLE} or ${ApiDateTime.SWS_LOCAL_EXAMPLE}"
+            )
+        }
     }
 }

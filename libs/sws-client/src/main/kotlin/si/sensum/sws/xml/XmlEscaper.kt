@@ -1,6 +1,6 @@
 package si.sensum.sws.xml
 
-object XmlEscaper {
+internal object XmlEscaper {
 
     fun escape(value: String): String {
         return value

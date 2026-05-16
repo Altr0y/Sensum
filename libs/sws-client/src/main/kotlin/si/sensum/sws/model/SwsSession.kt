@@ -5,6 +5,6 @@ data class SwsSession(
     val cookieValue: String
 )
 
-fun SwsSession.asCookieHeader(): String {
+internal fun SwsSession.asCookieHeader(): String {
     return "$cookieName=$cookieValue"
 }

@@ -2,7 +2,7 @@ package si.sensum.sws.xml
 
 import si.sensum.sws.model.SoapVersion
 
-object SoapEnvelopeBuilder {
+internal object SoapEnvelopeBuilder {
 
     private const val XML_SCHEMA_INSTANCE = "http://www.w3.org/2001/XMLSchema-instance"
     private const val XML_SCHEMA = "http://www.w3.org/2001/XMLSchema"
@@ -11,10 +11,7 @@ object SoapEnvelopeBuilder {
         bodyContent: String,
         soapVersion: SoapVersion = SoapVersion.SOAP_11
     ): String {
-        val prefix = when (soapVersion) {
-            SoapVersion.SOAP_11 -> "soap"
-            SoapVersion.SOAP_12 -> "soap12"
-        }
+        val prefix = soapVersion.envelopePrefix
 
         return """<?xml version="1.0" encoding="utf-8"?>
 <$prefix:Envelope

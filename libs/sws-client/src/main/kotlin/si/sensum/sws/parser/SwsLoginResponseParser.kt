@@ -2,22 +2,34 @@ package si.sensum.sws.parser
 
 import si.sensum.sws.SwsInvalidResponseException
 
-internal fun extractLoginResult(responseBody: String): Boolean {
-    val regex = Regex(
-        "<LoginResult>(.*?)</LoginResult>",
-        setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL)
-    )
+internal object SwsLoginResponseParser {
 
-    val match = regex.find(responseBody)
-        ?: throw SwsInvalidResponseException(
-            "SWS login response missing <LoginResult>"
+    fun extractLoginResult(responseBody: String): Boolean {
+        val document = SwsXmlDocumentParser.parse(
+            xml = responseBody,
+            responseName = "login"
         )
 
-    return when (match.groupValues[1].trim().lowercase()) {
-        "true" -> true
-        "false" -> false
-        else -> throw SwsInvalidResponseException(
-            "Invalid LoginResult value: ${match.groupValues[1].trim()}"
-        )
+        val value = document
+            .elementsByTagName("LoginResult")
+            .firstOrNull()
+            ?.textContent
+            ?.trim()
+            ?.takeIf { it.isNotBlank() }
+            ?: throw SwsInvalidResponseException(
+                "SWS login response missing <LoginResult>"
+            )
+
+        return parseLoginResult(value)
+    }
+
+    private fun parseLoginResult(value: String): Boolean {
+        return when (value.lowercase()) {
+            "true" -> true
+            "false" -> false
+            else -> throw SwsInvalidResponseException(
+                "Invalid LoginResult value: $value"
+            )
+        }
     }
 }

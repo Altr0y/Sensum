@@ -13,11 +13,21 @@ internal object SwsOperationFactory {
         soapVersion: SoapVersion = SoapVersion.SOAP_11,
         parameters: List<Pair<String, String>> = emptyList()
     ): SwsSoapOperation {
-        val body = buildMethodBody(
+        return createWithBody(
             methodName = methodName,
-            parameters = parameters
+            soapVersion = soapVersion,
+            body = buildMethodBody(
+                methodName = methodName,
+                parameters = parameters
+            )
         )
+    }
 
+    fun createWithBody(
+        methodName: String,
+        soapVersion: SoapVersion = SoapVersion.SOAP_11,
+        body: String
+    ): SwsSoapOperation {
         return SwsSoapOperation(
             name = methodName,
             action = "$SWS_NAMESPACE$methodName",
@@ -37,12 +47,18 @@ internal object SwsOperationFactory {
             return """<$methodName xmlns="$SWS_NAMESPACE" />"""
         }
 
-        val parameterXml = parameters.joinToString(separator = "\n") { (name, value) ->
+        return """
+            <$methodName xmlns="$SWS_NAMESPACE">
+${buildParametersXml(parameters)}
+            </$methodName>
+        """.trimIndent()
+    }
+
+    private fun buildParametersXml(
+        parameters: List<Pair<String, String>>
+    ): String {
+        return parameters.joinToString(separator = "\n") { (name, value) ->
             "    <$name>${XmlEscaper.escape(value)}</$name>"
         }
-
-        return """<$methodName xmlns="$SWS_NAMESPACE">
-$parameterXml
-</$methodName>"""
     }
 }

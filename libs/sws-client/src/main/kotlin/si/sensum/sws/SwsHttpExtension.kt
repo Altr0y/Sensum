@@ -4,18 +4,17 @@ import io.ktor.client.request.*
 import io.ktor.http.*
 import si.sensum.sws.model.SoapVersion
 
-fun HttpRequestBuilder.applySoapHeaders(
+internal fun HttpRequestBuilder.applySoapHeaders(
     action: String,
     soapVersion: SoapVersion
 ) {
-    when (soapVersion) {
-        SoapVersion.SOAP_11 -> {
-            contentType(ContentType.Text.Xml.withCharset(Charsets.UTF_8))
-            header("SOAPAction", "\"$action\"")
-        }
+    contentType(ContentType.parse("${soapVersion.contentType}; charset=utf-8"))
 
-        SoapVersion.SOAP_12 -> {
-            contentType(ContentType.parse("application/soap+xml; charset=utf-8"))
-        }
+    if (soapVersion.requiresSoapActionHeader()) {
+        header("SOAPAction", "\"$action\"")
     }
+}
+
+private fun SoapVersion.requiresSoapActionHeader(): Boolean {
+    return this == SoapVersion.SOAP_11
 }
