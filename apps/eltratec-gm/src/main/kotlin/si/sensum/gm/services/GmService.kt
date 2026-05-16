@@ -1,8 +1,8 @@
 package si.sensum.gm.services
 
-import si.sensum.gm.logging.loggedServiceCall
+import si.sensum.logging.loggedServiceCall
 
-abstract class GmService(
+internal abstract class GmService(
     private val serviceName: String
 ) {
     protected suspend fun <T> logged(

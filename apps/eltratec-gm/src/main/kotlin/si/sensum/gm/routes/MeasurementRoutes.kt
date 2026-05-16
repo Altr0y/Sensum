@@ -1,64 +1,112 @@
 package si.sensum.gm.routes
 
-import io.ktor.http.HttpStatusCode
-import io.ktor.server.application.*
-import io.ktor.server.request.receive
-import io.ktor.server.response.*
-import io.ktor.server.routing.*
-import si.sensum.gm.auth.resolveSwsSessionOrRespond
-import si.sensum.gm.model.MeasurementQuery
+import io.ktor.server.routing.Route
+import io.ktor.server.routing.get
+import io.ktor.server.routing.post
+import io.ktor.server.routing.route
 import si.sensum.gm.services.AuthService
 import si.sensum.gm.services.MeasurementService
-import si.sensum.shared.models.api.ApiErrorResponse
-import io.ktor.server.request.receive
-import si.sensum.shared.models.api.measurements.RefreshMeasurementsRequest
+import si.sensum.gm.validation.receiveMeasurementRangeQuery
+import si.sensum.gm.validation.receiveStationChannelPairsMeasurementRequest
+import si.sensum.gm.validation.requireIntPathParameter
+import si.sensum.gm.validation.requireLongPathParameter
 
-
-fun Route.measurementRoutes(
+internal fun Route.measurementRoutes(
     authService: AuthService,
     measurementService: MeasurementService
 ) {
-    get("/measurements") {
-        val swsSession = call.resolveSwsSessionOrRespond(authService) ?: return@get
-        val query = call.extractMeasurementQueryOrRespond() ?: return@get
+    route("/measurements") {
+        get {
+            call.gmRouteCall(authService) { session ->
+                val query = call.receiveMeasurementRangeQuery()
 
-        val measurements = measurementService.getMeasurements(
-            session = swsSession,
-            query = query
-        )
+                measurementService.getAllMeasurements(
+                    session = session,
+                    query = query
+                )
+            }
+        }
 
-        call.respond(measurements)
+        get("/detailed") {
+            call.gmRouteCall(authService) { session ->
+                val query = call.receiveMeasurementRangeQuery()
+
+                measurementService.getAllMeasurementsDetailed(
+                    session = session,
+                    query = query
+                )
+            }
+        }
+
+        post("/by-station-channel-pairs") {
+            call.gmRouteCall(authService) { session ->
+                val request = call.receiveStationChannelPairsMeasurementRequest()
+
+                measurementService.getMeasurementsByStationChannelPairs(
+                    session = session,
+                    request = request
+                )
+            }
+        }
     }
 
-    post("/measurements/by-station-channel-pairs") {
-        val session = call.resolveSwsSessionOrRespond(authService) ?: return@post
-        val request = call.receive<RefreshMeasurementsRequest>()
+    route("/stations/{stationId}/measurements") {
+        get {
+            call.gmRouteCall(authService) { session ->
+                val stationId = call.requireLongPathParameter("stationId")
+                val query = call.receiveMeasurementRangeQuery()
 
-        val measurements = measurementService.getMeasurementsByStationChannelPairs(
-            session = session,
-            request = request
-        )
+                measurementService.getStationMeasurements(
+                    session = session,
+                    stationId = stationId,
+                    query = query
+                )
+            }
+        }
 
-        call.respond(HttpStatusCode.OK, measurements)
+        get("/detailed") {
+            call.gmRouteCall(authService) { session ->
+                val stationId = call.requireLongPathParameter("stationId")
+                val query = call.receiveMeasurementRangeQuery()
+
+                measurementService.getStationMeasurementsDetailed(
+                    session = session,
+                    stationId = stationId,
+                    query = query
+                )
+            }
+        }
     }
-}
 
-private suspend fun ApplicationCall.extractMeasurementQueryOrRespond(): MeasurementQuery? {
-    val datetimeFrom = request.queryParameters["datetimeFrom"]
-    val datetimeTo = request.queryParameters["datetimeTo"]
+    route("/stations/{stationId}/channels/{channelId}/measurements") {
+        get {
+            call.gmRouteCall(authService) { session ->
+                val stationId = call.requireLongPathParameter("stationId")
+                val channelId = call.requireIntPathParameter("channelId")
+                val query = call.receiveMeasurementRangeQuery()
 
-    if (datetimeFrom.isNullOrBlank() || datetimeTo.isNullOrBlank()) {
-        respond(
-            HttpStatusCode.BadRequest,
-            ApiErrorResponse(
-                error = "Missing required query parameters: datetimeFrom, datetimeTo"
-            )
-        )
-        return null
+                measurementService.getChannelMeasurements(
+                    session = session,
+                    stationId = stationId,
+                    channelId = channelId,
+                    query = query
+                )
+            }
+        }
+
+        get("/detailed") {
+            call.gmRouteCall(authService) { session ->
+                val stationId = call.requireLongPathParameter("stationId")
+                val channelId = call.requireIntPathParameter("channelId")
+                val query = call.receiveMeasurementRangeQuery()
+
+                measurementService.getChannelMeasurementsDetailed(
+                    session = session,
+                    stationId = stationId,
+                    channelId = channelId,
+                    query = query
+                )
+            }
+        }
     }
-
-    return MeasurementQuery(
-        datetimeFrom = datetimeFrom,
-        datetimeTo = datetimeTo
-    )
 }

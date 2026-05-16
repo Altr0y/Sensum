@@ -1,22 +1,22 @@
 package si.sensum.gm.services
 
-import si.sensum.gm.model.MeasurementQuery
+import si.sensum.shared.models.api.measurements.MeasurementRangeQuery
 import si.sensum.shared.models.api.measurements.MeasurementDto
-import si.sensum.sws.SmartWebSoapClient
+import si.sensum.shared.models.api.measurements.MeasurementsByStationChannelPairsRequest
+import si.sensum.sws.client.SmartWebSoapClient
 import si.sensum.sws.model.SwsSession
-import si.sensum.shared.models.api.measurements.RefreshMeasurementsRequest
 
-class MeasurementService(
+internal class MeasurementService(
     private val soapClient: SmartWebSoapClient
 ) : GmService("GM MeasurementService") {
 
-    suspend fun getMeasurements(
+    suspend fun getAllMeasurements(
         session: SwsSession,
-        query: MeasurementQuery
+        query: MeasurementRangeQuery
     ): List<MeasurementDto> {
         return logged(
-            operation = "getMeasurements",
-            details = "from=${query.datetimeFrom}, to=${query.datetimeTo}"
+            operation = "getAllMeasurements",
+            details = query.details()
         ) {
             soapClient.getAllMeasurements(
                 session = session,
@@ -28,11 +28,11 @@ class MeasurementService(
 
     suspend fun getMeasurementsByStationChannelPairs(
         session: SwsSession,
-        request: RefreshMeasurementsRequest
+        request: MeasurementsByStationChannelPairsRequest
     ): List<MeasurementDto> {
         return logged(
             operation = "getMeasurementsByStationChannelPairs",
-            details = "pairs=${request.stationChannelPairs.size}, from=${request.datetimeFrom}, to=${request.datetimeTo}"
+            details = request.details()
         ) {
             soapClient.getMeasurementsByStationChannelPairs(
                 session = session,
@@ -41,5 +41,105 @@ class MeasurementService(
                 datetimeTo = request.datetimeTo
             )
         }
+    }
+
+    suspend fun getAllMeasurementsDetailed(
+        session: SwsSession,
+        query: MeasurementRangeQuery
+    ): List<MeasurementDto> {
+        return logged(
+            operation = "getAllMeasurementsDetailed",
+            details = query.details()
+        ) {
+            soapClient.getAllMeasurementsDetailed(
+                session = session,
+                datetimeFrom = query.datetimeFrom,
+                datetimeTo = query.datetimeTo
+            )
+        }
+    }
+
+    suspend fun getStationMeasurements(
+        session: SwsSession,
+        stationId: Long,
+        query: MeasurementRangeQuery
+    ): List<MeasurementDto> {
+        return logged(
+            operation = "getStationMeasurements",
+            details = "stationId=$stationId ${query.details()}"
+        ) {
+            soapClient.getStationMeasurements(
+                session = session,
+                stationId = stationId,
+                datetimeFrom = query.datetimeFrom,
+                datetimeTo = query.datetimeTo
+            )
+        }
+    }
+
+    suspend fun getStationMeasurementsDetailed(
+        session: SwsSession,
+        stationId: Long,
+        query: MeasurementRangeQuery
+    ): List<MeasurementDto> {
+        return logged(
+            operation = "getStationMeasurementsDetailed",
+            details = "stationId=$stationId ${query.details()}"
+        ) {
+            soapClient.getStationMeasurementsDetailed(
+                session = session,
+                stationId = stationId,
+                datetimeFrom = query.datetimeFrom,
+                datetimeTo = query.datetimeTo
+            )
+        }
+    }
+
+    suspend fun getChannelMeasurements(
+        session: SwsSession,
+        stationId: Long,
+        channelId: Int,
+        query: MeasurementRangeQuery
+    ): List<MeasurementDto> {
+        return logged(
+            operation = "getChannelMeasurements",
+            details = "stationId=$stationId channelId=$channelId ${query.details()}"
+        ) {
+            soapClient.getChannelMeasurements(
+                session = session,
+                stationId = stationId,
+                channelId = channelId,
+                datetimeFrom = query.datetimeFrom,
+                datetimeTo = query.datetimeTo
+            )
+        }
+    }
+
+    suspend fun getChannelMeasurementsDetailed(
+        session: SwsSession,
+        stationId: Long,
+        channelId: Int,
+        query: MeasurementRangeQuery
+    ): List<MeasurementDto> {
+        return logged(
+            operation = "getChannelMeasurementsDetailed",
+            details = "stationId=$stationId channelId=$channelId ${query.details()}"
+        ) {
+            soapClient.getChannelMeasurementsDetailed(
+                session = session,
+                stationId = stationId,
+                channelId = channelId,
+                datetimeFrom = query.datetimeFrom,
+                datetimeTo = query.datetimeTo
+            )
+        }
+    }
+
+    private fun MeasurementRangeQuery.details(): String {
+        return "from=$datetimeFrom to=$datetimeTo"
+    }
+
+    private fun MeasurementsByStationChannelPairsRequest.details(): String {
+        return "pairs=${stationChannelPairs.size} from=$datetimeFrom to=$datetimeTo"
     }
 }
