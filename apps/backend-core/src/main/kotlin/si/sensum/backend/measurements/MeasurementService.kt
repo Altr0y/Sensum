@@ -10,7 +10,6 @@ class MeasurementService(
     private val repository: MeasurementRepository = MeasurementRepository(),
     private val simulator: SimulatorService = SimulatorService()
 ) {
-
     fun getMeasurements(
         channelId: Int,
         from: LocalDateTime,
@@ -23,6 +22,12 @@ class MeasurementService(
         }
     }
 
+    fun regenerateMeasurements(from: LocalDateTime, to: LocalDateTime) {
+        repository.deleteByRange(from, to)
+        val generated = simulateAndInsert(from, to)
+        repository.batchInsert(generated)
+    }
+
     private fun getOrGenerateMeasurements(
         channelId: Int,
         from: LocalDateTime,
@@ -31,9 +36,13 @@ class MeasurementService(
         val existing = repository.findByChannelAndRange(channelId, from, to)
         if (existing.isNotEmpty()) return existing
 
-        val generated = simulator.generateMeasurements(from.toJava(), to.toJava())
+        val generated = simulateAndInsert(from, to)
+        repository.batchInsert(generated)
+        return generated.filter { it.channelId == channelId }
+    }
 
-        val toInsert = generated.map { m ->
+    private fun simulateAndInsert(from: LocalDateTime, to: LocalDateTime): List<Measurement> {
+        return simulator.generateMeasurements(from.toJava(), to.toJava()).map { m ->
             Measurement(
                 id = 0,
                 channelId = m.channelId,
@@ -42,10 +51,6 @@ class MeasurementService(
                 status = false
             )
         }
-
-        repository.batchInsert(toInsert)
-
-        return toInsert.filter { it.channelId == channelId }
     }
 
     private fun LocalDateTime.toJava(): JavaLocalDateTime =

@@ -8,6 +8,7 @@ import org.jetbrains.exposed.v1.core.greaterEq
 import org.jetbrains.exposed.v1.core.lessEq
 import org.jetbrains.exposed.v1.jdbc.batchInsert
 import org.jetbrains.exposed.v1.jdbc.selectAll
+import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import si.sensum.backend.database.DatabaseTransaction
 
 class MeasurementRepository {
@@ -55,5 +56,12 @@ class MeasurementRepository {
             value = row[MeasurementTable.value],
             status = row[MeasurementTable.status]
         )
+    }
+
+    fun deleteByRange(from: LocalDateTime, to: LocalDateTime): Unit = DatabaseTransaction.run {
+        MeasurementTable.deleteWhere {
+            (MeasurementTable.dateTime greaterEq from) and
+                    (MeasurementTable.dateTime lessEq to)
+        }
     }
 }

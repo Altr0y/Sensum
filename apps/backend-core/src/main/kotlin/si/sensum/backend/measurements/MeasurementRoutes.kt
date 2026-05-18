@@ -13,22 +13,30 @@ fun Route.measurementRoutes() {
             val channelId = call.request.queryParameters["channelId"]?.toIntOrNull()
                 ?: return@get call.respond(HttpStatusCode.BadRequest, "Missing or invalid channelId")
 
-            val fromStr = call.request.queryParameters["from"]
-                ?: return@get call.respond(HttpStatusCode.BadRequest, "Missing 'from' parameter")
+            val (from, to) = call.parseDateRange()
+                ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid or missing 'from'/'to' parameters, use ISO-8601 e.g. 2026-01-01T00:00:00")
 
-            val toStr = call.request.queryParameters["to"]
-                ?: return@get call.respond(HttpStatusCode.BadRequest, "Missing 'to' parameter")
+            call.respond(service.getMeasurements(channelId, from, to))
+        }
 
-            val from = runCatching { LocalDateTime.parse(fromStr) }.getOrElse {
-                return@get call.respond(HttpStatusCode.BadRequest, "Invalid 'from' format, use ISO-8601 e.g. 2026-01-01T00:00:00")
-            }
+        post("/regenerate") {
+            val (from, to) = call.parseDateRange()
+                ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid or missing 'from'/'to' parameters, use ISO-8601 e.g. 2026-01-01T00:00:00")
 
-            val to = runCatching { LocalDateTime.parse(toStr) }.getOrElse {
-                return@get call.respond(HttpStatusCode.BadRequest, "Invalid 'to' format, use ISO-8601 e.g. 2026-01-31T23:59:00")
-            }
-
-            val measurements = service.getMeasurements(channelId, from, to)
-            call.respond(measurements)
+            service.regenerateMeasurements(from, to)
+            call.respond(HttpStatusCode.OK, "Regenerated measurements from $from to $to")
         }
     }
+}
+
+private fun io.ktor.server.application.ApplicationCall.parseDateRange(): Pair<LocalDateTime, LocalDateTime>? {
+    val from = runCatching {
+        LocalDateTime.parse(request.queryParameters["from"] ?: return null)
+    }.getOrElse { return null }
+
+    val to = runCatching {
+        LocalDateTime.parse(request.queryParameters["to"] ?: return null)
+    }.getOrElse { return null }
+
+    return Pair(from, to)
 }
