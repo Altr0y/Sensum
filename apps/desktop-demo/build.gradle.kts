@@ -2,6 +2,7 @@ import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 
 plugins {
     kotlin("jvm")
+    kotlin("plugin.serialization")
     id("org.jetbrains.compose")
     id("org.jetbrains.kotlin.plugin.compose")
     id("org.jetbrains.compose.hot-reload")
@@ -29,6 +30,11 @@ dependencies {
     implementation("org.jetbrains.lets-plot:plot-raster:4.8.2")
     implementation("org.jetbrains.lets-plot:lets-plot-compose:3.0.2")
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.2")
+    implementation("io.ktor:ktor-client-core:3.4.2")
+    implementation("io.ktor:ktor-client-okhttp:3.4.2")
+    implementation("io.ktor:ktor-client-content-negotiation:3.4.2")
+    implementation("io.ktor:ktor-serialization-kotlinx-json:3.4.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 }
 
 kotlin {

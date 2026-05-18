@@ -34,8 +34,13 @@ class MeasurementService(
         to: LocalDateTime
     ): List<Measurement> {
         val existing = repository.findByChannelAndRange(channelId, from, to)
-        if (existing.isNotEmpty()) return existing
 
+        val expectedHours = java.time.Duration.between(from.toJava(), to.toJava()).toHours()
+        val actualCount = existing.size.toLong()
+
+        if (actualCount >= expectedHours) return existing
+
+        repository.deleteByRange(from, to)
         val generated = simulateAndInsert(from, to)
         repository.batchInsert(generated)
         return generated.filter { it.channelId == channelId }
@@ -51,6 +56,10 @@ class MeasurementService(
                 status = false
             )
         }
+    }
+
+    fun clearSimulated(from: LocalDateTime, to: LocalDateTime) {
+        repository.deleteByRange(from, to)
     }
 
     private fun LocalDateTime.toJava(): JavaLocalDateTime =
