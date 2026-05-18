@@ -121,7 +121,6 @@ class BackendMeasurementRepository(
         132 -> "PPI220 - globina vode-nivo [m]"
         133 -> "L8001H - globina vode-nivo [-]"
         134 -> "L8001H - Nivo [-]"
-        135 -> "L8001H - 4 [-]"
         else -> "Unknown ($channelId)"
     }
 }

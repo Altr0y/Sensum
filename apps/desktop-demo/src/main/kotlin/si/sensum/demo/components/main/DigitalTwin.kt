@@ -9,9 +9,12 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import org.jetbrains.letsPlot.compose.PlotPanel
 import org.jetbrains.letsPlot.geom.geomLine
+import org.jetbrains.letsPlot.gggrid
 import org.jetbrains.letsPlot.ggplot
+import org.jetbrains.letsPlot.intern.Plot
 import org.jetbrains.letsPlot.label.ggtitle
 import org.jetbrains.letsPlot.label.labs
+import org.jetbrains.letsPlot.themes.flavorDarcula
 import si.sensum.demo.components.DateTimePicker
 import si.sensum.demo.components.EmptyState
 import si.sensum.demo.components.theme.SensumThemeColors
@@ -22,9 +25,11 @@ import si.sensum.demo.repository.BackendMeasurementRepository
 import si.sensum.demo.resources.Res
 import si.sensum.demo.resources.digital_twin
 import java.time.LocalDateTime
+import org.jetbrains.letsPlot.themes.flavorStandard
+import si.sensum.demo.components.theme.LocalIsDarkTheme
 
 private const val STATION_ID = 2241
-private val ALL_CHANNELS = listOf(127, 128, 129, 130, 131, 132, 133, 134, 135)
+private val ALL_CHANNELS = listOf(127, 128, 129, 130, 131, 132, 133, 134)
 private val repository = BackendMeasurementRepository()
 
 @Composable
@@ -141,35 +146,42 @@ private fun DigitalTwinChart(
     measurements: List<Measurement>,
     modifier: Modifier = Modifier
 ) {
+    val isDark = LocalIsDarkTheme.current
     val sorted = measurements.sortedWith(
         compareBy<Measurement> { it.channelId }.thenBy { it.dateTime }
     )
 
-    val data = mapOf(
-        "time" to sorted.map { it.dateTime.toString() },
-        "value" to sorted.map { it.value },
-        "channel" to sorted.map { "${it.channelId} - ${it.channelName}" }
-    )
-
-    val plot = ggplot(data) {
-        x = "time"
-        y = "value"
-        color = "channel"
-        group = "channel"
-    } +
-            geomLine(size = 1.2) +
-            ggtitle("Digital Twin — simulated data") +
-            labs(x = "Time", y = "Value", color = "Channel")
-
-    Surface(
-        modifier = modifier,
-        color = MaterialTheme.colorScheme.surface,
-        shape = MaterialTheme.shapes.medium
-    ) {
-        PlotPanel(
-            figure = plot,
-            modifier = Modifier.fillMaxSize().padding(12.dp),
-            computationMessagesHandler = {}
+    fun buildPlot(title: String, channelIds: List<Int>): Plot {
+        val filtered = sorted.filter { it.channelId in channelIds }
+        val data = mapOf(
+            "time" to filtered.map { it.dateTime.toString() },
+            "value" to filtered.map { it.value },
+            "channel" to filtered.map { "${it.channelId} - ${it.channelName}" }
         )
+        return ggplot(data) {
+            x = "time"
+            y = "value"
+            color = "channel"
+            group = "channel"
+        } + geomLine(size = 1.0, alpha = 0.8) +
+                ggtitle(title) +
+                labs(x = "", y = "Vrednost", color = "Kanal") +
+                if (isDark) flavorDarcula() else flavorStandard()
     }
+
+    val grid = gggrid(
+        plots = listOf(
+            buildPlot("Temperatura [°C]", listOf(131)),
+            buildPlot("Globina vode [m]", listOf(127, 132, 133)),
+            buildPlot("Višina / Nivo [m]", listOf(128, 130, 134)),
+            buildPlot("Globina vodnjaka [m]", listOf(129))
+        ),
+        ncol = 2
+    ) + if (isDark) flavorDarcula() else flavorStandard()
+
+    PlotPanel(
+        figure = grid,
+        modifier = modifier.padding(12.dp),
+        computationMessagesHandler = {}
+    )
 }
