@@ -156,6 +156,35 @@ fun DigitalTwin() {
                 Text("Generiraj", color = SensumThemeColors.onAccent)
             }
 
+            Button(
+                onClick = {
+                    datetimeFrom = LocalDateTime.of(2026, 1, 1, 0, 0)
+                    datetimeTo = LocalDateTime.of(2026, 12, 31, 23, 0)
+                    scope.launch {
+                        isLoading = true
+                        statusMsg = ""
+                        val pairs = ALL_CHANNELS.map { StationChannelPair(STATION_ID, it) }
+                        repository.regenerateAndGet(
+                            MeasurementRequest(pairs, LocalDateTime.of(2026, 1, 1, 0, 0), LocalDateTime.of(2026, 12, 31, 23, 0))
+                        ).fold(
+                            onSuccess = {
+                                measurements = it
+                                hasLoaded = true
+                                statusMsg = "Loaded ${it.size} measurements."
+                            },
+                            onFailure = {
+                                statusMsg = "Error: ${it.message}"
+                            }
+                        )
+                        isLoading = false
+                    }
+                },
+                enabled = !isLoading,
+                colors = ButtonDefaults.buttonColors(containerColor = SensumThemeColors.info)
+            ) {
+                Text("Whole Year", color = SensumThemeColors.onAccent)
+            }
+
             if (!isLive) {
                 Button(
                     onClick = {
