@@ -1,0 +1,296 @@
+{
+  "station_id": 2241,
+  "station_name": "Radar test",
+  "real_data_range": {
+    "from": "2026-01-01T00:00:00",
+    "to": "2026-02-01T23:59:00"
+  },
+  "measurement_interval_minutes": 60,
+  "correlation_groups": {
+    "globina": {
+      "channels": [127, 132, 133]
+    },
+    "visina": {
+      "channels": [128, 130, 134]
+    },
+    "inverse_pair": {
+      "group_a": "globina",
+      "group_b": "visina",
+      "direction": "inverse"
+    }
+  },
+  "channels": [
+    {
+      "channel_id": 127,
+      "name": "L8001H - globina voda-radar",
+      "unit": "m",
+      "generator_type": "random_walk",
+      "resolution": 0.0001,
+      "mean": 2.9885,
+      "std": 0.0526,
+      "min_absolute": 2.8315,
+      "max_absolute": 3.1525,
+      "percentiles": { "p5": 2.8485, "p25": 2.9725, "p75": 3.0295, "p95": 3.0405 },
+      "hourly_profile": [
+        2.9855, 2.9857, 2.9864, 2.9867, 2.9861, 2.9879,
+        2.9905, 2.9916, 2.9921, 2.9903, 2.9946, 2.9922,
+        2.9895, 2.9890, 2.9878, 2.9892, 2.9880, 2.9898,
+        2.9917, 2.9891, 2.9866, 2.9880, 2.9849, 2.9810
+      ],
+      "weekly_profile": {
+        "monday": 3.0094, "tuesday": 3.0015, "wednesday": 2.9952,
+        "thursday": 2.9863, "friday": 2.9828, "saturday": 2.9754, "sunday": 2.9758
+      },
+      "seasonal_monthly_offsets": {
+        "january": 0.000, "february": 0.015, "march": 0.045, "april": 0.080,
+        "may": 0.060, "june": 0.020, "july": -0.020, "august": -0.030,
+        "september": -0.010, "october": 0.010, "november": 0.030, "december": 0.015
+      },
+      "outlier_rate": 0.0905,
+      "autocorr_lag1": 0.9988,
+      "correlation_group": "globina",
+      "correlation_role": "primary"
+    },
+    {
+      "channel_id": 128,
+      "name": "L8001H - višina vode",
+      "unit": "m",
+      "generator_type": "random_walk",
+      "resolution": 0.0001,
+      "mean": 1.6139,
+      "std": 0.0531,
+      "min_absolute": 1.5510,
+      "max_absolute": 1.7710,
+      "percentiles": { "p5": 1.5620, "p25": 1.5720, "p75": 1.6310, "p95": 1.7540 },
+      "hourly_profile": [
+        1.6166, 1.6161, 1.6159, 1.6151, 1.6166, 1.6149,
+        1.6128, 1.6111, 1.6107, 1.6122, 1.6079, 1.6106,
+        1.6127, 1.6138, 1.6155, 1.6126, 1.6143, 1.6128,
+        1.6102, 1.6133, 1.6153, 1.6147, 1.6169, 1.6219
+      ],
+      "weekly_profile": {
+        "monday": 1.5922, "tuesday": 1.6004, "wednesday": 1.6074,
+        "thursday": 1.6162, "friday": 1.6204, "saturday": 1.6271, "sunday": 1.6263
+      },
+      "seasonal_monthly_offsets": {
+        "january": 0.000, "february": -0.015, "march": -0.045, "april": -0.080,
+        "may": -0.060, "june": -0.020, "july": 0.020, "august": 0.030,
+        "september": 0.010, "october": -0.010, "november": -0.030, "december": -0.015
+      },
+      "outlier_rate": 0.0898,
+      "outlier_side": "upper",
+      "autocorr_lag1": 0.9993,
+      "correlation_group": "visina",
+      "correlation_role": "primary"
+    },
+    {
+      "channel_id": 129,
+      "name": "L8001H - globina vodnjaka (PPI220)",
+      "unit": "m",
+      "generator_type": "constant",
+      "constant_value": 4.5200,
+      "note": "Signal je konstanten skozi cel mesec januar. Preveriti pri Eltratec ali je kanal aktiven.",
+      "outlier_rate": 0.0,
+      "autocorr_lag1": null,
+      "correlation_group": null
+    },
+    {
+      "channel_id": 130,
+      "name": "PPI220 - Nivo",
+      "unit": "m",
+      "generator_type": "random_walk",
+      "resolution": 0.01,
+      "mean": 1.6159,
+      "std": 0.0520,
+      "min_absolute": 1.5600,
+      "max_absolute": 1.7700,
+      "percentiles": { "p5": 1.5600, "p25": 1.5800, "p75": 1.6300, "p95": 1.7500 },
+      "hourly_profile": [
+        1.6150, 1.6153, 1.6144, 1.6146, 1.6154, 1.6155,
+        1.6160, 1.6145, 1.6145, 1.6159, 1.6114, 1.6136,
+        1.6167, 1.6169, 1.6185, 1.6168, 1.6185, 1.6164,
+        1.6142, 1.6168, 1.6188, 1.6171, 1.6160, 1.6198
+      ],
+      "weekly_profile": {
+        "monday": 1.5949, "tuesday": 1.6031, "wednesday": 1.6094,
+        "thursday": 1.6186, "friday": 1.6221, "saturday": 1.6295, "sunday": 1.6271
+      },
+      "seasonal_monthly_offsets": {
+        "january": 0.000, "february": -0.015, "march": -0.045, "april": -0.080,
+        "may": -0.060, "june": -0.020, "july": 0.020, "august": 0.030,
+        "september": 0.010, "october": -0.010, "november": -0.030, "december": -0.015
+      },
+      "outlier_rate": 0.0973,
+      "outlier_side": "upper",
+      "autocorr_lag1": 0.9996,
+      "correlation_group": "visina",
+      "correlation_role": "secondary",
+      "correlation_noise_std": 0.002
+    },
+    {
+      "channel_id": 131,
+      "name": "PPI220 - Temperatura",
+      "unit": "°C",
+      "generator_type": "random_walk",
+      "resolution": 0.1,
+      "mean": 10.5746,
+      "std": 0.3874,
+      "min_absolute": 10.1,
+      "max_absolute": 11.4,
+      "percentiles": { "p5": 10.20, "p25": 10.20, "p75": 10.80, "p95": 11.30 },
+      "hourly_profile": [
+        10.6065, 10.6050, 10.5925, 10.6018, 10.6008, 10.6065,
+        10.5862, 10.5748, 10.5943, 10.5764, 10.5838, 10.5712,
+        10.5664, 10.5598, 10.5428, 10.5350, 10.5685, 10.5548,
+        10.5597, 10.5414, 10.5356, 10.5645, 10.5684, 10.5724
+      ],
+      "weekly_profile": {
+        "monday": 10.5957, "tuesday": 10.5733, "wednesday": 10.5149,
+        "thursday": 10.6311, "friday": 10.5876, "saturday": 10.5522, "sunday": 10.5587
+      },
+      "seasonal_monthly_offsets": {
+        "january": 0.00, "february": 0.30, "march": 1.20, "april": 2.80,
+        "may": 4.50, "june": 6.20, "july": 7.00, "august": 6.80,
+        "september": 5.00, "october": 3.00, "november": 1.50, "december": 0.50
+      },
+      "outlier_rate": 0.0,
+      "autocorr_lag1": 0.9975,
+      "autocorr_lag1440": 0.9881,
+      "correlation_group": null,
+      "note": "Izrazit mesečni padajoč trend v januarju (~1.1°C/mesec). Za letno simulacijo uporabi seasonal_monthly_offsets kot sinusoido."
+    },
+    {
+      "channel_id": 132,
+      "name": "PPI220 - globina vode-nivo",
+      "unit": "m",
+      "generator_type": "random_walk",
+      "resolution": 0.01,
+      "mean": 2.9841,
+      "std": 0.0520,
+      "min_absolute": 2.8300,
+      "max_absolute": 3.0400,
+      "percentiles": { "p5": 2.8500, "p25": 2.9700, "p75": 3.0200, "p95": 3.0400 },
+      "hourly_profile": [
+        2.9850, 2.9847, 2.9856, 2.9854, 2.9845, 2.9846,
+        2.9840, 2.9856, 2.9855, 2.9840, 2.9886, 2.9864,
+        2.9833, 2.9831, 2.9814, 2.9830, 2.9815, 2.9837,
+        2.9858, 2.9831, 2.9811, 2.9829, 2.9841, 2.9802
+      ],
+      "weekly_profile": {
+        "monday": 3.0051, "tuesday": 2.9969, "wednesday": 2.9906,
+        "thursday": 2.9815, "friday": 2.9780, "saturday": 2.9704, "sunday": 2.9728
+      },
+      "seasonal_monthly_offsets": {
+        "january": 0.000, "february": 0.015, "march": 0.045, "april": 0.080,
+        "may": 0.060, "june": 0.020, "july": -0.020, "august": -0.030,
+        "september": -0.010, "october": 0.010, "november": 0.030, "december": 0.015
+      },
+      "outlier_rate": 0.0973,
+      "outlier_side": "lower",
+      "autocorr_lag1": 0.9996,
+      "correlation_group": "globina",
+      "correlation_role": "secondary",
+      "correlation_noise_std": 0.002
+    },
+    {
+      "channel_id": 133,
+      "name": "L8001H - globina vode-nivo",
+      "unit": "m",
+      "note_unit": "Enota v sistemu je [-] — verjetno konfiguracijska napaka, vrednosti so v metrih",
+      "generator_type": "random_walk",
+      "resolution": 0.01,
+      "mean": 2.9911,
+      "std": 0.0526,
+      "min_absolute": 2.8300,
+      "max_absolute": 3.0500,
+      "percentiles": { "p5": 2.8500, "p25": 2.9700, "p75": 3.0300, "p95": 3.0400 },
+      "hourly_profile": [
+        2.9882, 2.9888, 2.9898, 2.9897, 2.9897, 2.9908,
+        2.9924, 2.9941, 2.9947, 2.9928, 2.9969, 2.9946,
+        2.9917, 2.9915, 2.9898, 2.9917, 2.9903, 2.9923,
+        2.9946, 2.9918, 2.9892, 2.9906, 2.9869, 2.9841
+      ],
+      "weekly_profile": {
+        "monday": 3.0125, "tuesday": 3.0042, "wednesday": 2.9977,
+        "thursday": 2.9884, "friday": 2.9854, "saturday": 2.9779, "sunday": 2.9785
+      },
+      "seasonal_monthly_offsets": {
+        "january": 0.000, "february": 0.015, "march": 0.045, "april": 0.080,
+        "may": 0.060, "june": 0.020, "july": -0.020, "august": -0.030,
+        "september": -0.010, "october": 0.010, "november": 0.030, "december": 0.015
+      },
+      "outlier_rate": 0.0874,
+      "outlier_side": "lower",
+      "autocorr_lag1": 0.9982,
+      "correlation_group": "globina",
+      "correlation_role": "tertiary",
+      "correlation_noise_std": 0.003
+    },
+    {
+      "channel_id": 134,
+      "name": "L8001H - Nivo",
+      "unit": "m",
+      "note_unit": "Enota v sistemu je [-] — verjetno konfiguracijska napaka, vrednosti so v metrih",
+      "generator_type": "random_walk",
+      "resolution": 0.005,
+      "mean": 1.6127,
+      "std": 0.0513,
+      "min_absolute": 1.5550,
+      "max_absolute": 1.7750,
+      "percentiles": { "p5": 1.5650, "p25": 1.5750, "p75": 1.6350, "p95": 1.7550 },
+      "hourly_profile": [
+        1.6160, 1.6151, 1.6144, 1.6145, 1.6145, 1.6135,
+        1.6116, 1.6095, 1.6097, 1.6107, 1.6068, 1.6096,
+        1.6121, 1.6125, 1.6140, 1.6118, 1.6134, 1.6109,
+        1.6094, 1.6123, 1.6139, 1.6129, 1.6171, 1.6200
+      ],
+      "weekly_profile": {
+        "monday": 1.5928, "tuesday": 1.6009, "wednesday": 1.6068,
+        "thursday": 1.6154, "friday": 1.6182, "saturday": 1.6250, "sunday": 1.6243
+      },
+      "seasonal_monthly_offsets": {
+        "january": 0.000, "february": -0.015, "march": -0.045, "april": -0.080,
+        "may": -0.060, "june": -0.020, "july": 0.020, "august": 0.030,
+        "september": 0.010, "october": -0.010, "november": -0.030, "december": -0.015
+      },
+      "outlier_rate": 0.0705,
+      "outlier_side": "upper",
+      "autocorr_lag1": 0.9981,
+      "correlation_group": "visina",
+      "correlation_role": "tertiary",
+      "correlation_noise_std": 0.003
+    },
+    {
+      "channel_id": 135,
+      "name": "L8001H - 4",
+      "unit": "unknown",
+      "note": "Ime in enota neznana — preveriti pri Eltratec. Glede na dnevni vzorec verjetno pretok ali izvedena veličina.",
+      "generator_type": "random_walk",
+      "resolution": 0.01,
+      "mean": 0.2171,
+      "std": 0.0446,
+      "min_absolute": 0.0000,
+      "max_absolute": 0.3200,
+      "percentiles": { "p5": 0.1400, "p25": 0.1900, "p75": 0.2500, "p95": 0.2800 },
+      "hourly_profile": [
+        0.2042, 0.2025, 0.2020, 0.2013, 0.2030, 0.2109,
+        0.2219, 0.2232, 0.2226, 0.2254, 0.2227, 0.2240,
+        0.2228, 0.2230, 0.2245, 0.2188, 0.2225, 0.2237,
+        0.2227, 0.2233, 0.2215, 0.2222, 0.2169, 0.2079
+      ],
+      "weekly_profile": {
+        "monday": 0.2173, "tuesday": 0.2190, "wednesday": 0.2178,
+        "thursday": 0.2157, "friday": 0.2172, "saturday": 0.2167, "sunday": 0.2165
+      },
+      "seasonal_monthly_offsets": {
+        "january": 0.000, "february": 0.005, "march": 0.010, "april": 0.015,
+        "may": 0.010, "june": 0.005, "july": 0.000, "august": -0.005,
+        "september": -0.005, "october": 0.000, "november": 0.005, "december": 0.000
+      },
+      "outlier_rate": 0.0089,
+      "outlier_side": "lower",
+      "autocorr_lag1": 0.0785,
+      "correlation_group": null
+    }
+  ]
+}
