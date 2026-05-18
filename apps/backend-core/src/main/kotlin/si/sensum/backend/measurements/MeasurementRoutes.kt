@@ -14,17 +14,31 @@ fun Route.measurementRoutes() {
                 ?: return@get call.respond(HttpStatusCode.BadRequest, "Missing or invalid channelId")
 
             val (from, to) = call.parseDateRange()
-                ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid or missing 'from'/'to' parameters, use ISO-8601 e.g. 2026-01-01T00:00:00")
+                ?: return@get call.respond(
+                    HttpStatusCode.BadRequest,
+                    "Invalid or missing 'from'/'to' parameters, use ISO-8601 e.g. 2026-01-01T00:00:00"
+                )
 
             call.respond(service.getMeasurements(channelId, from, to))
         }
 
         post("/regenerate") {
             val (from, to) = call.parseDateRange()
-                ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid or missing 'from'/'to' parameters, use ISO-8601 e.g. 2026-01-01T00:00:00")
+                ?: return@post call.respond(
+                    HttpStatusCode.BadRequest,
+                    "Invalid or missing 'from'/'to' parameters, use ISO-8601 e.g. 2026-01-01T00:00:00"
+                )
 
             service.regenerateMeasurements(from, to)
             call.respond(HttpStatusCode.OK, "Regenerated measurements from $from to $to")
+        }
+
+        post("/clear") {
+            val (from, to) = call.parseDateRange()
+                ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid or missing 'from'/'to' parameters")
+
+            service.clearSimulated(from, to)
+            call.respond(HttpStatusCode.OK, "Cleared measurements from $from to $to")
         }
     }
 }

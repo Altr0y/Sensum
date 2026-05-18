@@ -12,11 +12,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
-import si.sensum.demo.components.theme.SensumColors
 import si.sensum.demo.components.theme.SensumThemeColors
 import si.sensum.demo.resources.*
 
-enum class SideBarTab { DATA_LOADER, DATABASE_PANEL, MEASUREMENT_CHART, USER, INFO }
+enum class SideBarTab { DATA_LOADER, DATABASE_PANEL, MEASUREMENT_CHART, DIGITAL_TWIN, USER, INFO }
 
 @Composable
 fun SideBar(
@@ -59,6 +58,14 @@ fun SideBar(
                     active = activeTab == SideBarTab.MEASUREMENT_CHART,
                     expanded = expanded,
                     onClick = { onTabSelected(SideBarTab.MEASUREMENT_CHART) }
+                )
+
+                NavItem(
+                    icon = Res.drawable.digital_twin,
+                    label = "Digital Twin",
+                    active = activeTab == SideBarTab.DIGITAL_TWIN,
+                    expanded = expanded,
+                    onClick = { onTabSelected(SideBarTab.DIGITAL_TWIN) }
                 )
             }
 

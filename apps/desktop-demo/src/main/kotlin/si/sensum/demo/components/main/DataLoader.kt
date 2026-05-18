@@ -10,12 +10,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import si.sensum.demo.components.DateTimePicker
-import si.sensum.demo.components.theme.SensumColors
 import si.sensum.demo.components.theme.SensumThemeColors
 import si.sensum.demo.model.Measurement
 import si.sensum.demo.model.MeasurementRequest
 import si.sensum.demo.model.StationChannelPair
-import si.sensum.demo.repository.MockMeasurementRepository
+import si.sensum.demo.repository.SwsMeasurementRepository
 import java.time.LocalDateTime
 
 private const val STATION_ID = 2241
@@ -30,7 +29,7 @@ private val CHANNELS = mapOf(
     134 to "L8001H - Nivo [-]",
     135 to "L8001H - 4 [-]"
 )
-private val repository = MockMeasurementRepository()
+private val repository = SwsMeasurementRepository()
 
 @Composable
 fun DataLoader(onMeasurementsLoaded: (List<Measurement>) -> Unit = {}) {
