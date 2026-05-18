@@ -26,6 +26,7 @@ dependencies {
     implementation("org.jetbrains.exposed:exposed-kotlin-datetime:1.2.0")
     implementation(project(":libs:shared-models"))
     implementation(project(":libs:logging"))
+    implementation(project(":libs:simulator"))
 
     testImplementation(kotlin("test"))
     testImplementation("io.ktor:ktor-server-test-host:3.4.2")

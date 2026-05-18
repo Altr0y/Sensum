@@ -14,6 +14,7 @@ import org.slf4j.event.Level
 import si.sensum.logging.Logger
 import si.sensum.shared.models.api.HealthResponse
 import si.sensum.backend.database.configureDatabases
+import si.sensum.backend.measurements.measurementRoutes
 import java.util.UUID
 
 object ApiInfo {
@@ -85,5 +86,6 @@ private fun Application.configureRoutes() {
                 )
             )
         }
+        measurementRoutes()
     }
 }
