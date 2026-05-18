@@ -27,10 +27,22 @@ import si.sensum.demo.resources.digital_twin
 import java.time.LocalDateTime
 import org.jetbrains.letsPlot.themes.flavorStandard
 import si.sensum.demo.components.theme.LocalIsDarkTheme
+import kotlinx.coroutines.delay
+import si.sensum.simulator.SimulatorService
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Stop
+
 
 private const val STATION_ID = 2241
 private val ALL_CHANNELS = listOf(127, 128, 129, 130, 131, 132, 133, 134)
 private val repository = BackendMeasurementRepository()
+
+private val simulatorService = SimulatorService()
 
 @Composable
 fun DigitalTwin() {
@@ -42,6 +54,46 @@ fun DigitalTwin() {
     var isLoading by remember { mutableStateOf(false) }
     var statusMsg by remember { mutableStateOf("") }
     var hasLoaded by remember { mutableStateOf(false) }
+    var isLive by remember { mutableStateOf(false) }
+    var liveMeasurements by remember { mutableStateOf<List<Measurement>>(emptyList()) }
+    var liveCurrentTime by remember { mutableStateOf<java.time.LocalDateTime?>(null) }
+    var isPaused by remember { mutableStateOf(false) }
+
+    LaunchedEffect(isLive) {
+        if (!isLive) return@LaunchedEffect
+
+        liveMeasurements = emptyList()
+        var current = datetimeFrom
+
+        while (isLive && current.isBefore(datetimeTo)) {
+            if (!isPaused) {
+                val next = current.plusHours(1)
+                val generated = simulatorService.generateMeasurements(
+                    current.atOffset(ZoneOffset.UTC).toLocalDateTime(),
+                    next.atOffset(ZoneOffset.UTC).toLocalDateTime()
+                )
+                val newMeasurements = generated.map { m ->
+                    Measurement(
+                        id = null,
+                        stationId = STATION_ID,
+                        stationName = "Radar test",
+                        channelId = m.channelId,
+                        channelName = channelName(m.channelId),
+                        dateTime = m.dateTime,
+                        value = m.value.toDouble(),
+                        status = 0
+                    )
+                }
+                liveMeasurements = liveMeasurements + newMeasurements
+                liveCurrentTime = next
+                current = next
+            }
+            delay(1000L)
+        }
+
+        isLive = false
+        isPaused = false
+    }
 
     Column(
         modifier = Modifier
@@ -104,6 +156,73 @@ fun DigitalTwin() {
                 Text("Generiraj", color = SensumThemeColors.onAccent)
             }
 
+            if (!isLive) {
+                Button(
+                    onClick = {
+                        if (!datetimeFrom.isBefore(datetimeTo)) {
+                            statusMsg = "Error: 'From' has to be after 'To'."
+                            return@Button
+                        }
+                        isPaused = false
+                        isLive = true
+                    },
+                    enabled = !isLoading,
+                    colors = ButtonDefaults.buttonColors(containerColor = SensumThemeColors.success)
+                ) {
+                    Text("Live", color = SensumThemeColors.onAccent)
+                }
+            } else {
+                // Pause / Resume
+                Button(
+                    onClick = { isPaused = !isPaused },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (isPaused) SensumThemeColors.success else SensumThemeColors.info
+                    )
+                ) {
+                    Icon(
+                        imageVector = if (isPaused) Icons.Default.PlayArrow else Icons.Default.Pause,
+                        contentDescription = if (isPaused) "Resume" else "Pause",
+                        modifier = Modifier.size(25.dp)
+                    )
+                }
+
+                // Stop
+                Button(
+                    onClick = {
+                        isLive = false
+                        isPaused = false
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = SensumThemeColors.error)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Stop,
+                        contentDescription = "Stop",
+                        modifier = Modifier.size(25.dp)
+                    )
+                }
+
+                // Reset
+                Button(
+                    onClick = {
+                        liveMeasurements = emptyList()
+                        liveCurrentTime = null
+                        isPaused = false
+                        isLive = false
+                        scope.launch {
+                            delay(100L)
+                            isLive = true
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = SensumThemeColors.muted)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Refresh,
+                        contentDescription = "Reset",
+                        modifier = Modifier.size(25.dp)
+                    )
+                }
+            }
+
             if (isLoading) CircularProgressIndicator(
                 modifier = Modifier.size(20.dp),
                 color = SensumThemeColors.accent,
@@ -120,7 +239,19 @@ fun DigitalTwin() {
 
         HorizontalDivider(color = SensumThemeColors.border)
 
-        if (!hasLoaded) {
+        if (isLive && liveMeasurements.isNotEmpty()) {
+            liveCurrentTime?.let {
+                Text(
+                    "${if (isPaused) "⏸ Paused" else "▶ Live"}: ${it.format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm"))} — vsaka sekunda = 1 ura",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (isPaused) SensumThemeColors.warning else SensumThemeColors.success
+                )
+            }
+            DigitalTwinChart(
+                measurements = liveMeasurements,
+                modifier = Modifier.fillMaxSize()
+            )
+        } else if (!hasLoaded) {
             EmptyState(
                 icon = Res.drawable.digital_twin,
                 title = "No data",
@@ -184,4 +315,16 @@ private fun DigitalTwinChart(
         modifier = modifier.padding(12.dp),
         computationMessagesHandler = {}
     )
+}
+
+private fun channelName(channelId: Int): String = when (channelId) {
+    127 -> "L8001H - globina voda-radar [m]"
+    128 -> "L8001H - višina vode [m]"
+    129 -> "L8001H - globina vodnjaka (PPI220) [m]"
+    130 -> "PPI220 - Nivo [m]"
+    131 -> "PPI220 - Temperatura [°C]"
+    132 -> "PPI220 - globina vode-nivo [m]"
+    133 -> "L8001H - globina vode-nivo [-]"
+    134 -> "L8001H - Nivo [-]"
+    else -> "Unknown ($channelId)"
 }

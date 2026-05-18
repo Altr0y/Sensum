@@ -14,10 +14,12 @@ version = "1.0-SNAPSHOT"
 dependencies {
     implementation(compose.desktop.currentOs)
     implementation(compose.material3)
+    implementation(compose.materialIconsExtended)
     implementation(compose.components.resources)
 
     implementation(project(":libs:data-transform"))
     implementation(project(":libs:shared-models"))
+    implementation(project(":libs:simulator"))
 
     implementation("org.json:json:20240303")
     implementation("org.postgresql:postgresql:42.7.3")
