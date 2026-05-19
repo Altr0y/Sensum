@@ -1,8 +1,13 @@
+"use client"
+
 export default function MonitoringPage() {
     return (
-        <div>
-            <h1 className="text-2xl font-bold text-[#D4D4D4]">Monitoring</h1>
-            <p className="text-[#7A7E82] mt-2">Grafana dashboard bo tukaj.</p>
+        <div className="-m-6 h-[calc(100vh-3.5rem)]">
+            <iframe
+                src="http://localhost:3000/d/adv7vjj/sensum-digital-twin?orgId=1&kiosk&theme=dark"
+                className="w-full h-full border-0"
+                title="Sensum Digital Twin Dashboard"
+            />
         </div>
     )
 }
