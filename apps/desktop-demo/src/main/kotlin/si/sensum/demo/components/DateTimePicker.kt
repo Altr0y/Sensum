@@ -142,7 +142,7 @@ fun DateTimePicker(
                             Row(modifier = Modifier.fillMaxWidth()) {
                                 for (col in 0..6) {
                                     val dayNum = row * 7 + col - firstDayOfWeek + 1
-                                    if (dayNum < 1 || dayNum > daysInMonth) {
+                                    if (dayNum !in 1..daysInMonth) {
                                         Spacer(Modifier.weight(1f).aspectRatio(1f))
                                     } else {
                                         val date = displayMonth.atDay(dayNum)
@@ -184,36 +184,16 @@ fun DateTimePicker(
                                 tint = SensumThemeColors.muted,
                                 modifier = Modifier.size(20.dp)
                             )
-                            BasicTextField(
+                            TimeNumberField(
                                 value = hourText,
-                                onValueChange = {
-                                    if (it.length <= 2 && it.all { c -> c.isDigit() }) hourText = it
-                                },
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .border(1.dp, SensumThemeColors.accent, RoundedCornerShape(6.dp))
-                                    .padding(10.dp),
-                                singleLine = true,
-                                textStyle = MaterialTheme.typography.bodyLarge.copy(
-                                    textAlign = TextAlign.Center,
-                                    color = SensumThemeColors.onSurface
-                                )
+                                onValueChange = { hourText = it },
+                                isFocused = true
                             )
                             Text(":", style = MaterialTheme.typography.titleLarge, color = SensumThemeColors.muted)
-                            BasicTextField(
+                            TimeNumberField(
                                 value = minuteText,
-                                onValueChange = {
-                                    if (it.length <= 2 && it.all { c -> c.isDigit() }) minuteText = it
-                                },
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .border(1.dp, SensumThemeColors.border, RoundedCornerShape(6.dp))
-                                    .padding(10.dp),
-                                singleLine = true,
-                                textStyle = MaterialTheme.typography.bodyLarge.copy(
-                                    textAlign = TextAlign.Center,
-                                    color = SensumThemeColors.onSurface
-                                )
+                                onValueChange = { minuteText = it },
+                                isFocused = false
                             )
                             TextButton(onClick = {
                                 val h = hourText.toIntOrNull()?.coerceIn(0, 23) ?: 0
@@ -229,4 +209,33 @@ fun DateTimePicker(
             }
         }
     }
+}
+
+@Composable
+private fun TimeNumberField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    isFocused: Boolean,
+    modifier: Modifier = Modifier
+) {
+    BasicTextField(
+        value = value,
+        onValueChange = { newValue ->
+            if (newValue.length <= 2 && newValue.all { char -> char.isDigit() }) {
+                onValueChange(newValue)
+            }
+        },
+        modifier = modifier
+            .border(
+                width = 1.dp,
+                color = if (isFocused) SensumThemeColors.accent else SensumThemeColors.border,
+                shape = RoundedCornerShape(6.dp)
+            )
+            .padding(10.dp),
+        singleLine = true,
+        textStyle = MaterialTheme.typography.bodyLarge.copy(
+            textAlign = TextAlign.Center,
+            color = SensumThemeColors.onSurface
+        )
+    )
 }

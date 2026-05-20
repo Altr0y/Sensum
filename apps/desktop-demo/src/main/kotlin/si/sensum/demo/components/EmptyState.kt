@@ -11,7 +11,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
-import si.sensum.demo.components.theme.SensumColors
 import si.sensum.demo.components.theme.SensumThemeColors
 
 @Composable

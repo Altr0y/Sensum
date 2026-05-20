@@ -10,26 +10,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import si.sensum.demo.components.DateTimePicker
-import si.sensum.demo.components.theme.SensumColors
 import si.sensum.demo.components.theme.SensumThemeColors
+import si.sensum.demo.model.DemoChannels
 import si.sensum.demo.model.Measurement
 import si.sensum.demo.model.MeasurementRequest
 import si.sensum.demo.model.StationChannelPair
 import si.sensum.demo.repository.MockMeasurementRepository
 import java.time.LocalDateTime
 
-private const val STATION_ID = 2241
-private val CHANNELS = mapOf(
-    127 to "L8001H - globina voda-radar [m]",
-    128 to "L8001H - višina vode [m]",
-    129 to "L8001H - globina vodnjaka (PPI220) [m]",
-    130 to "PPI220 - Nivo [m]",
-    131 to "PPI220 - Temperatura [°C]",
-    132 to "PPI220 - globina vode-nivo [m]",
-    133 to "L8001H - globina vode-nivo [-]",
-    134 to "L8001H - Nivo [-]",
-    135 to "L8001H - 4 [-]"
-)
+private const val STATION_ID = DemoChannels.DEFAULT_STATION_ID
+private val CHANNELS = DemoChannels.names
 private val repository = MockMeasurementRepository()
 
 @Composable

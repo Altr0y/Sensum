@@ -20,6 +20,8 @@ dependencies {
     implementation("io.ktor:ktor-client-content-negotiation:3.4.2")
     implementation("io.ktor:ktor-serialization-kotlinx-json:3.4.2")
 
+    implementation("ch.qos.logback:logback-classic:1.5.32")
+
     implementation(project(":libs:data-transform"))
     implementation(project(":libs:shared-models"))
 
@@ -76,6 +78,7 @@ compose.desktop {
                 dirChooser = true
                 shortcut = true
                 menu = true
+                iconFile.set(project.file("src/main/composeResources/drawable/eltratec_logo_icon.ico"))
             }
         }
     }

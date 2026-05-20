@@ -14,7 +14,6 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 import si.sensum.demo.components.EmptyState
-import si.sensum.demo.components.theme.SensumColors
 import si.sensum.demo.components.theme.SensumThemeColors
 import si.sensum.demo.model.Measurement
 import si.sensum.demo.repository.PostgresMeasurementRepository
@@ -178,13 +177,16 @@ fun DatabasePanel(measurements: List<Measurement> = emptyList()) {
                         scope.launch {
                             isLoading = true
                             dbRepository.insertAll(measurements).fold(
-                                onSuccess = {
-                                    statusMsg = "Saved $it measurements."
-                                    dbRepository.getAll().onSuccess {
-                                        dbMeasurements = it
+                                onSuccess = { insertedCount ->
+                                    statusMsg = "Saved $insertedCount measurements."
+
+                                    dbRepository.getAll().onSuccess { loadedMeasurements ->
+                                        dbMeasurements = loadedMeasurements
                                     }
                                 },
-                                onFailure = { statusMsg = "DB Error: ${it.message}" }
+                                onFailure = { error ->
+                                    statusMsg = "DB Error: ${error.message}"
+                                }
                             )
                             isLoading = false
                         }

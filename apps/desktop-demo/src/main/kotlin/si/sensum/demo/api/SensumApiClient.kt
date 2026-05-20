@@ -8,6 +8,7 @@ import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import si.sensum.demo.model.Measurement
+import si.sensum.demo.model.DemoChannels
 import si.sensum.shared.models.api.LoginRequest
 import si.sensum.shared.models.api.LoginResponse
 import si.sensum.shared.models.api.measurements.MeasurementDto
@@ -28,14 +29,23 @@ class SensumApiClient(
 
     private var authToken: String? = null
 
-    suspend fun login(): LoginResponse {
+    suspend fun login(
+        username: String,
+        password: String
+    ): LoginResponse {
         val response = client.post("$baseUrl/api/v1/auth/login") {
             contentType(ContentType.Application.Json)
-            setBody(LoginRequest(username = "sensum", password = "sensum"))
-        }.body<LoginResponse>()
+            setBody(LoginRequest(username = username, password = password))
+        }
 
-        authToken = response.token
-        return response
+        if (!response.status.isSuccess()) {
+            error("Login failed: HTTP ${response.status.value}\n${response.bodyAsText()}")
+        }
+
+        val loginResponse = response.body<LoginResponse>()
+        authToken = loginResponse.token
+
+        return loginResponse
     }
 
     suspend fun refreshMeasurements(
@@ -143,25 +153,12 @@ class SensumApiClient(
         return Measurement(
             id = id?.toInt(),
             stationId = stationId.toInt(),
-            stationName = "Station $stationId",
+            stationName = "Station $DemoChannels.DEFAULT_STATION_NAME",
             channelId = channelId,
-            channelName = channelName(channelId),
+            channelName = DemoChannels.nameOf(channelId),
             dateTime = dateTime.toLocalDateTime(),
             value = value,
             status = status
         )
-    }
-
-    private fun channelName(channelId: Int): String = when (channelId) {
-        127 -> "L8001H - globina voda-radar [m]"
-        128 -> "L8001H - višina vode [m]"
-        129 -> "L8001H - globina vodnjaka (PPI220) [m]"
-        130 -> "PPI220 - Nivo [m]"
-        131 -> "PPI220 - Temperatura [°C]"
-        132 -> "PPI220 - globina vode-nivo [m]"
-        133 -> "L8001H - globina vode-nivo [-]"
-        134 -> "L8001H - Nivo [-]"
-        135 -> "L8001H - 4 [-]"
-        else -> "Channel $channelId"
     }
 }

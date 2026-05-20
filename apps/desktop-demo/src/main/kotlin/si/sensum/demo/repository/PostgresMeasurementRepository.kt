@@ -24,7 +24,7 @@ class PostgresMeasurementRepository(
         setProperty("password", password)
     }
 
-    private fun connect(): java.sql.Connection {
+    private fun connect(): Connection {
         Class.forName("org.postgresql.Driver")
         return DriverManager.getConnection(url, props)
     }
