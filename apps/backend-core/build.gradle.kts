@@ -27,8 +27,11 @@ dependencies {
     implementation("io.ktor:ktor-client-core:3.4.2")
     implementation("io.ktor:ktor-client-cio:3.4.2")
     implementation("io.ktor:ktor-client-content-negotiation:3.4.2")
+
     implementation(project(":libs:shared-models"))
     implementation(project(":libs:shared-auth"))
+    implementation(project(":libs:shared-http"))
+    implementation(project(":libs:shared-ktor"))
     implementation(project(":libs:logging"))
 
     testImplementation(kotlin("test"))

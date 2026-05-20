@@ -1,6 +1,7 @@
 package si.sensum.shared.auth.jwt
 
 import com.auth0.jwt.JWT
+import com.auth0.jwt.JWTVerifier
 import com.auth0.jwt.algorithms.Algorithm
 import java.time.Instant
 import java.util.Date
@@ -33,11 +34,12 @@ class JwtTokenService(
         return now.plusSeconds(config.ttlSeconds)
     }
 
-    fun verifier() =
-        JWT.require(algorithm)
+    fun verifier(): JWTVerifier {
+        return JWT.require(algorithm)
             .withIssuer(config.issuer)
             .withAudience(config.audience)
             .build()
+    }
 
     fun isValid(token: String): Boolean {
         return try {

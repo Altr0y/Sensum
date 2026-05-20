@@ -7,6 +7,8 @@ import io.ktor.server.plugins.callid.*
 import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import si.sensum.backend.auth.AuthService
+import si.sensum.backend.auth.authRoutes
 import si.sensum.backend.config.BackendConfig
 import si.sensum.backend.config.createHttpClient
 import si.sensum.backend.database.configureDatabases
@@ -14,16 +16,14 @@ import si.sensum.backend.gm.GmClient
 import si.sensum.backend.measurements.MeasurementRefreshService
 import si.sensum.backend.measurements.MeasurementRepository
 import si.sensum.backend.measurements.measurementRoutes
-import si.sensum.shared.models.api.HealthResponse
-import java.util.UUID
+import si.sensum.backend.plugins.installBackendErrorHandling
+import si.sensum.backend.users.UserRepository
+import si.sensum.logging.installHttpRequestLogging
 import si.sensum.shared.auth.jwt.JwtConfig
 import si.sensum.shared.auth.jwt.JwtTokenService
-import si.sensum.backend.plugins.installBackendErrorHandling
-import si.sensum.logging.installHttpRequestLogging
-
-object ApiInfo {
-    const val NAME = "Backend Core"
-}
+import si.sensum.shared.http.ServiceHttpClient
+import si.sensum.shared.models.api.HealthResponse
+import java.util.*
 
 fun main(args: Array<String>) {
     EngineMain.main(args)
@@ -83,10 +83,19 @@ private fun Application.configureRoutes(
         )
     )
 
-    val gmClient = GmClient(
+    val gmHttpClient = ServiceHttpClient(
         httpClient = httpClient,
-        baseUrl = backendConfig.gmBaseUrl,
+        baseUrl = backendConfig.gmBaseUrl
+    )
+
+    val gmClient = GmClient(
+        serviceHttpClient = gmHttpClient,
         serviceJwtTokenService = gmServiceJwtTokenService
+    )
+
+    val userRepository = UserRepository()
+    val authService = AuthService(
+        userRepository = userRepository
     )
 
     val measurementRepository = MeasurementRepository()
@@ -107,6 +116,10 @@ private fun Application.configureRoutes(
                 )
             )
         }
+
+        authRoutes(
+            authService = authService
+        )
 
         measurementRoutes(
             repository = measurementRepository,
