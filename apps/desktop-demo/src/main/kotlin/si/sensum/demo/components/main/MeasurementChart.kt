@@ -22,6 +22,9 @@ import si.sensum.demo.model.Measurement
 import si.sensum.demo.repository.PostgresMeasurementRepository
 import si.sensum.demo.resources.Res
 import si.sensum.demo.resources.chart
+import org.jetbrains.letsPlot.themes.flavorStandard
+import org.jetbrains.letsPlot.themes.flavorDarcula
+import si.sensum.demo.components.theme.LocalIsDarkTheme
 
 private val dbRepository = PostgresMeasurementRepository()
 
@@ -88,6 +91,8 @@ private fun LetsPlotMeasurementChart(
     measurements: List<Measurement>,
     modifier: Modifier = Modifier
 ) {
+    val isDark = LocalIsDarkTheme.current
+
     val sorted = measurements.sortedWith(
         compareBy<Measurement> { it.channelName }.thenBy { it.dateTime }
     )
@@ -106,19 +111,12 @@ private fun LetsPlotMeasurementChart(
     } +
             geomLine(size = 1.2) +
             ggtitle("Measurements by channel") +
-            labs(x = "Time", y = "Value", color = "Channel")
+            labs(x = "Time", y = "Value", color = "Channel") +
+            if (isDark) flavorDarcula() else flavorStandard()
 
-    Surface(
-        modifier = modifier,
-        color = MaterialTheme.colorScheme.surface,
-        shape = MaterialTheme.shapes.medium
-    ) {
-        PlotPanel(
-            figure = plot,
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(12.dp),
-            computationMessagesHandler = {}
-        )
-    }
+    PlotPanel(
+        figure = plot,
+        modifier = modifier.padding(12.dp),
+        computationMessagesHandler = {}
+    )
 }

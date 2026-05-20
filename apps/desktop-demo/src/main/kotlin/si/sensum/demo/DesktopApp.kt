@@ -56,11 +56,12 @@ fun App(
                     .background(MaterialTheme.colorScheme.background)
             ) {
                 when (activeTab) {
-                    SideBarTab.DATA_LOADER       -> DataLoader(onMeasurementsLoaded = { measurements = it })
-                    SideBarTab.DATABASE_PANEL    -> DatabasePanel(measurements = measurements)
+                    SideBarTab.DATA_LOADER -> DataLoader(onMeasurementsLoaded = { measurements = it })
+                    SideBarTab.DATABASE_PANEL -> DatabasePanel(measurements = measurements)
                     SideBarTab.MEASUREMENT_CHART -> MeasurementChart()
-                    SideBarTab.USER              -> User()
-                    SideBarTab.INFO              -> Info()
+                    SideBarTab.DIGITAL_TWIN -> DigitalTwin()
+                    SideBarTab.USER -> User()
+                    SideBarTab.INFO -> Info()
                 }
             }
         }

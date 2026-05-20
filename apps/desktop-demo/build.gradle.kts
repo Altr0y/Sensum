@@ -2,6 +2,7 @@ import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 
 plugins {
     kotlin("jvm")
+    kotlin("plugin.serialization")
     id("org.jetbrains.compose")
     id("org.jetbrains.kotlin.plugin.compose")
     id("org.jetbrains.compose.hot-reload")
@@ -13,6 +14,7 @@ version = "1.0-SNAPSHOT"
 dependencies {
     implementation(compose.desktop.currentOs)
     implementation(compose.material3)
+    implementation(compose.materialIconsExtended)
     implementation(compose.components.resources)
 
     implementation("io.ktor:ktor-client-core:3.4.2")
@@ -24,6 +26,7 @@ dependencies {
 
     implementation(project(":libs:data-transform"))
     implementation(project(":libs:shared-models"))
+    implementation(project(":libs:simulator"))
 
     implementation("org.json:json:20240303")
     implementation("org.postgresql:postgresql:42.7.3")
@@ -36,6 +39,11 @@ dependencies {
     implementation("org.jetbrains.lets-plot:plot-raster:4.8.2")
     implementation("org.jetbrains.lets-plot:lets-plot-compose:3.0.2")
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.2")
+    implementation("io.ktor:ktor-client-core:3.4.2")
+    implementation("io.ktor:ktor-client-okhttp:3.4.2")
+    implementation("io.ktor:ktor-client-content-negotiation:3.4.2")
+    implementation("io.ktor:ktor-serialization-kotlinx-json:3.4.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 }
 
 kotlin {

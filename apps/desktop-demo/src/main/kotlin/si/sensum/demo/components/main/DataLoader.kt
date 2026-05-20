@@ -16,11 +16,13 @@ import si.sensum.demo.model.Measurement
 import si.sensum.demo.model.MeasurementRequest
 import si.sensum.demo.model.StationChannelPair
 import si.sensum.demo.repository.MockMeasurementRepository
+import si.sensum.demo.repository.SwsMeasurementRepository
 import java.time.LocalDateTime
 
 private const val STATION_ID = DemoChannels.DEFAULT_STATION_ID
 private val CHANNELS = DemoChannels.names
 private val repository = MockMeasurementRepository()
+//private val repository = SwsMeasurementRepository()
 
 @Composable
 fun DataLoader(onMeasurementsLoaded: (List<Measurement>) -> Unit = {}) {
