@@ -1,34 +1,32 @@
 package si.sensum.gm.plugins
 
-import io.ktor.http.HttpStatusCode
-import io.ktor.server.application.Application
-import io.ktor.server.application.ApplicationCall
-import io.ktor.server.application.install
-import io.ktor.server.plugins.BadRequestException
-import io.ktor.server.plugins.callid.callId
-import io.ktor.server.plugins.statuspages.StatusPages
-import io.ktor.server.request.httpMethod
-import io.ktor.server.request.path
-import io.ktor.server.response.respond
+import io.ktor.http.*
+import io.ktor.server.application.*
+import io.ktor.server.plugins.*
+import io.ktor.server.plugins.statuspages.*
 import si.sensum.gm.errors.GmApiException
-import si.sensum.logging.Logger
-import si.sensum.shared.models.api.ApiErrorResponse
+import si.sensum.shared.ktor.errors.respondApiError
+import si.sensum.shared.ktor.errors.respondApiWarn
 import si.sensum.sws.SwsHttpException
 import si.sensum.sws.SwsInvalidResponseException
 import si.sensum.sws.SwsTimeoutException
 import si.sensum.sws.SwsUnauthorizedException
 
+private const val SERVICE_NAME = "eltratec-gm"
+
 internal fun Application.installGmErrorHandling() {
     install(StatusPages) {
         exception<GmApiException> { call, cause ->
-            call.respondWarn(
+            call.respondApiWarn(
+                serviceName = SERVICE_NAME,
                 status = cause.statusCode,
                 message = cause.message
             )
         }
 
         exception<BadRequestException> { call, cause ->
-            call.respondWarn(
+            call.respondApiWarn(
+                serviceName = SERVICE_NAME,
                 status = HttpStatusCode.BadRequest,
                 logMessage = cause.message ?: "Invalid request body",
                 responseMessage = "Invalid request body. Check that JSON is valid and all required fields have correct types."
@@ -36,21 +34,24 @@ internal fun Application.installGmErrorHandling() {
         }
 
         exception<IllegalArgumentException> { call, cause ->
-            call.respondWarn(
+            call.respondApiWarn(
+                serviceName = SERVICE_NAME,
                 status = HttpStatusCode.BadRequest,
                 message = cause.message ?: "Invalid request."
             )
         }
 
         exception<SwsUnauthorizedException> { call, cause ->
-            call.respondWarn(
+            call.respondApiWarn(
+                serviceName = SERVICE_NAME,
                 status = HttpStatusCode.Unauthorized,
                 message = cause.message ?: "SWS authorization failed"
             )
         }
 
         exception<SwsInvalidResponseException> { call, cause ->
-            call.respondError(
+            call.respondApiError(
+                serviceName = SERVICE_NAME,
                 status = HttpStatusCode.BadGateway,
                 cause = cause,
                 message = cause.message ?: "Invalid response from SWS"
@@ -58,7 +59,8 @@ internal fun Application.installGmErrorHandling() {
         }
 
         exception<SwsTimeoutException> { call, cause ->
-            call.respondError(
+            call.respondApiError(
+                serviceName = SERVICE_NAME,
                 status = HttpStatusCode.GatewayTimeout,
                 cause = cause,
                 message = cause.message ?: "SWS request timed out"
@@ -66,7 +68,8 @@ internal fun Application.installGmErrorHandling() {
         }
 
         exception<SwsHttpException> { call, cause ->
-            call.respondError(
+            call.respondApiError(
+                serviceName = SERVICE_NAME,
                 status = HttpStatusCode.BadGateway,
                 cause = cause,
                 message = swsHttpErrorMessage(cause)
@@ -74,7 +77,8 @@ internal fun Application.installGmErrorHandling() {
         }
 
         exception<Throwable> { call, cause ->
-            call.respondError(
+            call.respondApiError(
+                serviceName = SERVICE_NAME,
                 status = HttpStatusCode.InternalServerError,
                 cause = cause,
                 logMessage = cause.message ?: "Unexpected server error",
@@ -90,86 +94,4 @@ private fun swsHttpErrorMessage(cause: SwsHttpException): String {
         500 -> "SWS rejected the SOAP request. Check station/channel pairs, datetime format, and whether the SWS operation is supported."
         else -> "SWS returned HTTP ${cause.statusCode}: ${cause.message ?: "SWS HTTP error"}"
     }
-}
-
-private suspend fun ApplicationCall.respondWarn(
-    status: HttpStatusCode,
-    message: String
-) {
-    Logger.log.warn {
-        gmLogMessage(
-            level = "WARN",
-            status = status,
-            message = message
-        )
-    }
-
-    respond(
-        status,
-        ApiErrorResponse(error = message)
-    )
-}
-
-private suspend fun ApplicationCall.respondWarn(
-    status: HttpStatusCode,
-    logMessage: String,
-    responseMessage: String
-) {
-    Logger.log.warn {
-        gmLogMessage(
-            level = "WARN",
-            status = status,
-            message = logMessage
-        )
-    }
-
-    respond(
-        status,
-        ApiErrorResponse(error = responseMessage)
-    )
-}
-
-private suspend fun ApplicationCall.respondError(
-    status: HttpStatusCode,
-    cause: Throwable,
-    message: String
-) {
-    respondError(
-        status = status,
-        cause = cause,
-        logMessage = message,
-        responseMessage = message
-    )
-}
-
-private suspend fun ApplicationCall.respondError(
-    status: HttpStatusCode,
-    cause: Throwable,
-    logMessage: String,
-    responseMessage: String
-) {
-    Logger.log.error(cause) {
-        gmLogMessage(
-            level = "ERROR",
-            status = status,
-            message = logMessage
-        )
-    }
-
-    respond(
-        status,
-        ApiErrorResponse(error = responseMessage)
-    )
-}
-
-private fun ApplicationCall.gmLogMessage(
-    level: String,
-    status: HttpStatusCode,
-    message: String
-): String {
-    val requestId = callId ?: "-"
-    val method = request.httpMethod.value
-    val path = "/" + request.path().trimStart('/')
-
-    return "[$level] service=eltratec-gm requestId=$requestId method=$method path=$path status=${status.value} message=$message"
 }

@@ -2,43 +2,23 @@ package si.sensum.backend.plugins
 
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.*
-import io.ktor.server.plugins.BadRequestException
-import io.ktor.server.plugins.statuspages.*
-import io.ktor.server.response.*
 import org.postgresql.util.PSQLException
-import si.sensum.logging.Logger
-import si.sensum.shared.models.api.ApiErrorResponse
+import si.sensum.shared.ktor.errors.installCommonErrorHandling
+import si.sensum.shared.ktor.errors.respondApiError
+import si.sensum.shared.ktor.errors.respondApiWarn
 
 fun Application.installBackendErrorHandling() {
-    install(StatusPages) {
-        exception<BadRequestException> { call, _ ->
-            call.respond(
-                HttpStatusCode.BadRequest,
-                ApiErrorResponse(
-                    error = "Invalid request body. Check that all required JSON fields are present and have the correct type."
-                )
-            )
-        }
-
-        exception<IllegalArgumentException> { call, cause ->
-            call.respond(
-                HttpStatusCode.BadRequest,
-                ApiErrorResponse(
-                    error = cause.message ?: "Invalid request."
-                )
-            )
-        }
-
+    installCommonErrorHandling(
+        serviceName = "backend-core",
+        unexpectedErrorMessage = "Unexpected backend error. Check backend-core logs for details."
+    ) {
         exception<PSQLException> { call, cause ->
-            Logger.log.error(cause) {
-                "[DB] PostgreSQL error"
-            }
-
-            call.respond(
-                HttpStatusCode.InternalServerError,
-                ApiErrorResponse(
-                    error = "Database error. The database schema may be outdated. Check that measurements.status is boolean and measurements.value is real/float."
-                )
+            call.respondApiError(
+                serviceName = "backend-core",
+                status = HttpStatusCode.InternalServerError,
+                cause = cause,
+                logMessage = "PostgreSQL error",
+                responseMessage = "Database error. The database schema may be outdated. Check backend-core logs."
             )
         }
 
@@ -51,24 +31,10 @@ fun Application.installBackendErrorHandling() {
                 else -> HttpStatusCode.InternalServerError
             }
 
-            call.respond(
-                status,
-                ApiErrorResponse(
-                    error = cleanInternalMessage(message)
-                )
-            )
-        }
-
-        exception<Throwable> { call, cause ->
-            Logger.log.error(cause) {
-                "[HTTP] Unexpected backend-core error"
-            }
-
-            call.respond(
-                HttpStatusCode.InternalServerError,
-                ApiErrorResponse(
-                    error = "Unexpected backend error. Check backend-core logs for details."
-                )
+            call.respondApiWarn(
+                serviceName = "backend-core",
+                status = status,
+                message = cleanInternalMessage(message)
             )
         }
     }
