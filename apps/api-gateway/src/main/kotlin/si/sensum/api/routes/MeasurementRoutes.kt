@@ -1,70 +1,70 @@
 package si.sensum.api.routes
 
-import io.ktor.http.*
 import io.ktor.server.request.*
-import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import si.sensum.api.backend.BackendClient
-import si.sensum.shared.models.api.ApiErrorResponse
+import si.sensum.api.backend.BackendMeasurementClient
+import si.sensum.shared.ktor.response.respondOk
+import si.sensum.shared.ktor.validation.requireLongPathParameter
 import si.sensum.shared.models.api.measurements.MeasurementDto
 import si.sensum.shared.models.api.measurements.MeasurementsByStationChannelPairsRequest
 
-fun Route.measurementRoutes(
-    backendClient: BackendClient
+internal fun Route.measurementRoutes(
+    backendMeasurements: BackendMeasurementClient
 ) {
-    route("/api/v1/measurements") {
+    route("/measurements") {
         get {
-            val json = backendClient.getMeasurementsJson()
+            call.respondOk {
+                backendMeasurements.getMeasurements()
+            }
+        }
 
-            call.respondText(
-                text = json,
-                contentType = ContentType.Application.Json
-            )
+        get("/{id}") {
+            val id = call.requireLongPathParameter("id")
+
+            call.respondOk {
+                backendMeasurements.getMeasurementById(id)
+            }
         }
 
         post {
             val request = call.receive<MeasurementDto>()
-            val response = backendClient.createMeasurement(request)
 
-            call.respond(HttpStatusCode.Created, response)
+            call.respondOk {
+                backendMeasurements.createMeasurement(request)
+            }
         }
 
         put("/{id}") {
-            val id = call.parameters["id"]?.toLongOrNull()
-
-            if (id == null) {
-                call.respond(HttpStatusCode.BadRequest, ApiErrorResponse("Invalid measurement id"))
-                return@put
-            }
-
+            val id = call.requireLongPathParameter("id")
             val request = call.receive<MeasurementDto>()
-            val response = backendClient.updateMeasurement(id, request)
 
-            call.respond(HttpStatusCode.OK, response)
+            call.respondOk {
+                backendMeasurements.updateMeasurement(id, request)
+            }
         }
 
         delete("/{id}") {
-            val id = call.parameters["id"]?.toLongOrNull()
+            val id = call.requireLongPathParameter("id")
 
-            if (id == null) {
-                call.respond(HttpStatusCode.BadRequest, ApiErrorResponse("Invalid measurement id"))
-                return@delete
+            call.respondOk {
+                backendMeasurements.deleteMeasurement(id)
+                mapOf("deleted" to true)
             }
-
-            backendClient.deleteMeasurement(id)
-            call.respond(HttpStatusCode.NoContent)
         }
 
         delete {
-            backendClient.deleteAllMeasurements()
-            call.respond(HttpStatusCode.NoContent)
+            call.respondOk {
+                backendMeasurements.deleteAllMeasurements()
+                mapOf("deletedAll" to true)
+            }
         }
 
         post("/refresh") {
             val request = call.receive<MeasurementsByStationChannelPairsRequest>()
-            val response = backendClient.refreshMeasurements(request)
 
-            call.respond(HttpStatusCode.OK, response)
+            call.respondOk {
+                backendMeasurements.refreshMeasurements(request)
+            }
         }
     }
 }

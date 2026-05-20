@@ -31,6 +31,8 @@ dependencies {
 
     implementation(project(":libs:shared-auth"))
     implementation(project(":libs:shared-models"))
+    implementation(project(":libs:shared-http"))
+    implementation(project(":libs:shared-ktor"))
     implementation(project(":libs:logging"))
 
     testImplementation(kotlin("test"))
