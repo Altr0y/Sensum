@@ -4,7 +4,7 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class Measurement(
+data class MeasurementEntity(
     val id: Long,
     val channelId: Int,
     val dateTime: LocalDateTime,

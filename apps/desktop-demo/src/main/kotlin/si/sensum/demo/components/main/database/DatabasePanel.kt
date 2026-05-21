@@ -1,4 +1,4 @@
-package si.sensum.demo.components.main
+package si.sensum.demo.components.main.database
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
@@ -13,39 +13,68 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
+import si.sensum.demo.api.SensumApiClient
 import si.sensum.demo.components.EmptyState
 import si.sensum.demo.components.theme.SensumThemeColors
-import si.sensum.demo.model.Measurement
-import si.sensum.demo.repository.PostgresMeasurementRepository
+import si.sensum.demo.model.MeasurementUi
 import si.sensum.demo.resources.*
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 
 private val DT_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
-private val dbRepository = PostgresMeasurementRepository()
 
 @Composable
-fun DatabasePanel(measurements: List<Measurement> = emptyList()) {
+fun DatabasePanel(
+    measurements: List<MeasurementUi> = emptyList(),
+    apiClient: SensumApiClient
+) {
     val scope = rememberCoroutineScope()
 
-    var dbMeasurements by remember { mutableStateOf<List<Measurement>>(emptyList()) }
+    var apiMeasurements by remember { mutableStateOf<List<MeasurementUi>>(emptyList()) }
     var isLoading by remember { mutableStateOf(false) }
     var statusMsg by remember { mutableStateOf("") }
     var showSaveDialog by remember { mutableStateOf(false) }
     var showDeleteAllDialog by remember { mutableStateOf(false) }
 
-    // Naloži iz DB ob zagonu
+    fun refreshFromApi() {
+        scope.launch {
+            isLoading = true
+
+            runCatching {
+                apiClient.getMeasurements()
+            }.fold(
+                onSuccess = {
+                    apiMeasurements = it
+                    statusMsg = "Refreshed from API Gateway."
+                },
+                onFailure = {
+                    statusMsg = "API Error: ${it.message}"
+                }
+            )
+
+            isLoading = false
+        }
+    }
+
+    // naloži podatke prek api-gateway ob odprtju panela
     LaunchedEffect(Unit) {
         isLoading = true
-        dbRepository.getAll().fold(
-            onSuccess = { dbMeasurements = it },
-            onFailure = { statusMsg = "DB Error: ${it.message}" }
+        runCatching {
+            apiClient.getMeasurements()
+        }.fold(
+            onSuccess = {
+                apiMeasurements = it
+                statusMsg = "Loaded from API Gateway."
+            },
+            onFailure = {
+                statusMsg = "API Error: ${it.message}"
+            }
         )
         isLoading = false
     }
 
-    val grouped = dbMeasurements.groupBy { it.channelId }.toSortedMap()
+    val grouped = apiMeasurements.groupBy { it.channelId }.toSortedMap()
 
     Column(
         modifier = Modifier
@@ -53,10 +82,10 @@ fun DatabasePanel(measurements: List<Measurement> = emptyList()) {
             .padding(horizontal = 24.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // Header
+        // Header - povzetek meritev, ki so bile naložene prek API Gateway
         Text("Database Panel", style = MaterialTheme.typography.titleLarge)
         Text(
-            "${dbMeasurements.size} measurements across ${grouped.size} channels",
+            "${apiMeasurements.size} measurements across ${grouped.size} channels",
             style = MaterialTheme.typography.bodyMedium,
             color = SensumThemeColors.muted
         )
@@ -68,7 +97,7 @@ fun DatabasePanel(measurements: List<Measurement> = emptyList()) {
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Shrani naložene iz DataLoaderja v DB
+            // Pošlje trenutno naložene meritve iz UI-ja prek API Gateway v backend-core.
             Button(
                 onClick = { showSaveDialog = true },
                 enabled = measurements.isNotEmpty(),
@@ -77,26 +106,17 @@ fun DatabasePanel(measurements: List<Measurement> = emptyList()) {
                 Text("Save Loaded Data", color = SensumThemeColors.onAccent)
             }
 
-            // Osveži iz DB
+            // Osveži meritve preko api-gateway
             OutlinedButton(
-                onClick = {
-                    scope.launch {
-                        isLoading = true
-                        dbRepository.getAll().fold(
-                            onSuccess = { dbMeasurements = it; statusMsg = "Refreshed." },
-                            onFailure = { statusMsg = "DB Error: ${it.message}" }
-                        )
-                        isLoading = false
-                    }
-                }
+                onClick = { refreshFromApi() }
             ) {
                 Text("Refresh", color = SensumThemeColors.muted)
             }
 
-            // Izbriši vse
+            // Izbriši vse -  odpre potrditveno okno za brisanje vseh meritev prek API
             OutlinedButton(
                 onClick = { showDeleteAllDialog = true },
-                enabled = dbMeasurements.isNotEmpty()
+                enabled = apiMeasurements.isNotEmpty()
             ) {
                 Text("Delete All", color = SensumThemeColors.error)
             }
@@ -107,17 +127,23 @@ fun DatabasePanel(measurements: List<Measurement> = emptyList()) {
                 strokeWidth = 2.dp
             )
 
-            if (statusMsg.isNotEmpty()) Text(
-                text = statusMsg,
-                style = MaterialTheme.typography.bodyMedium,
-                color = if (statusMsg.startsWith("DB Error")) SensumThemeColors.error else SensumThemeColors.success
-            )
+            if (statusMsg.isNotEmpty()) {
+                Text(
+                    text = statusMsg,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = if (statusMsg.startsWith("API Error")) {
+                        SensumThemeColors.error
+                    } else {
+                        SensumThemeColors.success
+                    }
+                )
+            }
         }
 
         HorizontalDivider(color = SensumThemeColors.border)
 
-        // Content
-        if (dbMeasurements.isEmpty() && !isLoading) {
+        // Content - Prikaže prazno stanje, če API Gateway ne vrne meritev.
+        if (apiMeasurements.isEmpty() && !isLoading) {
             EmptyState(
                 icon = Res.drawable.database_panel,
                 title = "No data in database",
@@ -136,26 +162,44 @@ fun DatabasePanel(measurements: List<Measurement> = emptyList()) {
                         entries = entries,
                         onUpdate = { updated ->
                             scope.launch {
-                                dbRepository.update(updated).fold(
-                                    onSuccess = {
-                                        dbMeasurements = dbMeasurements.map { m ->
-                                            if (m.id == it.id) it else m
+                                isLoading = true
+
+                                runCatching {
+                                    apiClient.updateMeasurement(updated)
+                                }.fold(
+                                    onSuccess = { saved ->
+                                        apiMeasurements = apiMeasurements.map { measurement ->
+                                            if (measurement.id == saved.id) saved else measurement
                                         }
-                                        statusMsg = "Updated."
+                                        statusMsg = "Updated through API Gateway."
                                     },
-                                    onFailure = { statusMsg = "DB Error: ${it.message}" }
+                                    onFailure = {
+                                        statusMsg = "API Error: ${it.message}"
+                                    }
                                 )
+
+                                isLoading = false
                             }
                         },
                         onDelete = { id ->
                             scope.launch {
-                                dbRepository.delete(id).fold(
+                                isLoading = true
+
+                                runCatching {
+                                    apiClient.deleteMeasurement(id)
+                                }.fold(
                                     onSuccess = {
-                                        dbMeasurements = dbMeasurements.filter { it.id != id }
-                                        statusMsg = "Deleted."
+                                        apiMeasurements = apiMeasurements.filter { measurement ->
+                                            measurement.id != id
+                                        }
+                                        statusMsg = "Deleted through API Gateway."
                                     },
-                                    onFailure = { statusMsg = "DB Error: ${it.message}" }
+                                    onFailure = {
+                                        statusMsg = "API Error: ${it.message}"
+                                    }
                                 )
+
+                                isLoading = false
                             }
                         }
                     )
@@ -164,28 +208,34 @@ fun DatabasePanel(measurements: List<Measurement> = emptyList()) {
         }
     }
 
-    // Dialog: shrani DataLoader podatke v DB
+    // Dialog: shrani DataLoader naložene meritve prek api-gateway
     if (showSaveDialog) {
         AlertDialog(
             onDismissRequest = { showSaveDialog = false },
-            title = { Text("Save to Database") },
-            text = { Text("Save ${measurements.size} loaded measurements to the database?") },
+            title = { Text("Save through API Gateway") },
+            text = {
+                Text("Save ${measurements.size} loaded measurements through API Gateway?")
+            },
             confirmButton = {
                 Button(
                     onClick = {
                         showSaveDialog = false
                         scope.launch {
                             isLoading = true
-                            dbRepository.insertAll(measurements).fold(
+                            runCatching {
+                                apiClient.createMeasurements(measurements)
+                            }.fold(
                                 onSuccess = { insertedCount ->
-                                    statusMsg = "Saved $insertedCount measurements."
+                                    statusMsg = "Saved $insertedCount measurements through API Gateway."
 
-                                    dbRepository.getAll().onSuccess { loadedMeasurements ->
-                                        dbMeasurements = loadedMeasurements
+                                    runCatching {
+                                        apiClient.getMeasurements()
+                                    }.onSuccess { loadedMeasurements ->
+                                        apiMeasurements = loadedMeasurements
                                     }
                                 },
-                                onFailure = { error ->
-                                    statusMsg = "DB Error: ${error.message}"
+                                onFailure = {
+                                    statusMsg = "API Error: ${it.message}"
                                 }
                             )
                             isLoading = false
@@ -194,9 +244,11 @@ fun DatabasePanel(measurements: List<Measurement> = emptyList()) {
                     colors = ButtonDefaults.buttonColors(containerColor = SensumThemeColors.accent)
                 ) { Text("Save", color = SensumThemeColors.onAccent) }
             },
-            dismissButton = {
-                OutlinedButton(onClick = { showSaveDialog = false }) { Text("Cancel") }
-            },
+                dismissButton = {
+                    OutlinedButton(onClick = { showSaveDialog = false }) {
+                        Text("Cancel")
+                    }
+                },
             containerColor = MaterialTheme.colorScheme.surface
         )
     }
@@ -206,17 +258,26 @@ fun DatabasePanel(measurements: List<Measurement> = emptyList()) {
         AlertDialog(
             onDismissRequest = { showDeleteAllDialog = false },
             title = { Text("Delete All") },
-            text = { Text("This will permanently delete all ${dbMeasurements.size} measurements from the database.") },
+            text = { Text("This will delete all ${apiMeasurements.size} measurements through API Gateway.") },
             confirmButton = {
                 Button(
                     onClick = {
                         showDeleteAllDialog = false
                         scope.launch {
                             isLoading = true
-                            dbRepository.deleteAll().fold(
-                                onSuccess = { dbMeasurements = emptyList(); statusMsg = "All deleted." },
-                                onFailure = { statusMsg = "DB Error: ${it.message}" }
+
+                            runCatching {
+                                apiClient.deleteAllMeasurements()
+                            }.fold(
+                                onSuccess = {
+                                    apiMeasurements = emptyList()
+                                    statusMsg = "All measurements deleted through API Gateway."
+                                },
+                                onFailure = {
+                                    statusMsg = "API Error: ${it.message}"
+                                }
                             )
+
                             isLoading = false
                         }
                     },
@@ -234,8 +295,8 @@ fun DatabasePanel(measurements: List<Measurement> = emptyList()) {
 @Composable
 private fun ChannelAccordion(
     channelId: Int,
-    entries: List<Measurement>,
-    onUpdate: (Measurement) -> Unit,
+    entries: List<MeasurementUi>,
+    onUpdate: (MeasurementUi) -> Unit,
     onDelete: (Int) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -314,9 +375,9 @@ private fun ChannelAccordion(
 
 @Composable
 private fun EditableRow(
-    measurement: Measurement,
+    measurement: MeasurementUi,
     isEven: Boolean,
-    onUpdate: (Measurement) -> Unit,
+    onUpdate: (MeasurementUi) -> Unit,
     onDelete: (Int) -> Unit
 ) {
     var editing by remember { mutableStateOf(false) }

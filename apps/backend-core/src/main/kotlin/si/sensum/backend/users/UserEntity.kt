@@ -1,6 +1,6 @@
 package si.sensum.backend.users
 
-data class User(
+data class UserEntity(
     val id: Int,
     val customerId: Int,
     val username: String,

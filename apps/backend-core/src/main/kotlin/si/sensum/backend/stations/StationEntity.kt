@@ -1,6 +1,6 @@
 package si.sensum.backend.stations
 
-data class Station(
+data class StationEntity(
     val id: Long,
     val customerId: Int,
     val locationDescription: String,
