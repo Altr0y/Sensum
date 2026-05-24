@@ -15,7 +15,9 @@ internal class AuthService(
 
         val token = jwtTokenService.generateToken(
             JwtUser(
+                userId = user.id,
                 username = user.username,
+                customerId = user.customerId,
                 role = user.role
             )
         )

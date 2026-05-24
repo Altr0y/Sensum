@@ -23,6 +23,9 @@ class JwtTokenService(
             .withIssuedAt(Date.from(now))
             .withExpiresAt(Date.from(expiresAt))
 
+        user.userId?.let { builder.withClaim("userId", it) }
+        user.customerId?.let { builder.withClaim("customerId", it) }
+
         user.serviceName?.let { serviceName ->
             builder.withClaim("service", serviceName)
         }
@@ -55,7 +58,9 @@ class JwtTokenService(
             val decoded = verifier().verify(token)
 
             JwtUser(
+                userId = decoded.getClaim("userId").asInt(),
                 username = decoded.getClaim("username").asString() ?: decoded.subject,
+                customerId = decoded.getClaim("customerId").asInt(),
                 role = decoded.getClaim("role").asString() ?: "USER",
                 serviceName = decoded.getClaim("service").asString()
             )

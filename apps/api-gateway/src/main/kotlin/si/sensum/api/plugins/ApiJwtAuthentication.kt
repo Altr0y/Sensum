@@ -22,9 +22,17 @@ internal fun Application.installApiJwtAuthentication(
             verifier(jwtTokenService.verifier())
 
             validate { credential ->
+                val userId = credential.payload.getClaim("userId").asInt()
                 val username = credential.payload.getClaim("username").asString()
+                val customerId = credential.payload.getClaim("customerId").asInt()
+                val role = credential.payload.getClaim("role").asString()
 
-                if (!username.isNullOrBlank()) {
+                if (
+                    userId != null &&
+                    !username.isNullOrBlank() &&
+                    customerId != null &&
+                    !role.isNullOrBlank()
+                ) {
                     JWTPrincipal(credential.payload)
                 } else {
                     null

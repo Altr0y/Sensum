@@ -13,6 +13,10 @@ class AuthService(
         val user = userRepository.findByUsername(username)
             ?: throw IllegalArgumentException("Invalid username or password")
 
+        if (!user.enabled) {
+            throw IllegalArgumentException("User is disabled")
+        }
+
         if (!passwordMatches(password, user.passwordHash)) {
             throw IllegalArgumentException("Invalid username or password")
         }
@@ -20,6 +24,7 @@ class AuthService(
         return AuthenticatedUserResponse(
             id = user.id,
             username = user.username,
+            customerId = user.customerId,
             role = user.role.name
         )
     }
