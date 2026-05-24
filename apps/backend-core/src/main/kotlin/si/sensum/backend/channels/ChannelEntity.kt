@@ -2,7 +2,7 @@ package si.sensum.backend.channels
 
 import si.sensum.backend.measurements.MeasurementUnit
 
-data class Channel(
+data class ChannelEntity(
     val id: Int,
     val stationId: Long,
     val name: String,

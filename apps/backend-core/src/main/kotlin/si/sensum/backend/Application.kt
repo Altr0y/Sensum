@@ -18,11 +18,14 @@ import si.sensum.backend.measurements.MeasurementRepository
 import si.sensum.backend.measurements.measurementRoutes
 import si.sensum.backend.plugins.installBackendErrorHandling
 import si.sensum.backend.users.UserRepository
+import si.sensum.backend.users.userRoutes
 import si.sensum.logging.installHttpRequestLogging
 import si.sensum.shared.auth.jwt.JwtConfig
 import si.sensum.shared.auth.jwt.JwtTokenService
 import si.sensum.shared.http.ServiceHttpClient
 import si.sensum.shared.models.api.HealthResponse
+import si.sensum.backend.customers.CustomerRepository
+import si.sensum.backend.customers.customerRoutes
 import java.util.*
 
 fun main(args: Array<String>) {
@@ -51,6 +54,7 @@ private fun Application.loadBackendConfig(): BackendConfig {
         swsPassword = config.propertyOrNull("sws.password")?.getString().orEmpty()
     )
 }
+
 private fun Application.installPlugins() {
     installBackendErrorHandling()
 
@@ -72,6 +76,7 @@ private fun Application.installPlugins() {
 private fun Application.configureRoutes(
     backendConfig: BackendConfig
 ) {
+
     val httpClient = createHttpClient()
 
     val gmServiceJwtTokenService = JwtTokenService(
@@ -93,7 +98,10 @@ private fun Application.configureRoutes(
         serviceJwtTokenService = gmServiceJwtTokenService
     )
 
+    val customerRepository = CustomerRepository()
+
     val userRepository = UserRepository()
+
     val authService = AuthService(
         userRepository = userRepository
     )
@@ -121,8 +129,16 @@ private fun Application.configureRoutes(
             authService = authService
         )
 
+        customerRoutes(
+            customerRepository = customerRepository
+        )
+
+        userRoutes(
+            userRepository = userRepository
+        )
+
         measurementRoutes(
-            repository = measurementRepository,
+            measurementRepository = measurementRepository,
             refreshService = measurementRefreshService
         )
     }

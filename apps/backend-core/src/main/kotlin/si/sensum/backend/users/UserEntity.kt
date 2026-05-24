@@ -5,5 +5,6 @@ data class UserEntity(
     val customerId: Int,
     val username: String,
     val passwordHash: String,
-    val role: UserRole
+    val role: UserRole,
+    val enabled: Boolean
 )

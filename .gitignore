@@ -4,3 +4,5 @@ build/
 .idea/
 *.iml
 .env
+/export-all-module-files.ps1
+/exported-module-files/
