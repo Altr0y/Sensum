@@ -18,8 +18,8 @@ class MeasurementRefreshService(
         require(swsPassword.isNotBlank()) { "Missing SWS_PASSWORD" }
 
         val normalizedRequest = request.copy(
-            datetimeFrom = ApiDateTime.requireNormalized("datetimeFrom", request.datetimeFrom),
-            datetimeTo = ApiDateTime.requireNormalized("datetimeTo", request.datetimeTo)
+            datetimeFrom = ApiDateTime.requireNormalizedLocal("datetimeFrom", request.datetimeFrom),
+            datetimeTo = ApiDateTime.requireNormalizedLocal("datetimeTo", request.datetimeTo)
         )
 
         val gmLogin = gmClient.login(swsUsername, swsPassword)

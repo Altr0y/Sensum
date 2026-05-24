@@ -1,11 +1,9 @@
 package si.sensum.backend.measurements
 
 import kotlinx.datetime.LocalDateTime
-import kotlinx.serialization.Serializable
 
-@Serializable
 data class MeasurementEntity(
-    val id: Long,
+    val id: Long = 0,
     val channelId: Int,
     val dateTime: LocalDateTime,
     val value: Float,

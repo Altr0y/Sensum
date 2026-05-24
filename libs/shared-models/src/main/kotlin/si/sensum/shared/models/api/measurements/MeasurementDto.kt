@@ -12,7 +12,6 @@ data class MeasurementDto(
 
     @Serializable(with = OffsetDateTimeIsoSerializer::class)
     val dateTime: OffsetDateTime,
-
     val value: Double,
     val status: Int
 )
