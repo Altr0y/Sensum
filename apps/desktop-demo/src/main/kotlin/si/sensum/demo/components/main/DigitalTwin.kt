@@ -1,11 +1,17 @@
 package si.sensum.demo.components.main
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.letsPlot.compose.PlotPanel
 import org.jetbrains.letsPlot.geom.geomLine
@@ -14,80 +20,110 @@ import org.jetbrains.letsPlot.ggplot
 import org.jetbrains.letsPlot.intern.Plot
 import org.jetbrains.letsPlot.label.ggtitle
 import org.jetbrains.letsPlot.label.labs
-import org.jetbrains.letsPlot.themes.flavorDarcula
+import si.sensum.demo.api.SensumApiClient
 import si.sensum.demo.components.DateTimePicker
 import si.sensum.demo.components.EmptyState
 import si.sensum.demo.components.theme.SensumThemeColors
-import si.sensum.demo.model.Measurement
-import si.sensum.demo.model.MeasurementRequest
-import si.sensum.demo.model.StationChannelPair
-import si.sensum.demo.repository.BackendMeasurementRepository
+import si.sensum.demo.components.theme.letsPlotTheme
+import si.sensum.demo.model.MeasurementRequestUi
+import si.sensum.demo.model.MeasurementUi
+import si.sensum.demo.model.StationChannelPairUi
+import si.sensum.demo.repository.ApiMeasurementRepository
 import si.sensum.demo.resources.Res
 import si.sensum.demo.resources.digital_twin
 import java.time.LocalDateTime
-import org.jetbrains.letsPlot.themes.flavorStandard
-import si.sensum.demo.components.theme.LocalIsDarkTheme
-import kotlinx.coroutines.delay
-import si.sensum.simulator.SimulatorService
-import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Pause
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Stop
 
 
 private const val STATION_ID = 2241
 private val ALL_CHANNELS = listOf(127, 128, 129, 130, 131, 132, 133, 134)
-private val repository = BackendMeasurementRepository()
-
-private val simulatorService = SimulatorService()
 
 @Composable
-fun DigitalTwin() {
+fun DigitalTwin(
+    apiClient: SensumApiClient
+) {
     val scope = rememberCoroutineScope()
-
+    val repository = remember(apiClient) {
+        ApiMeasurementRepository(apiClient)
+    }
     var datetimeFrom by remember { mutableStateOf(LocalDateTime.of(2026, 6, 1, 0, 0)) }
     var datetimeTo by remember { mutableStateOf(LocalDateTime.of(2026, 6, 7, 0, 0)) }
-    var measurements by remember { mutableStateOf<List<Measurement>>(emptyList()) }
+    var measurements by remember { mutableStateOf<List<MeasurementUi>>(emptyList()) }
     var isLoading by remember { mutableStateOf(false) }
     var statusMsg by remember { mutableStateOf("") }
     var hasLoaded by remember { mutableStateOf(false) }
     var isLive by remember { mutableStateOf(false) }
-    var liveMeasurements by remember { mutableStateOf<List<Measurement>>(emptyList()) }
-    var liveCurrentTime by remember { mutableStateOf<java.time.LocalDateTime?>(null) }
+    var liveMeasurements by remember { mutableStateOf<List<MeasurementUi>>(emptyList()) }
+    var liveCurrentTime by remember { mutableStateOf<LocalDateTime?>(null) }
     var isPaused by remember { mutableStateOf(false) }
 
-    LaunchedEffect(isLive) {
+    fun validateDateRange(
+        from: LocalDateTime,
+        to: LocalDateTime
+    ): Boolean {
+        if (from.isBefore(to)) {
+            return true
+        }
+
+        statusMsg = "Error: 'From' has to be before 'To'."
+        return false
+    }
+
+    fun loadMeasurements(
+        from: LocalDateTime,
+        to: LocalDateTime
+    ) {
+        if (!validateDateRange(from, to)) {
+            return
+        }
+
+        scope.launch {
+            isLoading = true
+            statusMsg = ""
+
+            val pairs = ALL_CHANNELS.map { channelId ->
+                StationChannelPairUi(STATION_ID, channelId)
+            }
+
+            repository.regenerateAndGet(
+                MeasurementRequestUi(
+                    pairs = pairs,
+                    datetimeFrom = from,
+                    datetimeTo = to
+                )
+            ).fold(
+                onSuccess = { loadedMeasurements ->
+                    measurements = loadedMeasurements
+                    hasLoaded = true
+                    statusMsg = "Loaded ${loadedMeasurements.size} measurements."
+                },
+                onFailure = { error ->
+                    statusMsg = "Error: ${error.message}"
+                }
+            )
+
+            isLoading = false
+        }
+    }
+
+    LaunchedEffect(isLive, measurements) {
         if (!isLive) return@LaunchedEffect
 
         liveMeasurements = emptyList()
-        var current = datetimeFrom
+        liveCurrentTime = null
 
-        while (isLive && current.isBefore(datetimeTo)) {
-            if (!isPaused) {
-                val next = current.plusHours(1)
-                val generated = simulatorService.generateMeasurements(
-                    current.atOffset(ZoneOffset.UTC).toLocalDateTime(),
-                    next.atOffset(ZoneOffset.UTC).toLocalDateTime()
-                )
-                val newMeasurements = generated.map { m ->
-                    Measurement(
-                        id = null,
-                        stationId = STATION_ID,
-                        stationName = "Radar test",
-                        channelId = m.channelId,
-                        channelName = channelName(m.channelId),
-                        dateTime = m.dateTime,
-                        value = m.value.toDouble(),
-                        status = 0
-                    )
-                }
-                liveMeasurements = liveMeasurements + newMeasurements
-                liveCurrentTime = next
-                current = next
+        val sortedMeasurements = measurements.sortedBy { it.dateTime }
+
+        for (measurement in sortedMeasurements) {
+            if (!isLive) break
+
+            while (isPaused && isLive) {
+                delay(200L)
             }
+
+            liveMeasurements = liveMeasurements + measurement
+            liveCurrentTime = measurement.dateTime
+
             delay(1000L)
         }
 
@@ -127,30 +163,12 @@ fun DigitalTwin() {
 
             Button(
                 onClick = {
-                    if (!datetimeFrom.isBefore(datetimeTo)) {
-                        statusMsg = "Error: 'From' has to be before 'To'."
-                        return@Button
-                    }
-                    scope.launch {
-                        isLoading = true
-                        statusMsg = ""
-                        val pairs = ALL_CHANNELS.map { StationChannelPair(STATION_ID, it) }
-                        repository.regenerateAndGet(
-                            MeasurementRequest(pairs, datetimeFrom, datetimeTo)
-                        ).fold(
-                            onSuccess = {
-                                measurements = it
-                                hasLoaded = true
-                                statusMsg = "Loaded ${it.size} measurements."
-                            },
-                            onFailure = {
-                                statusMsg = "Error: ${it.message}"
-                            }
-                        )
-                        isLoading = false
-                    }
+                    loadMeasurements(
+                        from = datetimeFrom,
+                        to = datetimeTo
+                    )
                 },
-                enabled = !isLoading,
+                enabled = !isLoading && measurements.isNotEmpty(),
                 colors = ButtonDefaults.buttonColors(containerColor = SensumThemeColors.accent)
             ) {
                 Text("Generiraj", color = SensumThemeColors.onAccent)
@@ -158,28 +176,18 @@ fun DigitalTwin() {
 
             Button(
                 onClick = {
-                    datetimeFrom = LocalDateTime.of(2026, 1, 1, 0, 0)
-                    datetimeTo = LocalDateTime.of(2026, 12, 31, 23, 0)
-                    scope.launch {
-                        isLoading = true
-                        statusMsg = ""
-                        val pairs = ALL_CHANNELS.map { StationChannelPair(STATION_ID, it) }
-                        repository.regenerateAndGet(
-                            MeasurementRequest(pairs, LocalDateTime.of(2026, 1, 1, 0, 0), LocalDateTime.of(2026, 12, 31, 23, 0))
-                        ).fold(
-                            onSuccess = {
-                                measurements = it
-                                hasLoaded = true
-                                statusMsg = "Loaded ${it.size} measurements."
-                            },
-                            onFailure = {
-                                statusMsg = "Error: ${it.message}"
-                            }
-                        )
-                        isLoading = false
-                    }
+                    val wholeYearFrom = LocalDateTime.of(2026, 1, 1, 0, 0)
+                    val wholeYearTo = LocalDateTime.of(2026, 12, 31, 23, 0)
+
+                    datetimeFrom = wholeYearFrom
+                    datetimeTo = wholeYearTo
+
+                    loadMeasurements(
+                        from = wholeYearFrom,
+                        to = wholeYearTo
+                    )
                 },
-                enabled = !isLoading,
+                enabled = !isLoading && measurements.isNotEmpty(),
                 colors = ButtonDefaults.buttonColors(containerColor = SensumThemeColors.info)
             ) {
                 Text("Whole Year", color = SensumThemeColors.onAccent)
@@ -188,14 +196,13 @@ fun DigitalTwin() {
             if (!isLive) {
                 Button(
                     onClick = {
-                        if (!datetimeFrom.isBefore(datetimeTo)) {
-                            statusMsg = "Error: 'From' has to be after 'To'."
+                        if (!validateDateRange(datetimeFrom, datetimeTo)) {
                             return@Button
                         }
                         isPaused = false
                         isLive = true
                     },
-                    enabled = !isLoading,
+                    enabled = !isLoading && measurements.isNotEmpty(),
                     colors = ButtonDefaults.buttonColors(containerColor = SensumThemeColors.success)
                 ) {
                     Text("Live", color = SensumThemeColors.onAccent)
@@ -303,12 +310,13 @@ fun DigitalTwin() {
 
 @Composable
 private fun DigitalTwinChart(
-    measurements: List<Measurement>,
+    measurements: List<MeasurementUi>,
     modifier: Modifier = Modifier
 ) {
-    val isDark = LocalIsDarkTheme.current
+    val plotTheme = letsPlotTheme()
+
     val sorted = measurements.sortedWith(
-        compareBy<Measurement> { it.channelId }.thenBy { it.dateTime }
+        compareBy<MeasurementUi> { it.channelId }.thenBy { it.dateTime }
     )
 
     fun buildPlot(title: String, channelIds: List<Int>): Plot {
@@ -326,7 +334,7 @@ private fun DigitalTwinChart(
         } + geomLine(size = 1.0, alpha = 0.8) +
                 ggtitle(title) +
                 labs(x = "", y = "Vrednost", color = "Kanal") +
-                if (isDark) flavorDarcula() else flavorStandard()
+                plotTheme
     }
 
     val grid = gggrid(
@@ -337,7 +345,7 @@ private fun DigitalTwinChart(
             buildPlot("Globina vodnjaka [m]", listOf(129))
         ),
         ncol = 2
-    ) + if (isDark) flavorDarcula() else flavorStandard()
+    ) + plotTheme
 
     PlotPanel(
         figure = grid,

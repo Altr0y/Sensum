@@ -2,7 +2,7 @@ package si.sensum.demo.model
 
 import java.time.LocalDateTime
 
-data class Measurement(
+data class MeasurementUi(
     val id: Int? = null,
     val stationId: Int,
     val stationName: String,
@@ -11,15 +11,4 @@ data class Measurement(
     val dateTime: LocalDateTime,
     val value: Double,
     val status: Int
-)
-
-data class StationChannelPair(
-    val stationId: Int,
-    val channelId: Int
-)
-
-data class MeasurementRequest(
-    val pairs: List<StationChannelPair>,
-    val datetimeFrom: LocalDateTime,
-    val datetimeTo: LocalDateTime
 )

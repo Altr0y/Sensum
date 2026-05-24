@@ -9,24 +9,29 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
+import si.sensum.demo.api.SensumApiClient
 import si.sensum.demo.components.DateTimePicker
 import si.sensum.demo.components.theme.SensumThemeColors
 import si.sensum.demo.model.DemoChannels
-import si.sensum.demo.model.Measurement
-import si.sensum.demo.model.MeasurementRequest
-import si.sensum.demo.model.StationChannelPair
-import si.sensum.demo.repository.MockMeasurementRepository
-import si.sensum.demo.repository.SwsMeasurementRepository
+import si.sensum.demo.model.MeasurementUi
+import si.sensum.demo.model.MeasurementRequestUi
+import si.sensum.demo.model.StationChannelPairUi
+import si.sensum.demo.repository.ApiMeasurementRepository
 import java.time.LocalDateTime
 
 private const val STATION_ID = DemoChannels.DEFAULT_STATION_ID
 private val CHANNELS = DemoChannels.names
-private val repository = MockMeasurementRepository()
-//private val repository = SwsMeasurementRepository()
 
 @Composable
-fun DataLoader(onMeasurementsLoaded: (List<Measurement>) -> Unit = {}) {
+fun DataLoader(
+    apiClient: SensumApiClient,
+    onMeasurementsLoaded: (List<MeasurementUi>) -> Unit = {}
+) {
     val scope = rememberCoroutineScope()
+
+    val repository = remember(apiClient) {
+        ApiMeasurementRepository(apiClient)
+    }
 
     val selectedChannels = remember {
         mutableStateMapOf<Int, Boolean>().apply {
@@ -119,7 +124,7 @@ fun DataLoader(onMeasurementsLoaded: (List<Measurement>) -> Unit = {}) {
             Button(
                 onClick = {
                     val pairs = selectedChannels.filter { it.value }.keys
-                        .map { StationChannelPair(STATION_ID, it) }
+                        .map { StationChannelPairUi(STATION_ID, it) }
 
                     if (pairs.isEmpty()) {
                         statusMsg = "Select at least one channel."
@@ -133,8 +138,10 @@ fun DataLoader(onMeasurementsLoaded: (List<Measurement>) -> Unit = {}) {
                     scope.launch {
                         isLoading = true
                         statusMsg = ""
+                        // TODO: remove
+                        apiClient.login("sensum", "sensum")
                         val result = repository.getMeasurements(
-                            MeasurementRequest(pairs, datetimeFrom, datetimeTo)
+                            MeasurementRequestUi(pairs, datetimeFrom, datetimeTo)
                         )
                         result.fold(
                             onSuccess = {

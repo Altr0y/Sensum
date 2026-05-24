@@ -8,7 +8,8 @@ import androidx.compose.ui.Modifier
 import si.sensum.demo.api.SensumApiClient
 import si.sensum.demo.components.*
 import si.sensum.demo.components.main.*
-import si.sensum.demo.model.Measurement
+import si.sensum.demo.components.main.database.DatabasePanel
+import si.sensum.demo.model.MeasurementUi
 
 @Composable
 fun App(
@@ -33,7 +34,7 @@ fun App(
 
     var sidebarExpanded by remember { mutableStateOf(false) }
     var activeTab by remember { mutableStateOf(SideBarTab.DATA_LOADER) }
-    var measurements by remember { mutableStateOf<List<Measurement>>(emptyList()) }
+    var measurements by remember { mutableStateOf<List<MeasurementUi>>(emptyList()) }
 
     Column(modifier = Modifier.fillMaxSize()) {
         TitleBar(
@@ -56,10 +57,24 @@ fun App(
                     .background(MaterialTheme.colorScheme.background)
             ) {
                 when (activeTab) {
-                    SideBarTab.DATA_LOADER -> DataLoader(onMeasurementsLoaded = { measurements = it })
-                    SideBarTab.DATABASE_PANEL -> DatabasePanel(measurements = measurements)
-                    SideBarTab.MEASUREMENT_CHART -> MeasurementChart()
-                    SideBarTab.DIGITAL_TWIN -> DigitalTwin()
+                    SideBarTab.DATA_LOADER -> DataLoader(
+                        apiClient = apiClient,
+                        onMeasurementsLoaded = { measurements = it }
+                    )
+
+                    SideBarTab.DATABASE_PANEL -> DatabasePanel(
+                        measurements = measurements,
+                        apiClient = apiClient
+                    )
+
+                    SideBarTab.MEASUREMENT_CHART -> MeasurementChart(
+                        apiClient = apiClient
+                    )
+
+                    SideBarTab.DIGITAL_TWIN -> DigitalTwin(
+                        apiClient = apiClient
+                    )
+
                     SideBarTab.USER -> User()
                     SideBarTab.INFO -> Info()
                 }

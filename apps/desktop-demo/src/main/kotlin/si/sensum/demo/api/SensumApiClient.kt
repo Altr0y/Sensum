@@ -5,16 +5,15 @@ import io.ktor.client.call.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
+import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
-import si.sensum.demo.model.Measurement
-import si.sensum.demo.model.DemoChannels
+import si.sensum.demo.model.MeasurementUi
 import si.sensum.shared.models.api.LoginRequest
 import si.sensum.shared.models.api.LoginResponse
 import si.sensum.shared.models.api.measurements.MeasurementDto
 import si.sensum.shared.models.api.measurements.MeasurementsByStationChannelPairsRequest
 import si.sensum.shared.models.api.measurements.MeasurementsByStationChannelPairsResponse
-import io.ktor.client.statement.bodyAsText
 import si.sensum.shared.models.api.measurements.StationChannelPairDto
 
 class SensumApiClient(
@@ -26,8 +25,10 @@ class SensumApiClient(
         }
         expectSuccess = false
     }
-
-    private var authToken: String? = null
+    private val session = ApiSession()
+    private fun requireToken(): String {
+        return session.requireToken()
+    }
 
     suspend fun login(
         username: String,
@@ -43,7 +44,7 @@ class SensumApiClient(
         }
 
         val loginResponse = response.body<LoginResponse>()
-        authToken = loginResponse.token
+        session.saveToken(loginResponse.token)
 
         return loginResponse
     }
@@ -55,7 +56,7 @@ class SensumApiClient(
     ): MeasurementsByStationChannelPairsResponse {
         val response = client.post("$baseUrl/api/v1/measurements/refresh") {
             contentType(ContentType.Application.Json)
-            header(HttpHeaders.Authorization, "Bearer ${authToken ?: error("Not logged in")}")
+            header(HttpHeaders.Authorization, "Bearer ${requireToken()}")
             setBody(
                 MeasurementsByStationChannelPairsRequest(
                     stationChannelPairs = stationChannelPairs,
@@ -72,18 +73,24 @@ class SensumApiClient(
         return response.body()
     }
 
-    suspend fun getMeasurements(): List<Measurement> {
-        val dtos = client.get("$baseUrl/api/v1/measurements") {
-            header(HttpHeaders.Authorization, "Bearer ${authToken ?: error("Not logged in")}")
-        }.body<List<MeasurementDto>>()
+    suspend fun getMeasurements(): List<MeasurementUi> {
+        val response = client.get("$baseUrl/api/v1/measurements") {
+            header(HttpHeaders.Authorization, "Bearer ${requireToken()}")
+        }
 
-        return dtos.map { it.toDesktopMeasurement() }
+        if (!response.status.isSuccess()) {
+            error("Get measurements failed: HTTP ${response.status.value}\n${response.bodyAsText()}")
+        }
+
+        return response
+            .body<List<MeasurementDto>>()
+            .map { it.toUi() }
     }
 
-    suspend fun createMeasurement(measurement: Measurement): Measurement {
+    suspend fun createMeasurement(measurement: MeasurementUi): MeasurementUi {
         val response = client.post("$baseUrl/api/v1/measurements") {
             contentType(ContentType.Application.Json)
-            header(HttpHeaders.Authorization, "Bearer ${authToken ?: error("Not logged in")}")
+            header(HttpHeaders.Authorization, "Bearer ${requireToken()}")
             setBody(measurement.toDto())
         }
 
@@ -91,10 +98,10 @@ class SensumApiClient(
             error("Create failed: HTTP ${response.status.value}\n${response.bodyAsText()}")
         }
 
-        return response.body<MeasurementDto>().toDesktopMeasurement()
+        return response.body<MeasurementDto>().toUi()
     }
 
-    suspend fun createMeasurements(measurements: List<Measurement>): Int {
+    suspend fun createMeasurements(measurements: List<MeasurementUi>): Int {
         measurements.forEach {
             createMeasurement(it)
         }
@@ -102,12 +109,12 @@ class SensumApiClient(
         return measurements.size
     }
 
-    suspend fun updateMeasurement(measurement: Measurement): Measurement {
+    suspend fun updateMeasurement(measurement: MeasurementUi): MeasurementUi {
         val id = measurement.id ?: error("Cannot update measurement without id")
 
         val response = client.put("$baseUrl/api/v1/measurements/$id") {
             contentType(ContentType.Application.Json)
-            header(HttpHeaders.Authorization, "Bearer ${authToken ?: error("Not logged in")}")
+            header(HttpHeaders.Authorization, "Bearer ${requireToken()}")
             setBody(measurement.toDto())
         }
 
@@ -115,12 +122,12 @@ class SensumApiClient(
             error("Update failed: HTTP ${response.status.value}\n${response.bodyAsText()}")
         }
 
-        return response.body<MeasurementDto>().toDesktopMeasurement()
+        return response.body<MeasurementDto>().toUi()
     }
 
     suspend fun deleteMeasurement(id: Int) {
         val response = client.delete("$baseUrl/api/v1/measurements/$id") {
-            header(HttpHeaders.Authorization, "Bearer ${authToken ?: error("Not logged in")}")
+            header(HttpHeaders.Authorization, "Bearer ${requireToken()}")
         }
 
         if (!response.status.isSuccess()) {
@@ -130,7 +137,7 @@ class SensumApiClient(
 
     suspend fun deleteAllMeasurements() {
         val response = client.delete("$baseUrl/api/v1/measurements") {
-            header(HttpHeaders.Authorization, "Bearer ${authToken ?: error("Not logged in")}")
+            header(HttpHeaders.Authorization, "Bearer ${requireToken()}")
         }
 
         if (!response.status.isSuccess()) {
@@ -138,27 +145,39 @@ class SensumApiClient(
         }
     }
 
-    private fun Measurement.toDto(): MeasurementDto {
-        return MeasurementDto(
-            id = id?.toLong(),
-            stationId = stationId.toLong(),
-            channelId = channelId,
-            dateTime = dateTime.atOffset(java.time.ZoneOffset.UTC),
-            value = value,
-            status = status
-        )
+    suspend fun getMeasurementsByRange(
+        channelId: Int,
+        datetimeFrom: String,
+        datetimeTo: String
+    ): List<MeasurementUi> {
+        val response = client.get("$baseUrl/api/v1/measurements/range") {
+            header(HttpHeaders.Authorization, "Bearer ${requireToken()}")
+            parameter("channelId", channelId)
+            parameter("from", datetimeFrom)
+            parameter("to", datetimeTo)
+        }
+
+        if (!response.status.isSuccess()) {
+            error("Get measurements by range failed: HTTP ${response.status.value}\n${response.bodyAsText()}")
+        }
+
+        return response
+            .body<List<MeasurementDto>>()
+            .map { it.toUi() }
     }
 
-    private fun MeasurementDto.toDesktopMeasurement(): Measurement {
-        return Measurement(
-            id = id?.toInt(),
-            stationId = stationId.toInt(),
-            stationName = "Station $DemoChannels.DEFAULT_STATION_NAME",
-            channelId = channelId,
-            channelName = DemoChannels.nameOf(channelId),
-            dateTime = dateTime.toLocalDateTime(),
-            value = value,
-            status = status
-        )
+    suspend fun regenerateMeasurements(
+        datetimeFrom: String,
+        datetimeTo: String
+    ) {
+        val response = client.post("$baseUrl/api/v1/measurements/regenerate") {
+            header(HttpHeaders.Authorization, "Bearer ${requireToken()}")
+            parameter("from", datetimeFrom)
+            parameter("to", datetimeTo)
+        }
+
+        if (!response.status.isSuccess()) {
+            error("Regenerate failed: HTTP ${response.status.value}\n${response.bodyAsText()}")
+        }
     }
 }

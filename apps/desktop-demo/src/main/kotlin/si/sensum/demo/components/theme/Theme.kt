@@ -2,7 +2,11 @@ package si.sensum.demo.components.theme
 
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.staticCompositionLocalOf
+import org.jetbrains.letsPlot.themes.flavorDarcula
+import org.jetbrains.letsPlot.themes.flavorStandard
 
 val LocalIsDarkTheme = staticCompositionLocalOf { true }
 val LocalThemeColors = staticCompositionLocalOf { SensumColors.Dark }
@@ -10,9 +14,9 @@ val LocalThemeColors = staticCompositionLocalOf { SensumColors.Dark }
 val SensumThemeColors: SensumColors.Palette
     @Composable
     get() = LocalThemeColors.current
+
 @Composable
 fun SensumTheme(
-
     isDark: Boolean = true,
     content: @Composable () -> Unit
 ) {
@@ -31,3 +35,11 @@ fun SensumTheme(
         )
     }
 }
+
+@Composable
+fun letsPlotTheme() =
+    if (LocalIsDarkTheme.current) {
+        flavorDarcula()
+    } else {
+        flavorStandard()
+    }

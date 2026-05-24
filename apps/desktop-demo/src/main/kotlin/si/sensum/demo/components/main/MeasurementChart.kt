@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -16,30 +15,38 @@ import org.jetbrains.letsPlot.geom.geomLine
 import org.jetbrains.letsPlot.ggplot
 import org.jetbrains.letsPlot.label.ggtitle
 import org.jetbrains.letsPlot.label.labs
+import si.sensum.demo.api.SensumApiClient
 import si.sensum.demo.components.EmptyState
 import si.sensum.demo.components.theme.SensumThemeColors
-import si.sensum.demo.model.Measurement
-import si.sensum.demo.repository.PostgresMeasurementRepository
+import si.sensum.demo.components.theme.letsPlotTheme
+import si.sensum.demo.model.MeasurementUi
 import si.sensum.demo.resources.Res
 import si.sensum.demo.resources.chart
-import org.jetbrains.letsPlot.themes.flavorStandard
-import org.jetbrains.letsPlot.themes.flavorDarcula
-import si.sensum.demo.components.theme.LocalIsDarkTheme
-
-private val dbRepository = PostgresMeasurementRepository()
 
 @Composable
-fun MeasurementChart() {
-    var measurements by remember { mutableStateOf<List<Measurement>>(emptyList()) }
+fun MeasurementChart(
+    apiClient: SensumApiClient = remember { SensumApiClient() }
+) {
+    var measurements by remember { mutableStateOf<List<MeasurementUi>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
     var errorMsg by remember { mutableStateOf("") }
 
+    // Meritve naloži prek API Gateway.
     LaunchedEffect(Unit) {
         isLoading = true
-        dbRepository.getAll().fold(
-            onSuccess = { measurements = it },
-            onFailure = { errorMsg = "DB Error: ${it.message}" }
+        errorMsg = ""
+
+        runCatching {
+            apiClient.getMeasurements()
+        }.fold(
+            onSuccess = { loadedMeasurements ->
+                measurements = loadedMeasurements
+            },
+            onFailure = { error ->
+                errorMsg = "API Error: ${error.message}"
+            }
         )
+
         isLoading = false
     }
 
@@ -48,9 +55,10 @@ fun MeasurementChart() {
             EmptyState(
                 icon = Res.drawable.chart,
                 title = "Loading...",
-                subtitle = "Fetching measurements from database."
+                subtitle = "Fetching measurements through API Gateway."
             )
         }
+
         errorMsg.isNotEmpty() -> {
             EmptyState(
                 icon = Res.drawable.chart,
@@ -58,13 +66,15 @@ fun MeasurementChart() {
                 subtitle = errorMsg
             )
         }
+
         measurements.isEmpty() -> {
             EmptyState(
                 icon = Res.drawable.chart,
                 title = "No data to display",
-                subtitle = "Load measurements in Data Loader\nand save them to the database first."
+                subtitle = "Load measurements in Data Loader or refresh them from API Gateway."
             )
         }
+
         else -> {
             Column(
                 modifier = Modifier
@@ -76,7 +86,9 @@ fun MeasurementChart() {
                     text = "Measurement Chart — ${measurements.size} measurements",
                     style = MaterialTheme.typography.titleLarge
                 )
+
                 HorizontalDivider(color = SensumThemeColors.border)
+
                 LetsPlotMeasurementChart(
                     measurements = measurements,
                     modifier = Modifier.fillMaxSize()
@@ -88,18 +100,19 @@ fun MeasurementChart() {
 
 @Composable
 private fun LetsPlotMeasurementChart(
-    measurements: List<Measurement>,
+    measurements: List<MeasurementUi>,
     modifier: Modifier = Modifier
 ) {
-    val isDark = LocalIsDarkTheme.current
+//    val isDark = LocalIsDarkTheme.current
+    val plotTheme = letsPlotTheme()
 
     val sorted = measurements.sortedWith(
-        compareBy<Measurement> { it.channelName }.thenBy { it.dateTime }
+        compareBy<MeasurementUi> { it.channelName }.thenBy { it.dateTime }
     )
 
     val data = mapOf(
-        "time"    to sorted.map { it.dateTime.toString() },
-        "value"   to sorted.map { it.value },
+        "time" to sorted.map { it.dateTime.toString() },
+        "value" to sorted.map { it.value },
         "channel" to sorted.map { "${it.channelId} - ${it.channelName}" }
     )
 
@@ -112,7 +125,7 @@ private fun LetsPlotMeasurementChart(
             geomLine(size = 1.2) +
             ggtitle("Measurements by channel") +
             labs(x = "Time", y = "Value", color = "Channel") +
-            if (isDark) flavorDarcula() else flavorStandard()
+            plotTheme
 
     PlotPanel(
         figure = plot,
