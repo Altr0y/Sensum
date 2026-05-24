@@ -40,4 +40,33 @@ internal class BackendMeasurementClient(
     ): MeasurementsByStationChannelPairsResponse {
         return backend.post("/api/v1/measurements/refresh", request)
     }
+
+    suspend fun getMeasurementsByRange(
+        channelId: Int,
+        datetimeFrom: String,
+        datetimeTo: String
+    ): List<MeasurementDto> {
+        return backend.get(
+            "/api/v1/measurements/range?channelId=$channelId&from=$datetimeFrom&to=$datetimeTo"
+        )
+    }
+
+    suspend fun regenerateMeasurements(
+        datetimeFrom: String,
+        datetimeTo: String
+    ): Map<String, Boolean> {
+        return backend.post(
+            path = "/api/v1/measurements/regenerate?from=$datetimeFrom&to=$datetimeTo",
+            body = emptyMap<String, String>()
+        )
+    }
+
+    suspend fun deleteMeasurementsByRange(
+        datetimeFrom: String,
+        datetimeTo: String
+    ): Map<String, Int> {
+        return backend.deleteWithResponse(
+            "/api/v1/measurements/range?from=$datetimeFrom&to=$datetimeTo"
+        )
+    }
 }

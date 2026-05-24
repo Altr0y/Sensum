@@ -1,8 +1,10 @@
 package si.sensum.api.di
 
 import si.sensum.api.backend.BackendChannelClient
+import si.sensum.api.backend.BackendCustomerClient
 import si.sensum.api.backend.BackendMeasurementClient
 import si.sensum.api.backend.BackendStationClient
+import si.sensum.api.backend.BackendUserClient
 import si.sensum.api.services.AuthService
 import si.sensum.shared.auth.jwt.JwtTokenService
 
@@ -11,5 +13,7 @@ internal data class ApiDependencies(
     val authService: AuthService,
     val backendMeasurements: BackendMeasurementClient,
     val backendStations: BackendStationClient,
-    val backendChannels: BackendChannelClient
+    val backendChannels: BackendChannelClient,
+    val backendUsers: BackendUserClient,
+    val backendCustomers: BackendCustomerClient
 )

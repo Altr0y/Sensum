@@ -29,6 +29,14 @@ private fun Route.protectedRoutes(
         authService = dependencies.authService
     )
 
+    customerRoutes(
+        customers = dependencies.backendCustomers
+    )
+
+    userRoutes(
+        backendUsers  = dependencies.backendUsers
+    )
+
     measurementRoutes(
         backendMeasurements = dependencies.backendMeasurements
     )
@@ -40,4 +48,5 @@ private fun Route.protectedRoutes(
     channelRoutes(
         backendChannels = dependencies.backendChannels
     )
+
 }

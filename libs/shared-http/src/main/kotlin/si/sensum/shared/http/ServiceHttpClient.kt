@@ -109,6 +109,26 @@ class ServiceHttpClient(
         }
     }
 
+    suspend inline fun <reified T> deleteWithResponse(
+        path: String,
+        bearerToken: String? = null
+    ): T {
+        val response = httpClient.delete(fullUrl(path)) {
+            bearerToken?.let {
+                header(HttpHeaders.Authorization, "Bearer $it")
+            }
+        }
+
+        if (!response.status.isSuccess()) {
+            throw ServiceHttpException(
+                statusCode = response.status,
+                responseBody = response.bodyAsText()
+            )
+        }
+
+        return response.body()
+    }
+
     @PublishedApi
     internal fun fullUrl(path: String): String {
         return baseUrl.trimEnd('/') + "/" + path.trimStart('/')

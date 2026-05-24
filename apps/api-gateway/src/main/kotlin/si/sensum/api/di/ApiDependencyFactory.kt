@@ -2,7 +2,7 @@ package si.sensum.api.di
 
 import si.sensum.api.backend.BackendAuthClient
 import si.sensum.api.backend.BackendChannelClient
-import si.sensum.shared.http.ServiceHttpClient
+import si.sensum.api.backend.BackendCustomerClient
 import si.sensum.api.backend.BackendMeasurementClient
 import si.sensum.api.backend.BackendStationClient
 import si.sensum.api.config.ApiGatewayConfig
@@ -10,6 +10,8 @@ import si.sensum.api.config.createHttpClient
 import si.sensum.api.services.AuthService
 import si.sensum.shared.auth.jwt.JwtConfig
 import si.sensum.shared.auth.jwt.JwtTokenService
+import si.sensum.shared.http.ServiceHttpClient
+import si.sensum.api.backend.BackendUserClient
 
 internal fun createApiDependencies(
     config: ApiGatewayConfig
@@ -42,6 +44,8 @@ internal fun createApiDependencies(
         authService = authService,
         backendMeasurements = BackendMeasurementClient(backendHttpClient),
         backendStations = BackendStationClient(backendHttpClient),
-        backendChannels = BackendChannelClient(backendHttpClient)
+        backendChannels = BackendChannelClient(backendHttpClient),
+        backendUsers = BackendUserClient(backendHttpClient),
+        backendCustomers = BackendCustomerClient(backendHttpClient)
     )
 }
