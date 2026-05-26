@@ -23,6 +23,7 @@ COPY libs/sws-client/build.gradle.kts ./libs/sws-client/build.gradle.kts
 COPY libs/logging/build.gradle.kts ./libs/logging/build.gradle.kts
 COPY libs/data-transform/build.gradle.kts ./libs/data-transform/build.gradle.kts
 COPY libs/simulator/build.gradle.kts ./libs/simulator/build.gradle.kts
+COPY libs/geo-dsl/build.gradle.kts ./libs/geo-dsl/build.gradle.kts
 
 # Pre-download dependencies
 RUN ./gradlew :apps:backend-core:dependencies --no-daemon
@@ -32,6 +33,7 @@ COPY apps/backend-core ./apps/backend-core
 COPY libs/shared-models ./libs/shared-models
 COPY libs/logging ./libs/logging
 COPY libs/simulator ./libs/simulator
+COPY libs/geo-dsl ./libs/geo-dsl
 
 # Build the distribution
 RUN ./gradlew :apps:backend-core:installDist --no-daemon

@@ -23,6 +23,7 @@ COPY libs/sws-client/build.gradle.kts ./libs/sws-client/build.gradle.kts
 COPY libs/logging/build.gradle.kts ./libs/logging/build.gradle.kts
 COPY libs/data-transform/build.gradle.kts ./libs/data-transform/build.gradle.kts
 COPY libs/simulator/build.gradle.kts ./libs/simulator/build.gradle.kts
+COPY libs/geo-dsl/build.gradle.kts ./libs/geo-dsl/build.gradle.kts
 
 # Pre-download dependencies
 RUN ./gradlew :apps:eltratec-gm:dependencies --no-daemon
@@ -34,6 +35,7 @@ COPY libs/shared-auth ./libs/shared-auth
 COPY libs/sws-client ./libs/sws-client
 COPY libs/logging ./libs/logging
 COPY libs/simulator ./libs/simulator
+COPY libs/geo-dsl ./libs/geo-dsl
 
 # Build the distribution
 RUN ./gradlew :apps:eltratec-gm:installDist --no-daemon

@@ -1,0 +1,10 @@
+country "Slovenia" {
+    region "Podravska" {
+        municipality "Maribor" {
+            river "Drava" line {
+                point(15.54, 46.56);
+                point(15.65, 46.55);
+            }
+        }
+    }
+}
