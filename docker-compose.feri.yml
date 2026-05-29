@@ -85,6 +85,7 @@ services:
       API_GATEWAY_PORT: ${API_GATEWAY_PORT:-8080}
       API_GATEWAY_HOST: ${API_GATEWAY_HOST:-0.0.0.0}
       GM_BASE_URL: ${GM_BASE_URL:-http://eltratec-gm:8081}
+      BACKEND_CORE_BASE_URL: ${BACKEND_CORE_BASE_URL:-http://backend-core:8082}
       GM_API_AUTH_TOKEN: ${GM_API_AUTH_TOKEN:-change-this-dev-token}
     depends_on:
       eltratec-gm:
