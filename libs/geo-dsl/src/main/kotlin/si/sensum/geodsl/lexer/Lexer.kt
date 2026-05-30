@@ -1,96 +1,97 @@
 package si.sensum.geodsl.lexer
 
 import java.io.File
+import si.sensum.geodsl.ast.GeoElement
+import si.sensum.geodsl.parser.Parser
 
-const val MAX_STATE = 15
-const val START_STATE = 0
+const val MAX_STATE = 16
 const val NO_EDGE = -1
 
-class Lexer(val filePath: String) {
-    var row: Int = 1
-    var column: Int = 1
+class Lexer(
+    private val source: String,
+    private val fileName: String = "<input>",
+    private val baseDir: File? = null,
+    private val visited: MutableSet<String> = mutableSetOf()
+) {
+    private var pos = 0
+    private var line = 1
+    private var col = 1
 
-    val automata = Array(MAX_STATE) { IntArray(256) { NO_EDGE } }
-    val finite = Array(MAX_STATE) { TokenType.ERR }
+    private val automata = Array(MAX_STATE) { IntArray(256) { NO_EDGE } }
+    private val finite = Array(MAX_STATE) { TokenType.UNKNOWN }
 
-    val reader = File(filePath).bufferedReader()
-    var currentChar: Char = reader.read().toChar()
+    companion object {
+        val KEYWORDS = mapOf(
+            "include" to TokenType.INCLUDE,
+            "country" to TokenType.COUNTRY,
+            "layer" to TokenType.LAYER,
+            "from" to TokenType.FROM,
+            "data_source" to TokenType.DATA_SOURCE,
+            "database" to TokenType.DATABASE,
+            "table" to TokenType.TABLE,
+            "municipality" to TokenType.MUNICIPALITY,
+            "polygon" to TokenType.POLYGON,
+            "station" to TokenType.STATION,
+            "at" to TokenType.AT,
+            "channel" to TokenType.CHANNEL,
+            "kind" to TokenType.KIND,
+            "unit" to TokenType.UNIT,
+            "measurement" to TokenType.MEASUREMENT,
+            "value" to TokenType.VALUE,
+            "status" to TokenType.STATUS,
+            "auto_resolve" to TokenType.AUTO_RESOLVE,
+            "belongs_to" to TokenType.BELONGS_TO,
+            "type" to TokenType.TYPE,
+            "by" to TokenType.BY,
+            "contains" to TokenType.CONTAINS,
+            "inside" to TokenType.INSIDE,
+            "near" to TokenType.NEAR,
+            "within" to TokenType.WITHIN,
+            "export" to TokenType.EXPORT,
+            "required" to TokenType.REQUIRED,
+            "optional" to TokenType.OPTIONAL,
+            "water_level" to TokenType.WATER_LEVEL,
+            "temperature" to TokenType.TEMPERATURE,
+            "rainfall" to TokenType.RAINFALL,
+            "flow_rate" to TokenType.FLOW_RATE,
+            "ok" to TokenType.STATUS_OK,
+            "warning" to TokenType.STATUS_WARNING,
+            "critical" to TokenType.STATUS_CRITICAL,
+            "error" to TokenType.STATUS_ERROR,
+            "geojson" to TokenType.FORMAT_GEOJSON,
+            "csv" to TokenType.FORMAT_CSV,
+            "json" to TokenType.FORMAT_JSON,
+            "geometry" to TokenType.GEOMETRY,
+            "point" to TokenType.POINT,
+            "spatial_refs" to TokenType.SPATIAL_REFS,
+            "latest_measurements" to TokenType.LATEST_MEASUREMENTS,
+            "river" to TokenType.RIVER,
+            "lake" to TokenType.LAKE,
+            "area" to TokenType.AREA,
+            "flood_zone" to TokenType.FLOOD_ZONE,
+            "risk" to TokenType.RISK,
+            "line" to TokenType.LINE_KW,
+        )
 
-    val keywords = mapOf(
-        // Organizacijski konstrukti
-        "country" to TokenType.COUNTRY,
-        "region" to TokenType.REGION,
-        "municipality" to TokenType.MUNICIPALITY,
-        // Geometrijski konstrukti
-        "river" to TokenType.RIVER,
-        "lake" to TokenType.LAKE,
-        "area" to TokenType.AREA,
-        "flood_zone" to TokenType.FLOOD_ZONE,
-        // Senzorski konstrukti
-        "station" to TokenType.STATION,
-        "channel" to TokenType.CHANNEL,
-        "measurement" to TokenType.MEASUREMENT,
-        // Ukazi
-        "point" to TokenType.POINT,
-        "line" to TokenType.LINE,
-        "polygon" to TokenType.POLYGON,
-        "at" to TokenType.AT,
-        "kind" to TokenType.KIND,
-        "unit" to TokenType.UNIT,
-        "value" to TokenType.VALUE,
-        "status" to TokenType.STATUS,
-        "source" to TokenType.SOURCE,
-        "threshold" to TokenType.THRESHOLD,
-        "above" to TokenType.ABOVE,
-        "below" to TokenType.BELOW,
-        "display" to TokenType.DISPLAY,
-        "color" to TokenType.COLOR_KW,
-        "label" to TokenType.LABEL,
-        "risk" to TokenType.RISK,
-        // Channel kind
-        "water_level" to TokenType.WATER_LEVEL,
-        "water_depth" to TokenType.WATER_DEPTH,
-        "pressure" to TokenType.PRESSURE,
-        "temperature" to TokenType.TEMPERATURE,
-        "humidity" to TokenType.HUMIDITY,
-        "rainfall" to TokenType.RAINFALL,
-        "battery" to TokenType.BATTERY,
-        "signal" to TokenType.SIGNAL,
-        // Unit
-        "m" to TokenType.UNIT_M,
-        "cm" to TokenType.UNIT_CM,
-        "mm" to TokenType.UNIT_MM,
-        "hPa" to TokenType.UNIT_HPA,
-        "C" to TokenType.UNIT_C,
-        "V" to TokenType.UNIT_V,
-        "dBm" to TokenType.UNIT_DBM,
-        // Status
-        "ok" to TokenType.STATUS_OK,
-        "warning" to TokenType.STATUS_WARNING,
-        "error" to TokenType.STATUS_ERROR,
-        // Risk
-        "low" to TokenType.RISK_LOW,
-        "medium" to TokenType.RISK_MEDIUM,
-        "high" to TokenType.RISK_HIGH,
-        "critical" to TokenType.RISK_CRITICAL,
-    )
+        private val DATETIME_REGEX = Regex("""\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}""")
+    }
 
     init {
         // Stanje 1: INT
         for (c in '0'..'9') automata[0][c.code] = 1
         for (c in '0'..'9') automata[1][c.code] = 1
-        finite[1] = TokenType.INT
+        finite[1] = TokenType.INTEGER
 
         // Stanje 2: NUM decimalna pika
         automata[1]['.'.code] = 2
-        finite[2] = TokenType.ERR  // samo pika brez cifre = napaka
+        finite[2] = TokenType.UNKNOWN
 
         // Stanje 3: NUMBER
         for (c in '0'..'9') automata[2][c.code] = 3
         for (c in '0'..'9') automata[3][c.code] = 3
         finite[3] = TokenType.NUMBER
 
-        // Stanje 4: IDENT
+        // Stanje 4: IDENT/KW
         for (c in 'a'..'z') automata[0][c.code] = 4
         for (c in 'A'..'Z') automata[0][c.code] = 4
         automata[0]['_'.code] = 4
@@ -98,154 +99,210 @@ class Lexer(val filePath: String) {
         for (c in 'A'..'Z') automata[4][c.code] = 4
         for (c in '0'..'9') automata[4][c.code] = 4
         automata[4]['_'.code] = 4
-        automata[4]['-'.code] = 4
-        finite[4] = TokenType.ERR  // resolve v nextToken()
+        finite[4] = TokenType.IDENT  // resolve v nextToken()
 
-        // Stanje 5: KW/DT — resolve, ni prehoda iz avtomata
+        // Stanje 5: NEG
+        automata[0]['-'.code] = 5
+        finite[5] = TokenType.UNKNOWN
 
-        // Stanje 6: STR v teku
-        automata[0]['"'.code] = 6
-        for (i in 0..255) automata[6][i] = 6
-        automata[6]['"'.code] = 8
-        automata[6]['\\'.code] = 7
-        finite[6] = TokenType.ERR  // nedokončan niz
+        // Stanje 6: NEG INT
+        for (c in '0'..'9') automata[5][c.code] = 6
+        for (c in '0'..'9') automata[6][c.code] = 6
+        finite[6] = TokenType.NUMBER
 
-        // Stanje 7: STR escape
-        for (i in 0..255) automata[7][i] = 6
-        finite[7] = TokenType.ERR
+        // Stanje 7: NEG NUM decimalna pika
+        automata[6]['.'.code] = 7
+        finite[7] = TokenType.UNKNOWN
 
-        // Stanje 8: STRING končno
-        finite[8] = TokenType.STRING
+        // Stanje 8: NEG NUMBER
+        for (c in '0'..'9') automata[7][c.code] = 8
+        for (c in '0'..'9') automata[8][c.code] = 8
+        finite[8] = TokenType.NUMBER
 
-        // Stanje 9: COLOR
-        automata[0]['#'.code] = 9
-        for (c in '0'..'9') automata[9][c.code] = 9
-        for (c in 'a'..'f') automata[9][c.code] = 9
-        for (c in 'A'..'F') automata[9][c.code] = 9
-        finite[9] = TokenType.COLOR
+        // Stanje 9: STR v teku
+        automata[0]['"'.code] = 9
+        for (i in 0..255) automata[9][i] = 9
+        automata[9]['"'.code] = 10
+        automata[9]['\\'.code] = 11
+        finite[9] = TokenType.UNKNOWN  // nedokončan niz
 
-        // Stanje 10: NEG
-        automata[0]['-'.code] = 10
-        finite[10] = TokenType.ERR  // samo minus = napaka
+        // Stanje 10: STRING končno
+        finite[10] = TokenType.STRING
 
-        // Stanje 11: NEG INT
-        for (c in '0'..'9') automata[10][c.code] = 11
-        for (c in '0'..'9') automata[11][c.code] = 11
-        finite[11] = TokenType.NUMBER
+        // Stanje 11: STR escape
+        for (i in 0..255) automata[11][i] = 9
+        finite[11] = TokenType.UNKNOWN
 
-        // Stanje 12: NEG NUM
-        automata[11]['.'.code] = 12
+        // Stanje 12: DATETIME — iz stanja 1 ko pride '-'
+        automata[1]['-'.code] = 12
         for (c in '0'..'9') automata[12][c.code] = 12
-        finite[12] = TokenType.NUMBER
+        automata[12]['-'.code] = 12
+        automata[12]['T'.code] = 12
+        automata[12][':'.code] = 12
+        finite[12] = TokenType.DATETIME
 
-        // Stanje 13: LBRACE, RBRACE
-        automata[0]['{'.code] = 13
-        automata[0]['}'.code] = 13
-        finite[13] = TokenType.ERR  // resolve v nextToken()
+        // Stanje 13: DISTANCE — iz stanja 1 ali 6 ko pride 'm'
+        automata[1]['m'.code] = 13
+        automata[6]['m'.code] = 13
+        finite[13] = TokenType.DISTANCE
 
-        // Stanje 14: LPAREN, RPAREN, COMMA, SEMI, PCT
-        automata[0]['('.code] = 14
-        automata[0][')'.code] = 14
-        automata[0][','.code] = 14
-        automata[0][';'.code] = 14
-        automata[0]['%'.code] = 14
-        finite[14] = TokenType.ERR  // resolve v nextToken()
+        // Stanje 14: COMMENT — '//' do konca vrstice
+        automata[0]['/'.code] = 14
+        for (i in 0..255) automata[14][i] = 14
+        automata[14]['\n'.code] = NO_EDGE  // EXIT ob novem vrstici
+        finite[14] = TokenType.UNKNOWN     // komentarji se preskočijo
+
+        // Stanje 15: ločila
+        automata[0]['{'.code] = 15
+        automata[0]['}'.code] = 15
+        automata[0]['('.code] = 15
+        automata[0][')'.code] = 15
+        automata[0][','.code] = 15
+        automata[0][';'.code] = 15
+        finite[15] = TokenType.UNKNOWN  // resolve v nextToken()
     }
 
-    fun nextChar(): Char {
-        val c = currentChar
-        val next = reader.read()
-        currentChar = if (next == -1) '\u0000' else next.toChar()
+    fun tokenize(): List<Token> {
+        visited.add(fileName)
+        val tokens = mutableListOf<Token>()
+
+        var tok = nextToken()
+        while (tok.type != TokenType.EOF) {
+            if (tok.type == TokenType.INCLUDE) {
+                val nextTok = nextToken()
+                if (nextTok.type == TokenType.STRING) {
+                    val semi = nextToken()
+                    if (semi.type != TokenType.SEMICOLON)
+                        throw LexerException("Pričakovan ';' po include", semi)
+                    tokens.addAll(resolveInclude(nextTok.value, nextTok))
+                } else {
+                    tokens.add(tok)
+                    tokens.add(nextTok)
+                }
+            } else {
+                tokens.add(tok)
+            }
+            tok = nextToken()
+        }
+
+        tokens.add(Token(TokenType.EOF, "", line, col, fileName))
+        return tokens
+    }
+
+    private fun resolveInclude(relativePath: String, origin: Token): List<Token> {
+        val file = (baseDir ?: File(".")).resolve(relativePath).canonicalFile
+        if (!file.exists())
+            throw LexerException("Datoteka ne obstaja: ${file.absolutePath}", origin)
+        if (file.canonicalPath in visited)
+            throw LexerException("Krožna odvisnost: ${file.canonicalPath}", origin)
+        return Lexer(file.readText(), file.canonicalPath, file.parentFile, visited)
+            .tokenize()
+            .filter { it.type != TokenType.EOF }
+    }
+
+    fun resolveLayer(path: String, baseToken: Token): List<GeoElement> {
+        if (!path.endsWith(".sensum")) return emptyList()
+        val file = (baseDir ?: File(".")).resolve(path).canonicalFile
+        if (!file.exists()) return emptyList()
+        val tokens = Lexer(file.readText(), file.canonicalPath, file.parentFile, visited)
+            .tokenize()
+            .filter { it.type != TokenType.EOF }
+        return Parser(tokens).parseProgram()
+            .countries.firstOrNull()?.geoElements ?: emptyList()
+    }
+
+    private fun currentChar(): Char =
+        if (pos < source.length) source[pos] else '\u0000'
+
+    private fun advance(): Char {
+        val c = source[pos]
+        if (c == '\n') {
+            line++; col = 1
+        } else col++
+        pos++
         return c
     }
 
-    fun nextToken(): Token {
-        // Preskoči whitespace
-        while (currentChar == ' ' || currentChar == '\n' ||
-            currentChar == '\t' || currentChar == '\r'
+    private fun nextToken(): Token {
+        // preskoči whitespace
+        while (pos < source.length &&
+            (currentChar() == ' ' || currentChar() == '\n' ||
+                    currentChar() == '\t' || currentChar() == '\r')
         ) {
-            if (currentChar == '\n') {
-                row++; column = 1
-            } else column++
-            nextChar()
+            advance()
         }
 
-        // EOF
-        if (currentChar == '\u0000') return Token(
-            lexem = "", type = TokenType.ERR,
-            row = row, column = column, eof = true
-        )
+        if (pos >= source.length)
+            return Token(TokenType.EOF, "", line, col, fileName)
 
-        var state = START_STATE
+        var state = 0
         var lexem = ""
-        val startRow = row
-        val startColumn = column
+        val startLine = line
+        val startCol = col
         var lastChar = ' '
 
         while (true) {
-            val nextState = automata[state][currentChar.code]
+            val c = currentChar()
+            if (c == '\u0000') break
+            val nextState = automata[state][c.code]
             if (nextState == NO_EDGE) break
-            lastChar = currentChar
+            lastChar = c
             state = nextState
-            lexem += nextChar()
-            column++
+            lexem += advance()
         }
 
         if (lexem.isEmpty()) {
-            val unknown = currentChar
-            nextChar()
-            column++
-            return Token(
-                lexem = unknown.toString(),
-                type = TokenType.ERR,
-                row = startRow, column = startColumn
-            )
+            val unknown = advance()
+            return Token(TokenType.UNKNOWN, unknown.toString(), startLine, startCol, fileName)
         }
 
         var tokenType = finite[state]
 
         when (state) {
             4 -> {
-                // IDENT resolve — keywords ali DATETIME
-                val datetimeRegex = Regex("""\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}""")
-                tokenType = if (datetimeRegex.matches(lexem)) {
-                    TokenType.DATETIME
-                } else {
-                    keywords[lexem] ?: TokenType.ERR
-                }
+                // IDENT resolve — keywords
+                tokenType = KEYWORDS[lexem] ?: TokenType.IDENT
             }
 
-            8 -> {
+            10 -> {
                 // STRING — odstrani narekovaje
                 lexem = lexem.removeSurrounding("\"")
                 tokenType = TokenType.STRING
             }
 
-            13 -> {
-                // LBRACE ali RBRACE
-                tokenType = when (lastChar) {
-                    '{' -> TokenType.LBRACE
-                    '}' -> TokenType.RBRACE
-                    else -> TokenType.ERR
-                }
+            12 -> {
+                // DATETIME validacija
+                if (!DATETIME_REGEX.matches(lexem))
+                    throw LexerException("Neveljaven datetime: '$lexem'", null)
+                tokenType = TokenType.DATETIME
             }
 
             14 -> {
-                // LPAREN, RPAREN, COMMA, SEMI, UNIT_PCT
+                // COMMENT — preskoči in vrni naslednji token
+                return nextToken()
+            }
+
+            15 -> {
+                // ločila resolve
                 tokenType = when (lastChar) {
+                    '{' -> TokenType.LBRACE
+                    '}' -> TokenType.RBRACE
                     '(' -> TokenType.LPAREN
                     ')' -> TokenType.RPAREN
                     ',' -> TokenType.COMMA
-                    ';' -> TokenType.SEMI
-                    '%' -> TokenType.UNIT_PCT
-                    else -> TokenType.ERR
+                    ';' -> TokenType.SEMICOLON
+                    else -> TokenType.UNKNOWN
                 }
             }
         }
 
-        return Token(
-            lexem = lexem, type = tokenType,
-            row = startRow, column = startColumn
-        )
+        return Token(tokenType, lexem, startLine, startCol, fileName)
     }
+
+
 }
+
+
+
+class LexerException(message: String, val token: Token?) :
+    Exception(if (token != null) "$message [${token.file}:${token.line}:${token.column}]" else message)

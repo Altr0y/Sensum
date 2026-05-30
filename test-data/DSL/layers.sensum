@@ -1,0 +1,9 @@
+// Primer vključene datoteke — samo geografske plasti
+// Datoteka: test-data/layers.sensum
+// Vključi z: include "layers.sensum";
+
+layer regions        from "geojson/slovenia-regions.geojson";
+layer municipalities from "geojson/slovenia-municipalities.geojson";
+layer rivers         from "geojson/slovenia-rivers.geojson";
+layer lakes          from "geojson/slovenia-lakes.geojson";
+layer flood_zones    from "geojson/slovenia-flood-zones.geojson";

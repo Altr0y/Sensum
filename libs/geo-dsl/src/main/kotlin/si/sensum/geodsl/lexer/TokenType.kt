@@ -1,50 +1,91 @@
 package si.sensum.geodsl.lexer
 
 enum class TokenType {
-    // Napake in EOF
-    ERR,
+    // Ključne besede — struktura
+    INCLUDE,
+    COUNTRY,
+    LAYER,
+    FROM,
+    DATA_SOURCE,
+    DATABASE,
+    TABLE,
+    MUNICIPALITY,
+    POLYGON,
+    STATION,
+    AT,
+    CHANNEL,
+    KIND,
+    UNIT,
+    MEASUREMENT,
+    VALUE,
+    STATUS,
+    AUTO_RESOLVE,
+    BELONGS_TO,
+    TYPE,
+    BY,
+    CONTAINS,
+    INSIDE,
+    NEAR,
+    WITHIN,
+    EXPORT,
+    INCLUDE_KW,
+
+    // Geografski konstrukti
+    RIVER,
+    LAKE,
+    AREA,
+    FLOOD_ZONE,
+    RISK,
+    LINE_KW,
+
+    // Ključne besede — vrednosti
+    REQUIRED,
+    OPTIONAL,
+
+    // Tipi kanalov
+    WATER_LEVEL,
+    TEMPERATURE,
+    RAINFALL,
+    FLOW_RATE,
+
+    // Statusne vrednosti
+    STATUS_OK,
+    STATUS_WARNING,
+    STATUS_CRITICAL,
+    STATUS_ERROR,
+
+    // Export formati
+    FORMAT_GEOJSON,
+    FORMAT_CSV,
+    FORMAT_JSON,
+
+    // Export opcije
+    GEOMETRY,
+    POINT_KW,
+    SPATIAL_REFS,
+    LATEST_MEASUREMENTS,
+
+    // Geografski primitivi
+    POINT,
 
     // Literali
-    INT,        // 2241, 101
-    NUMBER,     // 1.42, -3.5
-    STRING,     // "Drava - Melje"
-    DATETIME,   // 2026-05-21T10:00:00
-    COLOR,      // "#ff0000"
+    STRING,
+    NUMBER,
+    INTEGER,
+    DATETIME,
+    DISTANCE,
 
-    // Keywords - organizacijski konstrukti
-    COUNTRY, REGION, MUNICIPALITY,
-
-    // Keywords - geometrijski konstrukti
-    RIVER, LAKE, AREA, FLOOD_ZONE,
-
-    // Keywords - senzorski konstrukti
-    STATION, CHANNEL, MEASUREMENT,
-
-    // Keywords - ukazi
-    POINT, LINE, POLYGON, RISK, AT,
-    KIND, UNIT, VALUE, STATUS, SOURCE,
-    THRESHOLD, ABOVE, BELOW,
-    DISPLAY, COLOR_KW, LABEL,
-
-    // Vrednosti - channel kind
-    WATER_LEVEL, WATER_DEPTH, PRESSURE,
-    TEMPERATURE, HUMIDITY, RAINFALL, BATTERY, SIGNAL,
-
-    // Vrednosti - unit
-    UNIT_M, UNIT_CM, UNIT_MM, UNIT_HPA,
-    UNIT_C, UNIT_PCT, UNIT_V, UNIT_DBM,
-
-    // Vrednosti - status
-    STATUS_OK, STATUS_WARNING, STATUS_ERROR,
-
-    // Vrednosti - risk
-    RISK_LOW, RISK_MEDIUM, RISK_HIGH, RISK_CRITICAL,
+    // Identifikator
+    IDENT,
 
     // Ločila
-    LBRACE,   // {
-    RBRACE,   // }
-    LPAREN,   // (
-    RPAREN,   // )
-    COMMA,    // ,
-    SEMI      // ;
+    LBRACE,
+    RBRACE,
+    LPAREN,
+    RPAREN,
+    COMMA,
+    SEMICOLON,
+
+    // Posebni
+    EOF, UNKNOWN
 }

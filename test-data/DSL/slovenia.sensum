@@ -1,0 +1,46 @@
+// Primer GeoSensum DSL datoteke - nova oblika z plastmi
+// Datoteka: test-data/slovenia.sensum
+country "Slovenia" {
+    // 1. Staticni geografski sloji (GeoJSON datoteke)
+    layer regions        from "geojson/slovenia-regions.geojson";
+    layer municipalities from "geojson/slovenia-municipalities.geojson";
+    layer rivers         from "rivers.sensum";
+    layer lakes          from "geojson/slovenia-lakes.geojson";
+    layer flood_zones    from "geojson/slovenia-flood-zones.geojson";
+    // 2. Podatkovni viri iz baze podatkov
+    data_source stations     from database table "stations";
+    data_source channels     from database table "channels";
+    data_source measurements from database table "measurements";
+    // 3. Rocno dodana testna obcina
+    municipality "Test Municipality" polygon {
+        point(15.10, 46.10);
+        point(15.30, 46.10);
+        point(15.30, 46.30);
+        point(15.10, 46.30);
+        point(15.10, 46.10);
+    }
+    // 4. Rocno dodana testna postaja z meritvami
+    station 9999 "Test Flood Station" at (15.20, 46.20) {
+        channel 901 "Water level" kind water_level unit m {
+            measurement 2026-05-21T10:00:00 value 1.42 status ok;
+            measurement 2026-05-21T11:00:00 value 1.80 status warning;
+        }
+        channel 902 "Temperature" kind temperature unit celsius {
+            measurement 2026-05-21T10:00:00 value 15.2 status ok;
+        }
+    }
+    // 5. Pravila za samodejno prostorsko razresevanje
+    auto_resolve stations {
+        belongs_to type municipality by contains required;
+        belongs_to type region       by contains required;
+        inside     type flood_zone   optional;
+        near       type river        within 500m optional;
+        near       type lake         within 700m optional;
+    }
+    // 6. Izvoz v GeoJSON
+    export geojson "stations-enriched.geojson" {
+        include station geometry point;
+        include spatial_refs;
+        include latest_measurements;
+    }
+}

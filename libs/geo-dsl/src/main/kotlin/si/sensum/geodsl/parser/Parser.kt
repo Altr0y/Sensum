@@ -1,497 +1,342 @@
 package si.sensum.geodsl.parser
 
 import si.sensum.geodsl.ast.*
-import si.sensum.geodsl.lexer.Lexer
 import si.sensum.geodsl.lexer.Token
 import si.sensum.geodsl.lexer.TokenType
+import si.sensum.geodsl.lexer.Lexer
 
-class Parser(filePath: String) {
-    val lexer = Lexer(filePath)
-    var currentToken: Token = lexer.nextToken()
+class Parser(
+    private val tokens: List<Token>,
+    private val lexer: Lexer? = null
+) {
+    private var pos = 0
 
-    fun eat(type: TokenType): Boolean {
-        return if (currentToken.type == type) {
-            currentToken = lexer.nextToken()
-            true
+    private val geoTypes = setOf(
+        TokenType.RIVER, TokenType.LAKE,
+        TokenType.AREA, TokenType.FLOOD_ZONE
+    )
+
+    fun parseProgram(): ProgramNode {
+        return if (!atEnd() && peek().type in geoTypes) {
+            ProgramNode(listOf(parseGeoFile()))
         } else {
-            println("ERR [${currentToken.row}:${currentToken.column}]: expected($type) got(${currentToken.type}) -> \"${currentToken.lexem}\"")
-            false
+            val countries = mutableListOf<CountryNode>()
+            while (!atEnd()) countries.add(parseCountry())
+            ProgramNode(countries)
         }
     }
 
-    // Program ::= Country EOF
-    fun parseProgram(): CountryNode? {
-        val country = parseCountry() ?: return null
-        if (!currentToken.eof) {
-            println("ERR [${currentToken.row}:${currentToken.column}]: unexpected token after end of program")
-            return null
+    private fun parseGeoFile(): CountryNode {
+        val elements = mutableListOf<GeoElement>()
+        while (!atEnd() && peek().type in geoTypes) {
+            elements.add(parseGeoElement())
         }
-        return country
-    }
-
-    // Country ::= "country" STRING "{" RegionList "}"
-    fun parseCountry(): CountryNode? {
-        if (!eat(TokenType.COUNTRY)) return null
-        val name = currentToken.lexem
-        if (!eat(TokenType.STRING)) return null
-        if (!eat(TokenType.LBRACE)) return null
-        val regions = parseRegionList()
-        if (!eat(TokenType.RBRACE)) return null
-        return CountryNode(name = name, regions = regions)
-    }
-
-    // RegionList ::= Region RegionList | ε
-    fun parseRegionList(): List<RegionNode> {
-        val regions = mutableListOf<RegionNode>()
-        while (currentToken.type == TokenType.REGION) {
-            val region = parseRegion() ?: break
-            regions.add(region)
-        }
-        return regions
-    }
-
-    // Region ::= "region" STRING "{" MunicipalityList "}"
-    fun parseRegion(): RegionNode? {
-        if (!eat(TokenType.REGION)) return null
-        val name = currentToken.lexem
-        if (!eat(TokenType.STRING)) return null
-        if (!eat(TokenType.LBRACE)) return null
-        val municipalities = parseMunicipalityList()
-        if (!eat(TokenType.RBRACE)) return null
-        return RegionNode(name = name, municipalities = municipalities)
-    }
-
-    // MunicipalityList ::= Municipality MunicipalityList | ε
-    fun parseMunicipalityList(): List<MunicipalityNode> {
-        val municipalities = mutableListOf<MunicipalityNode>()
-        while (currentToken.type == TokenType.MUNICIPALITY) {
-            val municipality = parseMunicipality() ?: break
-            municipalities.add(municipality)
-        }
-        return municipalities
-    }
-
-    // Municipality ::= "municipality" STRING "{" MunicipalityElementList "}"
-    fun parseMunicipality(): MunicipalityNode? {
-        if (!eat(TokenType.MUNICIPALITY)) return null
-        val name = currentToken.lexem
-        if (!eat(TokenType.STRING)) return null
-        if (!eat(TokenType.LBRACE)) return null
-        val elements = parseMunicipalityElementList()
-        if (!eat(TokenType.RBRACE)) return null
-        return MunicipalityNode(name = name, elements = elements)
-    }
-
-    // MunicipalityElementList ::= MunicipalityElement MunicipalityElementList | ε
-    fun parseMunicipalityElementList(): List<MunicipalityElement> {
-        val elements = mutableListOf<MunicipalityElement>()
-        val startTypes = setOf(
-            TokenType.RIVER, TokenType.LAKE, TokenType.AREA,
-            TokenType.FLOOD_ZONE, TokenType.STATION
+        return CountryNode(
+            name = "__geo__",
+            layers = emptyList(),
+            dataSources = emptyList(),
+            municipalities = emptyList(),
+            stations = emptyList(),
+            autoResolves = emptyList(),
+            exports = emptyList(),
+            geoElements = elements
         )
-        while (currentToken.type in startTypes) {
-            val element = parseMunicipalityElement() ?: break
-            elements.add(element)
-        }
-        return elements
     }
 
-    // MunicipalityElement ::= River | Lake | Area | FloodZone | Station
-    fun parseMunicipalityElement(): MunicipalityElement? {
-        return when (currentToken.type) {
+    private fun parseGeoElement(): GeoElement {
+        return when (peek().type) {
             TokenType.RIVER -> parseRiver()
             TokenType.LAKE -> parseLake()
             TokenType.AREA -> parseArea()
             TokenType.FLOOD_ZONE -> parseFloodZone()
-            TokenType.STATION -> parseStation()
-            else -> {
-                println("ERR [${currentToken.row}:${currentToken.column}]: unexpected token(${currentToken.type})")
-                null
-            }
+            else -> throw ParseException("Nepričakovan geo element '${peek().value}'", peek())
         }
     }
 
-    // River ::= "river" STRING "line" "{" GeoCommandList "}"
-    fun parseRiver(): RiverNode? {
-        if (!eat(TokenType.RIVER)) return null
-        val name = currentToken.lexem
-        if (!eat(TokenType.STRING)) return null
-        if (!eat(TokenType.LINE)) return null
-        if (!eat(TokenType.LBRACE)) return null
-        val commands = parseGeoCommandList()
-        if (!eat(TokenType.RBRACE)) return null
-        return RiverNode(name = name, commands = commands)
+    private fun parseRiver(): RiverNode {
+        expect(TokenType.RIVER)
+        val name = expect(TokenType.STRING).value
+        expect(TokenType.LINE_KW)
+        expect(TokenType.LBRACE)
+        val points = mutableListOf<PointNode>()
+        while (!check(TokenType.RBRACE) && !atEnd()) points.add(parsePoint())
+        expect(TokenType.RBRACE)
+        return RiverNode(name, points)
     }
 
-    // Lake ::= "lake" STRING "polygon" "{" GeoCommandList "}"
-    fun parseLake(): LakeNode? {
-        if (!eat(TokenType.LAKE)) return null
-        val name = currentToken.lexem
-        if (!eat(TokenType.STRING)) return null
-        if (!eat(TokenType.POLYGON)) return null
-        if (!eat(TokenType.LBRACE)) return null
-        val commands = parseGeoCommandList()
-        if (!eat(TokenType.RBRACE)) return null
-        return LakeNode(name = name, commands = commands)
+    private fun parseLake(): LakeNode {
+        expect(TokenType.LAKE)
+        val name = expect(TokenType.STRING).value
+        expect(TokenType.POLYGON)
+        expect(TokenType.LBRACE)
+        val points = mutableListOf<PointNode>()
+        while (!check(TokenType.RBRACE) && !atEnd()) points.add(parsePoint())
+        expect(TokenType.RBRACE)
+        return LakeNode(name, points)
     }
 
-    // Area ::= "area" STRING "polygon" "{" GeoCommandList "}"
-    fun parseArea(): AreaNode? {
-        if (!eat(TokenType.AREA)) return null
-        val name = currentToken.lexem
-        if (!eat(TokenType.STRING)) return null
-        if (!eat(TokenType.POLYGON)) return null
-        if (!eat(TokenType.LBRACE)) return null
-        val commands = parseGeoCommandList()
-        if (!eat(TokenType.RBRACE)) return null
-        return AreaNode(name = name, commands = commands)
+    private fun parseArea(): AreaNode {
+        expect(TokenType.AREA)
+        val name = expect(TokenType.STRING).value
+        expect(TokenType.POLYGON)
+        expect(TokenType.LBRACE)
+        val points = mutableListOf<PointNode>()
+        while (!check(TokenType.RBRACE) && !atEnd()) points.add(parsePoint())
+        expect(TokenType.RBRACE)
+        return AreaNode(name, points)
     }
 
-    // FloodZone ::= "flood_zone" STRING "risk" RiskValue "polygon" "{" GeoCommandList "}"
-    fun parseFloodZone(): FloodZoneNode? {
-        if (!eat(TokenType.FLOOD_ZONE)) return null
-        val name = currentToken.lexem
-        if (!eat(TokenType.STRING)) return null
-        if (!eat(TokenType.RISK)) return null
-        val risk = currentToken.lexem
-        if (!eatRiskValue()) return null
-        if (!eat(TokenType.POLYGON)) return null
-        if (!eat(TokenType.LBRACE)) return null
-        val commands = parseGeoCommandList()
-        if (!eat(TokenType.RBRACE)) return null
-        return FloodZoneNode(name = name, risk = risk, commands = commands)
+    private fun parseFloodZone(): FloodZoneNode {
+        expect(TokenType.FLOOD_ZONE)
+        val name = expect(TokenType.STRING).value
+        expect(TokenType.RISK)
+        val risk = expect(TokenType.IDENT).value
+        expect(TokenType.POLYGON)
+        expect(TokenType.LBRACE)
+        val points = mutableListOf<PointNode>()
+        while (!check(TokenType.RBRACE) && !atEnd()) points.add(parsePoint())
+        expect(TokenType.RBRACE)
+        return FloodZoneNode(name, risk, points)
     }
 
-    fun eatRiskValue(): Boolean {
-        return when (currentToken.type) {
-            TokenType.RISK_LOW, TokenType.RISK_MEDIUM,
-            TokenType.RISK_HIGH, TokenType.RISK_CRITICAL -> {
-                currentToken = lexer.nextToken()
-                true
-            }
+    private fun parseCountry(): CountryNode {
+        expect(TokenType.COUNTRY)
+        val name = expect(TokenType.STRING).value
+        expect(TokenType.LBRACE)
 
-            else -> {
-                println("ERR [${currentToken.row}:${currentToken.column}]: expected risk value (low/medium/high/critical) got(${currentToken.type})")
-                false
+        val layers = mutableListOf<LayerNode>()
+        val dataSources = mutableListOf<DataSourceNode>()
+        val municipalities = mutableListOf<MunicipalityNode>()
+        val stations = mutableListOf<StationNode>()
+        val autoResolves = mutableListOf<AutoResolveNode>()
+        val exports = mutableListOf<ExportNode>()
+
+        while (!check(TokenType.RBRACE) && !atEnd()) {
+            when (peek().type) {
+                TokenType.LAYER -> layers.add(parseLayer())
+                TokenType.DATA_SOURCE -> dataSources.add(parseDataSource())
+                TokenType.MUNICIPALITY -> municipalities.add(parseMunicipality())
+                TokenType.STATION -> stations.add(parseStation())
+                TokenType.AUTO_RESOLVE -> autoResolves.add(parseAutoResolve())
+                TokenType.EXPORT -> exports.add(parseExport())
+                else -> throw ParseException("Nepričakovan token '${peek().value}'", peek())
             }
         }
+
+        expect(TokenType.RBRACE)
+        return CountryNode(name, layers, dataSources, municipalities, stations, autoResolves, exports)
     }
 
-    // Station ::= "station" INT STRING "at" Coordinate "{" StationBodyList "}"
-    fun parseStation(): StationNode? {
-        if (!eat(TokenType.STATION)) return null
-        val stationId = currentToken.lexem.toIntOrNull() ?: run {
-            println("ERR [${currentToken.row}:${currentToken.column}]: expected INT for stationId")
-            return null
-        }
-        if (!eat(TokenType.INT)) return null
-        val name = currentToken.lexem
-        if (!eat(TokenType.STRING)) return null
-        if (!eat(TokenType.AT)) return null
-        val coordinate = parseCoordinate() ?: return null
-        if (!eat(TokenType.LBRACE)) return null
-        val commands = mutableListOf<StationCommand>()
+    private fun parseLayer(): LayerNode {
+        expect(TokenType.LAYER)
+        val name = expect(TokenType.IDENT).value
+        expect(TokenType.FROM)
+        val path = expect(TokenType.STRING).value
+        expect(TokenType.SEMICOLON)
+        val elements = lexer?.resolveLayer(path, tokens[pos - 1]) ?: emptyList()
+        return LayerNode(name, path, elements)
+    }
+
+
+    private fun parseDataSource(): DataSourceNode {
+        expect(TokenType.DATA_SOURCE)
+        val name = expect(TokenType.IDENT).value
+        expect(TokenType.FROM)
+        expect(TokenType.DATABASE)
+        expect(TokenType.TABLE)
+        val table = expect(TokenType.STRING).value
+        expect(TokenType.SEMICOLON)
+        return DataSourceNode(name, table)
+    }
+
+    private fun parseMunicipality(): MunicipalityNode {
+        expect(TokenType.MUNICIPALITY)
+        val name = expect(TokenType.STRING).value
+        expect(TokenType.POLYGON)
+        expect(TokenType.LBRACE)
+        val points = mutableListOf<PointNode>()
+        while (!check(TokenType.RBRACE) && !atEnd()) points.add(parsePoint())
+        expect(TokenType.RBRACE)
+        return MunicipalityNode(name, points)
+    }
+
+    private fun parsePoint(): PointNode {
+        expect(TokenType.POINT)
+        expect(TokenType.LPAREN)
+        val lon = num()
+        expect(TokenType.COMMA)
+        val lat = num()
+        expect(TokenType.RPAREN)
+        expect(TokenType.SEMICOLON)
+        return PointNode(lon, lat)
+    }
+
+    private fun parseStation(): StationNode {
+        expect(TokenType.STATION)
+        val id = expect(TokenType.INTEGER).value.toInt()
+        val name = expect(TokenType.STRING).value
+        expect(TokenType.AT)
+        expect(TokenType.LPAREN)
+        val lon = num()
+        expect(TokenType.COMMA)
+        val lat = num()
+        expect(TokenType.RPAREN)
+        expect(TokenType.LBRACE)
         val channels = mutableListOf<ChannelNode>()
-        while (currentToken.type != TokenType.RBRACE && !currentToken.eof) {
-            when (currentToken.type) {
-                TokenType.CHANNEL -> {
-                    val channel = parseChannel() ?: break
-                    channels.add(channel)
+        while (!check(TokenType.RBRACE) && !atEnd()) channels.add(parseChannel())
+        expect(TokenType.RBRACE)
+        return StationNode(id, name, PointNode(lon, lat), channels)
+    }
+
+    private fun parseChannel(): ChannelNode {
+        expect(TokenType.CHANNEL)
+        val id = expect(TokenType.INTEGER).value.toInt()
+        val name = expect(TokenType.STRING).value
+        expect(TokenType.KIND)
+        val kind = when (advance().type) {
+            TokenType.WATER_LEVEL -> ChannelKind.WATER_LEVEL
+            TokenType.TEMPERATURE -> ChannelKind.TEMPERATURE
+            TokenType.RAINFALL -> ChannelKind.RAINFALL
+            TokenType.FLOW_RATE -> ChannelKind.FLOW_RATE
+            else -> throw ParseException("Neznan tip kanala '${cur().value}'", cur())
+        }
+        expect(TokenType.UNIT)
+        val unit = advance().value
+        expect(TokenType.LBRACE)
+        val measurements = mutableListOf<MeasurementNode>()
+        while (!check(TokenType.RBRACE) && !atEnd()) measurements.add(parseMeasurement())
+        expect(TokenType.RBRACE)
+        return ChannelNode(id, name, kind, unit, measurements)
+    }
+
+    private fun parseMeasurement(): MeasurementNode {
+        expect(TokenType.MEASUREMENT)
+        val dt = expect(TokenType.DATETIME).value
+        expect(TokenType.VALUE)
+        val value = num()
+        expect(TokenType.STATUS)
+        val status = when (advance().type) {
+            TokenType.STATUS_OK -> MeasurementStatus.OK
+            TokenType.STATUS_WARNING -> MeasurementStatus.WARNING
+            TokenType.STATUS_CRITICAL -> MeasurementStatus.CRITICAL
+            TokenType.STATUS_ERROR -> MeasurementStatus.ERROR
+            else -> throw ParseException("Neznan status '${cur().value}'", cur())
+        }
+        expect(TokenType.SEMICOLON)
+        return MeasurementNode(dt, value, status)
+    }
+
+    private fun parseAutoResolve(): AutoResolveNode {
+        expect(TokenType.AUTO_RESOLVE)
+        val target = expect(TokenType.IDENT).value
+        expect(TokenType.LBRACE)
+        val rules = mutableListOf<ResolveRuleNode>()
+        while (!check(TokenType.RBRACE) && !atEnd()) {
+            rules.add(
+                when (peek().type) {
+                    TokenType.BELONGS_TO -> {
+                        expect(TokenType.BELONGS_TO); expect(TokenType.TYPE)
+                        val t = anyWord()
+                        expect(TokenType.BY); expect(TokenType.CONTAINS)
+                        val req = reqOpt(); expect(TokenType.SEMICOLON)
+                        BelongsToRuleNode(t, req)
+                    }
+
+                    TokenType.INSIDE -> {
+                        expect(TokenType.INSIDE); expect(TokenType.TYPE)
+                        val t = anyWord()
+                        val req = reqOpt(); expect(TokenType.SEMICOLON)
+                        InsideRuleNode(t, req)
+                    }
+
+                    TokenType.NEAR -> {
+                        expect(TokenType.NEAR); expect(TokenType.TYPE)
+                        val t = anyWord()
+                        expect(TokenType.WITHIN)
+                        val m = expect(TokenType.DISTANCE).value.removeSuffix("m").toInt()
+                        val req = reqOpt(); expect(TokenType.SEMICOLON)
+                        NearRuleNode(t, m, req)
+                    }
+
+                    else -> throw ParseException("Pričakovano pravilo, dobljeno '${peek().value}'", peek())
                 }
+            )
+        }
+        expect(TokenType.RBRACE)
+        return AutoResolveNode(target, rules)
+    }
 
-                TokenType.SOURCE -> {
-                    val cmd = parseStationSource() ?: break
-                    commands.add(cmd)
+    private fun parseExport(): ExportNode {
+        expect(TokenType.EXPORT)
+        val format = when (advance().type) {
+            TokenType.FORMAT_GEOJSON -> ExportFormat.GEOJSON
+            TokenType.FORMAT_CSV -> ExportFormat.CSV
+            TokenType.FORMAT_JSON -> ExportFormat.JSON
+            else -> throw ParseException("Neznan format '${cur().value}'", cur())
+        }
+        val path = expect(TokenType.STRING).value
+        expect(TokenType.LBRACE)
+        val options = mutableListOf<ExportOptionNode>()
+        while (!check(TokenType.RBRACE) && !atEnd()) {
+            if (!check(TokenType.INCLUDE))
+                throw ParseException("Pričakovano 'include', dobljeno '${peek().value}'", peek())
+            advance()
+            options.add(
+                when (peek().type) {
+                    TokenType.STATION -> {
+                        advance(); expect(TokenType.GEOMETRY); advance()
+                        expect(TokenType.SEMICOLON); StationGeometryOption("point")
+                    }
+
+                    TokenType.SPATIAL_REFS -> {
+                        advance(); expect(TokenType.SEMICOLON); SpatialRefsOption
+                    }
+
+                    TokenType.LATEST_MEASUREMENTS -> {
+                        advance(); expect(TokenType.SEMICOLON); LatestMeasurementsOption
+                    }
+
+                    TokenType.IDENT -> {
+                        val n = advance().value; expect(TokenType.SEMICOLON); RawIdentOption(n)
+                    }
+
+                    else -> throw ParseException("Neznana export opcija '${peek().value}'", peek())
                 }
-
-                TokenType.DISPLAY -> {
-                    val cmd = parseStationDisplay() ?: break
-                    commands.add(cmd)
-                }
-
-                TokenType.LABEL -> {
-                    val cmd = parseStationLabel() ?: break
-                    commands.add(cmd)
-                }
-
-                else -> {
-                    println("ERR [${currentToken.row}:${currentToken.column}]: unexpected token in station(${currentToken.type})")
-                    break
-                }
-            }
+            )
         }
-        if (!eat(TokenType.RBRACE)) return null
-        return StationNode(
-            stationId = stationId, name = name,
-            coordinate = coordinate, commands = commands, channels = channels
-        )
+        expect(TokenType.RBRACE)
+        return ExportNode(format, path, options)
     }
 
-    // GeoCommandList ::= GeoCommand GeoCommandList | ε
-    fun parseGeoCommandList(): List<GeoCommand> {
-        val commands = mutableListOf<GeoCommand>()
-        val startTypes = setOf(
-            TokenType.POINT, TokenType.DISPLAY,
-            TokenType.LABEL, TokenType.SOURCE
-        )
-        while (currentToken.type in startTypes) {
-            val cmd = parseGeoCommand() ?: break
-            commands.add(cmd)
-        }
-        return commands
-    }
-
-    // GeoCommand ::= Point | DisplayCommand | LabelCommand | SourceCommand
-    fun parseGeoCommand(): GeoCommand? {
-        return when (currentToken.type) {
-            TokenType.POINT -> parsePoint()
-            TokenType.DISPLAY -> parseDisplay()
-            TokenType.LABEL -> parseLabel()
-            TokenType.SOURCE -> parseSource()
-            else -> {
-                println("ERR [${currentToken.row}:${currentToken.column}]: unexpected geo command(${currentToken.type})")
-                null
-            }
-        }
-    }
-
-    // Point ::= "point" "(" NUMBER "," NUMBER ")" ";"
-    fun parsePoint(): PointCommand? {
-        if (!eat(TokenType.POINT)) return null
-        val coord = parseCoordinate() ?: return null
-        if (!eat(TokenType.SEMI)) return null
-        return PointCommand(coordinate = coord)
-    }
-
-    // Coordinate ::= "(" NUMBER "," NUMBER ")"
-    fun parseCoordinate(): Coordinate? {
-        if (!eat(TokenType.LPAREN)) return null
-        val lon = currentToken.lexem.toDoubleOrNull() ?: run {
-            println("ERR [${currentToken.row}:${currentToken.column}]: expected NUMBER for longitude")
-            return null
-        }
-        if (!eat(TokenType.NUMBER)) return null
-        if (!eat(TokenType.COMMA)) return null
-        val lat = currentToken.lexem.toDoubleOrNull() ?: run {
-            println("ERR [${currentToken.row}:${currentToken.column}]: expected NUMBER for latitude")
-            return null
-        }
-        if (!eat(TokenType.NUMBER)) return null
-        if (!eat(TokenType.RPAREN)) return null
-        return Coordinate(longitude = lon, latitude = lat)
-    }
-
-    // DisplayCommand ::= "display" "color" COLOR ";"
-    fun parseDisplay(): DisplayCommand? {
-        if (!eat(TokenType.DISPLAY)) return null
-        if (!eat(TokenType.COLOR_KW)) return null
-        val color = currentToken.lexem
-        if (!eat(TokenType.COLOR)) return null
-        if (!eat(TokenType.SEMI)) return null
-        return DisplayCommand(color = color)
-    }
-
-    fun parseLabel(): LabelCommand? {
-        if (!eat(TokenType.LABEL)) return null
-        val label = currentToken.lexem
-        if (!eat(TokenType.STRING)) return null
-        if (!eat(TokenType.SEMI)) return null
-        return LabelCommand(label = label)
-    }
-
-    fun parseSource(): SourceCommand? {
-        if (!eat(TokenType.SOURCE)) return null
-        val source = currentToken.lexem
-        if (!eat(TokenType.STRING)) return null
-        if (!eat(TokenType.SEMI)) return null
-        return SourceCommand(source = source)
-    }
-
-    fun parseStationSource(): StationSourceCommand? {
-        if (!eat(TokenType.SOURCE)) return null
-        val source = currentToken.lexem
-        if (!eat(TokenType.STRING)) return null
-        if (!eat(TokenType.SEMI)) return null
-        return StationSourceCommand(source = source)
-    }
-
-    fun parseStationDisplay(): StationDisplayCommand? {
-        if (!eat(TokenType.DISPLAY)) return null
-        if (!eat(TokenType.COLOR_KW)) return null
-        val color = currentToken.lexem
-        if (!eat(TokenType.COLOR)) return null
-        if (!eat(TokenType.SEMI)) return null
-        return StationDisplayCommand(color = color)
-    }
-
-    fun parseStationLabel(): StationLabelCommand? {
-        if (!eat(TokenType.LABEL)) return null
-        val label = currentToken.lexem
-        if (!eat(TokenType.STRING)) return null
-        if (!eat(TokenType.SEMI)) return null
-        return StationLabelCommand(label = label)
-    }
-
-    // Channel ::= "channel" INT STRING "kind" ChannelKind "unit" UnitLiteral "{" ChannelCommandList "}"
-    fun parseChannel(): ChannelNode? {
-        if (!eat(TokenType.CHANNEL)) return null
-        val channelId = currentToken.lexem.toIntOrNull() ?: run {
-            println("ERR [${currentToken.row}:${currentToken.column}]: expected INT for channelId")
-            return null
-        }
-        if (!eat(TokenType.INT)) return null
-        val name = currentToken.lexem
-        if (!eat(TokenType.STRING)) return null
-        if (!eat(TokenType.KIND)) return null
-        val kind = currentToken.lexem
-        if (!eatChannelKind()) return null
-        if (!eat(TokenType.UNIT)) return null
-        val unit = currentToken.lexem
-        if (!eatUnitLiteral()) return null
-        if (!eat(TokenType.LBRACE)) return null
-        val commands = parseChannelCommandList()
-        if (!eat(TokenType.RBRACE)) return null
-        return ChannelNode(
-            channelId = channelId, name = name,
-            kind = kind, unit = unit, commands = commands
-        )
-    }
-
-    fun eatChannelKind(): Boolean {
-        val kinds = setOf(
-            TokenType.WATER_LEVEL, TokenType.WATER_DEPTH, TokenType.PRESSURE,
-            TokenType.TEMPERATURE, TokenType.HUMIDITY, TokenType.RAINFALL,
-            TokenType.BATTERY, TokenType.SIGNAL
-        )
-        return if (currentToken.type in kinds) {
-            currentToken = lexer.nextToken()
-            true
-        } else {
-            println("ERR [${currentToken.row}:${currentToken.column}]: expected channel kind got(${currentToken.type})")
-            false
-        }
-    }
-
-    fun eatUnitLiteral(): Boolean {
-        val units = setOf(
-            TokenType.UNIT_M, TokenType.UNIT_CM, TokenType.UNIT_MM,
-            TokenType.UNIT_HPA, TokenType.UNIT_C, TokenType.UNIT_PCT,
-            TokenType.UNIT_V, TokenType.UNIT_DBM
-        )
-        return if (currentToken.type in units) {
-            currentToken = lexer.nextToken()
-            true
-        } else {
-            println("ERR [${currentToken.row}:${currentToken.column}]: expected unit got(${currentToken.type})")
-            false
-        }
-    }
-
-    // ChannelCommandList ::= ChannelCommand ChannelCommandList | ε
-    fun parseChannelCommandList(): List<ChannelCommand> {
-        val commands = mutableListOf<ChannelCommand>()
-        val startTypes = setOf(
-            TokenType.MEASUREMENT, TokenType.THRESHOLD,
-            TokenType.DISPLAY, TokenType.LABEL
-        )
-        while (currentToken.type in startTypes) {
-            val cmd = parseChannelCommand() ?: break
-            commands.add(cmd)
-        }
-        return commands
-    }
-
-    // ChannelCommand ::= Measurement | Threshold | Display | Label
-    fun parseChannelCommand(): ChannelCommand? {
-        return when (currentToken.type) {
-            TokenType.MEASUREMENT -> parseMeasurement()
-            TokenType.THRESHOLD -> parseThreshold()
-            TokenType.DISPLAY -> parseChannelDisplay()
-            TokenType.LABEL -> parseChannelLabel()
-            else -> {
-                println("ERR [${currentToken.row}:${currentToken.column}]: unexpected channel command(${currentToken.type})")
-                null
-            }
-        }
-    }
-
-    // Measurement ::= "measurement" DATETIME "value" NUMBER "status" StatusValue ";"
-    fun parseMeasurement(): MeasurementNode? {
-        if (!eat(TokenType.MEASUREMENT)) return null
-        val datetime = currentToken.lexem
-        if (!eat(TokenType.DATETIME)) return null
-        if (!eat(TokenType.VALUE)) return null
-        val value = currentToken.lexem.toDoubleOrNull() ?: run {
-            println("ERR [${currentToken.row}:${currentToken.column}]: expected NUMBER for measurement value")
-            return null
-        }
-        if (!eat(TokenType.NUMBER)) return null
-        if (!eat(TokenType.STATUS)) return null
-        val status = currentToken.lexem
-        if (!eatStatusValue()) return null
-        if (!eat(TokenType.SEMI)) return null
-        return MeasurementNode(datetime = datetime, value = value, status = status)
-    }
-
-    // Threshold ::= "threshold" ThresholdDirection NUMBER "status" StatusValue ";"
-    fun parseThreshold(): ThresholdNode? {
-        if (!eat(TokenType.THRESHOLD)) return null
-        val direction = currentToken.lexem
-        if (!eatThresholdDirection()) return null
-        val value = currentToken.lexem.toDoubleOrNull() ?: run {
-            println("ERR [${currentToken.row}:${currentToken.column}]: expected NUMBER for threshold value")
-            return null
-        }
-        if (!eat(TokenType.NUMBER)) return null
-        if (!eat(TokenType.STATUS)) return null
-        val status = currentToken.lexem
-        if (!eatStatusValue()) return null
-        if (!eat(TokenType.SEMI)) return null
-        return ThresholdNode(direction = direction, value = value, status = status)
-    }
-
-    fun eatThresholdDirection(): Boolean {
-        return when (currentToken.type) {
-            TokenType.ABOVE, TokenType.BELOW -> {
-                currentToken = lexer.nextToken()
-                true
+    private fun num(): Double {
+        val t = peek()
+        return when (t.type) {
+            TokenType.NUMBER, TokenType.INTEGER -> {
+                advance(); t.value.toDouble()
             }
 
-            else -> {
-                println("ERR [${currentToken.row}:${currentToken.column}]: expected above/below got(${currentToken.type})")
-                false
-            }
+            else -> throw ParseException("Pričakovano število, dobljeno '${t.value}'", t)
         }
     }
 
-    fun eatStatusValue(): Boolean {
-        return when (currentToken.type) {
-            TokenType.STATUS_OK, TokenType.STATUS_WARNING, TokenType.STATUS_ERROR -> {
-                currentToken = lexer.nextToken()
-                true
-            }
-
-            else -> {
-                println("ERR [${currentToken.row}:${currentToken.column}]: expected status (ok/warning/error) got(${currentToken.type})")
-                false
-            }
-        }
+    private fun reqOpt(): Boolean = when (advance().type) {
+        TokenType.REQUIRED -> true
+        TokenType.OPTIONAL -> false
+        else -> throw ParseException("Pričakovano 'required' ali 'optional', dobljeno '${cur().value}'", cur())
     }
 
-    fun parseChannelDisplay(): ChannelDisplayCommand? {
-        if (!eat(TokenType.DISPLAY)) return null
-        if (!eat(TokenType.COLOR_KW)) return null
-        val color = currentToken.lexem
-        if (!eat(TokenType.COLOR)) return null
-        if (!eat(TokenType.SEMI)) return null
-        return ChannelDisplayCommand(color = color)
+    private fun expect(type: TokenType): Token {
+        if (check(type)) return advance()
+        throw ParseException("Pričakovan $type, dobljeno ${peek().type} (\"${peek().value}\")", peek())
     }
 
-    fun parseChannelLabel(): ChannelLabelCommand? {
-        if (!eat(TokenType.LABEL)) return null
-        val label = currentToken.lexem
-        if (!eat(TokenType.STRING)) return null
-        if (!eat(TokenType.SEMI)) return null
-        return ChannelLabelCommand(label = label)
-    }
+    private fun anyWord(): String = advance().value
+    private fun check(type: TokenType) = !atEnd() && peek().type == type
+    private fun peek() = tokens[pos]
+    private fun cur() = tokens[pos - 1]
+    private fun advance() = tokens[pos++]
+    private fun atEnd() = pos >= tokens.size || tokens[pos].type == TokenType.EOF
 }
+
+class ParseException(message: String, token: Token) :
+    Exception("$message [${token.file}:${token.line}:${token.column}]")
