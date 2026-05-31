@@ -13,7 +13,7 @@ class Parser(
 
     private val geoTypes = setOf(
         TokenType.RIVER, TokenType.LAKE,
-        TokenType.AREA, TokenType.FLOOD_ZONE
+        TokenType.REGION, TokenType.FLOOD_ZONE
     )
 
     fun parseProgram(): ProgramNode {
@@ -47,7 +47,7 @@ class Parser(
         return when (peek().type) {
             TokenType.RIVER -> parseRiver()
             TokenType.LAKE -> parseLake()
-            TokenType.AREA -> parseArea()
+            TokenType.REGION -> parseRegion()
             TokenType.FLOOD_ZONE -> parseFloodZone()
             else -> throw ParseException("Nepričakovan geo element '${peek().value}'", peek())
         }
@@ -75,15 +75,15 @@ class Parser(
         return LakeNode(name, points)
     }
 
-    private fun parseArea(): AreaNode {
-        expect(TokenType.AREA)
+    private fun parseRegion(): RegionNode {
+        expect(TokenType.REGION)
         val name = expect(TokenType.STRING).value
         expect(TokenType.POLYGON)
         expect(TokenType.LBRACE)
         val points = mutableListOf<PointNode>()
         while (!check(TokenType.RBRACE) && !atEnd()) points.add(parsePoint())
         expect(TokenType.RBRACE)
-        return AreaNode(name, points)
+        return RegionNode (name, points)
     }
 
     private fun parseFloodZone(): FloodZoneNode {

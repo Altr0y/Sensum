@@ -53,7 +53,7 @@ data class MeasurementNode(
 sealed class GeoElement
 data class RiverNode(val name: String, val points: List<PointNode>) : GeoElement()
 data class LakeNode(val name: String, val points: List<PointNode>) : GeoElement()
-data class AreaNode(val name: String, val points: List<PointNode>) : GeoElement()
+data class RegionNode(val name: String, val points: List<PointNode>) : GeoElement()
 data class FloodZoneNode(
     val name: String,
     val risk: String,

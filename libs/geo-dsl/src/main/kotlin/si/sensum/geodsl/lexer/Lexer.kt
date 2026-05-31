@@ -67,7 +67,7 @@ class Lexer(
             "latest_measurements" to TokenType.LATEST_MEASUREMENTS,
             "river" to TokenType.RIVER,
             "lake" to TokenType.LAKE,
-            "area" to TokenType.AREA,
+            "region" to TokenType.REGION,
             "flood_zone" to TokenType.FLOOD_ZONE,
             "risk" to TokenType.RISK,
             "line" to TokenType.LINE_KW,
@@ -244,7 +244,16 @@ class Lexer(
         while (true) {
             val c = currentChar()
             if (c == '\u0000') break
-            val nextState = automata[state][c.code]
+            //zaradi šumnikov - TODO
+            //val nextState = automata[state][c.code]
+            val nextState =
+                if (c.code < 256)
+                    automata[state][c.code]
+                else if (state == 9 || state == 11)
+                    9
+                else
+                    NO_EDGE
+
             if (nextState == NO_EDGE) break
             lastChar = c
             state = nextState

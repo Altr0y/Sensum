@@ -33,7 +33,7 @@ enum class TokenType {
     // Geografski konstrukti
     RIVER,
     LAKE,
-    AREA,
+    REGION,
     FLOOD_ZONE,
     RISK,
     LINE_KW,
