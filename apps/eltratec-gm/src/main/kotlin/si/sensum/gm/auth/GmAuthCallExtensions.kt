@@ -7,7 +7,7 @@ import io.ktor.server.response.respond
 import si.sensum.gm.services.AuthService
 import si.sensum.shared.auth.bearer.BearerToken
 import si.sensum.gm.model.GmUserSession
-import si.sensum.shared.models.api.ApiErrorResponse
+import si.sensum.shared.models.common.ApiError
 import si.sensum.sws.model.SwsSession
 
 internal suspend fun ApplicationCall.resolveGmTokenOrRespond(): String? {
@@ -45,6 +45,6 @@ internal suspend fun ApplicationCall.resolveSwsSessionOrRespond(
 private suspend fun ApplicationCall.respondUnauthorized(message: String) {
     respond(
         HttpStatusCode.Unauthorized,
-        ApiErrorResponse(error = message)
+        ApiError(error = message)
     )
 }

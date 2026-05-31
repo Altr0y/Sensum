@@ -12,8 +12,8 @@ import si.sensum.api.backend.BackendUserClient
 import si.sensum.shared.ktor.response.respondCreated
 import si.sensum.shared.ktor.response.respondOk
 import si.sensum.shared.ktor.validation.requireIntPathParameter
-import si.sensum.shared.models.api.users.CreateUserRequest
-import si.sensum.shared.models.api.users.UpdateUserRequest
+import si.sensum.shared.models.users.CreateUserCommand
+import si.sensum.shared.models.users.UpdateUserCommand
 
 internal fun Route.userRoutes(
     backendUsers: BackendUserClient
@@ -29,7 +29,7 @@ internal fun Route.userRoutes(
 
         post {
             val principal = call.requireAdminUser() ?: return@post
-            val request = call.receive<CreateUserRequest>()
+            val request = call.receive<CreateUserCommand>()
 
             call.respondCreated {
                 backendUsers.createUser(
@@ -54,7 +54,7 @@ internal fun Route.userRoutes(
         put("/{userId}") {
             val principal = call.requireAdminUser() ?: return@put
             val userId = call.requireIntPathParameter("userId")
-            val request = call.receive<UpdateUserRequest>()
+            val request = call.receive<UpdateUserCommand>()
 
             call.respondOk {
                 backendUsers.updateUser(

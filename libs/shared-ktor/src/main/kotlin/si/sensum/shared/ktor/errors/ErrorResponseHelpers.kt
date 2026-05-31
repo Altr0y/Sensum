@@ -7,7 +7,7 @@ import io.ktor.server.request.httpMethod
 import io.ktor.server.request.path
 import io.ktor.server.response.respond
 import si.sensum.logging.Logger
-import si.sensum.shared.models.api.ApiErrorResponse
+import si.sensum.shared.models.common.ApiError
 
 suspend fun ApplicationCall.respondApiWarn(
     serviceName: String,
@@ -25,7 +25,7 @@ suspend fun ApplicationCall.respondApiWarn(
 
     respond(
         status = status,
-        message = ApiErrorResponse(error = message)
+        message = ApiError(error = message)
     )
 }
 
@@ -46,7 +46,7 @@ suspend fun ApplicationCall.respondApiWarn(
 
     respond(
         status = status,
-        message = ApiErrorResponse(error = responseMessage)
+        message = ApiError(error = responseMessage)
     )
 }
 
@@ -83,7 +83,7 @@ suspend fun ApplicationCall.respondApiError(
 
     respond(
         status = status,
-        message = ApiErrorResponse(error = responseMessage)
+        message = ApiError(error = responseMessage)
     )
 }
 

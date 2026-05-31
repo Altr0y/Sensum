@@ -1,6 +1,6 @@
 package si.sensum.sws.client
 
-import si.sensum.shared.models.api.channels.ChannelDto
+import si.sensum.shared.models.channels.ChannelDto
 import si.sensum.sws.model.SwsSession
 import si.sensum.sws.model.SwsStationQuery
 import si.sensum.sws.operation.SwsOperations

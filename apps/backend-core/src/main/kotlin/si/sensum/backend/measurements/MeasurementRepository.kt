@@ -17,7 +17,7 @@ import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
 import si.sensum.backend.channels.ChannelTable
 import si.sensum.backend.database.DatabaseTransaction
-import si.sensum.shared.models.api.measurements.MeasurementDto
+import si.sensum.shared.models.measurements.MeasurementDto
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 
@@ -74,13 +74,40 @@ class MeasurementRepository {
         dto.copy(id = inserted[MeasurementTable.id])
     }
 
-    fun batchInsert(measurements: List<MeasurementEntity>) = DatabaseTransaction.run {
-        MeasurementTable.batchInsert(measurements) { measurement ->
+    fun createBatch(measurements: List<MeasurementDto>): Int = DatabaseTransaction.run {
+        if (measurements.isEmpty()) {
+            return@run 0
+        }
+
+        MeasurementTable.batchInsert(
+            data = measurements,
+            shouldReturnGeneratedValues = false
+        ) { dto ->
+            this[MeasurementTable.channelId] = dto.channelId
+            this[MeasurementTable.dateTime] = dto.toDbDateTime()
+            this[MeasurementTable.value] = dto.value.toFloat()
+            this[MeasurementTable.status] = dto.status != 0
+        }
+
+        measurements.size
+    }
+
+    fun batchInsert(measurements: List<MeasurementEntity>): Int = DatabaseTransaction.run {
+        if (measurements.isEmpty()) {
+            return@run 0
+        }
+
+        MeasurementTable.batchInsert(
+            data = measurements,
+            shouldReturnGeneratedValues = false
+        ) { measurement ->
             this[MeasurementTable.channelId] = measurement.channelId
             this[MeasurementTable.dateTime] = measurement.dateTime
             this[MeasurementTable.value] = measurement.value
             this[MeasurementTable.status] = measurement.status
         }
+
+        measurements.size
     }
 
     fun update(

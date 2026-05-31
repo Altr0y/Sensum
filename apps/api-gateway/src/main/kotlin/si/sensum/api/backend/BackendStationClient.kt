@@ -1,7 +1,7 @@
 package si.sensum.api.backend
 
 import si.sensum.shared.http.ServiceHttpClient
-import si.sensum.shared.models.api.stations.StationDto
+import si.sensum.shared.models.stations.StationDto
 
 internal class BackendStationClient(
     private val backend: ServiceHttpClient

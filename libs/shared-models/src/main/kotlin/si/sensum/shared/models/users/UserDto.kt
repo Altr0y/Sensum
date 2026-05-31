@@ -1,4 +1,4 @@
-package si.sensum.shared.models.api.users
+package si.sensum.shared.models.users
 
 import kotlinx.serialization.Serializable
 

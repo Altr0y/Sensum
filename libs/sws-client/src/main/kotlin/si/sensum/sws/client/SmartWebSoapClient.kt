@@ -1,10 +1,10 @@
 package si.sensum.sws.client
 
 import io.ktor.client.HttpClient
-import si.sensum.shared.models.api.channels.ChannelDto
-import si.sensum.shared.models.api.measurements.MeasurementDto
-import si.sensum.shared.models.api.measurements.StationChannelPairDto
-import si.sensum.shared.models.api.stations.StationDto
+import si.sensum.shared.models.channels.ChannelDto
+import si.sensum.shared.models.measurements.MeasurementDto
+import si.sensum.shared.models.measurements.StationChannelPairDto
+import si.sensum.shared.models.stations.StationDto
 import si.sensum.sws.SwsSoapExecutor
 import si.sensum.sws.model.SwsChannelQuery
 import si.sensum.sws.model.SwsDateTimeRange

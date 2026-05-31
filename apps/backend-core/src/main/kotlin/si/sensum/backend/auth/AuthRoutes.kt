@@ -6,14 +6,14 @@ import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
-import si.sensum.shared.models.api.LoginRequest
+import si.sensum.shared.models.auth.LoginCommand
 
 fun Route.authRoutes(
     authService: AuthService
 ) {
     route("/api/v1/auth") {
         post("/verify") {
-            val request = call.receive<LoginRequest>()
+            val request = call.receive<LoginCommand>()
 
             val authenticatedUser = authService.verifyLogin(
                 username = request.username,

@@ -10,7 +10,7 @@ import io.ktor.server.response.respond
 import si.sensum.gm.config.GmAppConfig
 import si.sensum.shared.auth.jwt.JwtConfig
 import si.sensum.shared.auth.jwt.JwtTokenService
-import si.sensum.shared.models.api.ApiErrorResponse
+import si.sensum.shared.models.common.ApiError
 
 private const val SERVICE_JWT_AUTH_NAME = "service-jwt"
 private const val ALLOWED_SERVICE_NAME = "backend-core"
@@ -46,7 +46,7 @@ internal fun Application.installGmServiceJwtAuthentication(config: GmAppConfig) 
             challenge { _, _ ->
                 call.respond(
                     HttpStatusCode.Unauthorized,
-                    ApiErrorResponse(error = "Invalid or expired service JWT")
+                    ApiError(error = "Invalid or expired service JWT")
                 )
             }
         }

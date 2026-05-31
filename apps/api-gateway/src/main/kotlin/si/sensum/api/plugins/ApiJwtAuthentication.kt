@@ -9,7 +9,7 @@ import io.ktor.server.auth.jwt.jwt
 import io.ktor.server.response.respond
 import si.sensum.api.config.ApiGatewayConfig
 import si.sensum.shared.auth.jwt.JwtTokenService
-import si.sensum.shared.models.api.ApiErrorResponse
+import si.sensum.shared.models.common.ApiError
 
 internal fun Application.installApiJwtAuthentication(
     config: ApiGatewayConfig,
@@ -42,7 +42,7 @@ internal fun Application.installApiJwtAuthentication(
             challenge { _, _ ->
                 call.respond(
                     HttpStatusCode.Unauthorized,
-                    ApiErrorResponse(
+                    ApiError(
                         error = "Token is not valid or has expired"
                     )
                 )

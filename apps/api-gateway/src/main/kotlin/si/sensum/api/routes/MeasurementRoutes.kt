@@ -4,10 +4,12 @@ import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.routing.*
 import si.sensum.api.backend.BackendMeasurementClient
+import si.sensum.shared.ktor.response.respondCreated
 import si.sensum.shared.ktor.response.respondOk
 import si.sensum.shared.ktor.validation.requireLongPathParameter
-import si.sensum.shared.models.api.measurements.MeasurementDto
-import si.sensum.shared.models.api.measurements.MeasurementsByStationChannelPairsRequest
+import si.sensum.shared.models.measurements.CreateMeasurementsBatchCommand
+import si.sensum.shared.models.measurements.MeasurementDto
+import si.sensum.shared.models.measurements.RefreshMeasurementsCommand
 
 internal fun Route.measurementRoutes(
     backendMeasurements: BackendMeasurementClient
@@ -49,16 +51,29 @@ internal fun Route.measurementRoutes(
         post {
             val request = call.receive<MeasurementDto>()
 
-            call.respondOk {
+            call.respondCreated {
                 backendMeasurements.createMeasurement(request)
+            }
+        }
+
+        // Ustvari več meritev z enim HTTP klicem.
+        post("/batch") {
+            val request = call.receive<CreateMeasurementsBatchCommand>()
+
+            if (request.measurements.isEmpty()) {
+                throw IllegalArgumentException("Measurement batch must not be empty")
+            }
+
+            call.respondCreated {
+                backendMeasurements.createMeasurementsBatch(request)
             }
         }
 
         // Osveži realne meritve iz GM/SWS in jih shrani v bazo.
         post("/refresh") {
-            val request = call.receive<MeasurementsByStationChannelPairsRequest>()
+            val request = call.receive<RefreshMeasurementsCommand>()
 
-            call.respondOk {
+            call.respondCreated {
                 backendMeasurements.refreshMeasurements(request)
             }
         }

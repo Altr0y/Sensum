@@ -1,9 +1,9 @@
-package si.sensum.shared.models.api
+package si.sensum.shared.models.common
 
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class HealthResponse(
+data class HealthDto(
     val status: String,
     val service: String
 )

@@ -5,7 +5,7 @@ import kotlinx.datetime.toKotlinLocalDateTime
 import si.sensum.simulator.SimulatorService
 import java.time.LocalDateTime as JavaLocalDateTime
 import kotlinx.datetime.number
-import si.sensum.shared.models.api.measurements.MeasurementDto
+import si.sensum.shared.models.measurements.MeasurementDto
 
 class MeasurementService(
     private val repository: MeasurementRepository = MeasurementRepository(),

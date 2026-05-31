@@ -1,8 +1,8 @@
 package si.sensum.backend.measurements
 
 import si.sensum.backend.gm.GmClient
-import si.sensum.shared.models.api.measurements.MeasurementsByStationChannelPairsRequest
-import si.sensum.shared.models.api.measurements.MeasurementsByStationChannelPairsResponse
+import si.sensum.shared.models.measurements.RefreshMeasurementsCommand
+import si.sensum.shared.models.measurements.RefreshMeasurementsResult
 import si.sensum.shared.models.datetime.ApiDateTime
 
 class MeasurementRefreshService(
@@ -12,8 +12,8 @@ class MeasurementRefreshService(
     private val swsPassword: String
 ) {
     suspend fun refresh(
-        request: MeasurementsByStationChannelPairsRequest
-    ): MeasurementsByStationChannelPairsResponse {
+        request: RefreshMeasurementsCommand
+    ): RefreshMeasurementsResult {
         require(swsUsername.isNotBlank()) { "Missing SWS_USERNAME" }
         require(swsPassword.isNotBlank()) { "Missing SWS_PASSWORD" }
 
@@ -31,7 +31,7 @@ class MeasurementRefreshService(
 
         val (deleted, inserted) = measurementRepository.replaceAllFromDtos(measurements)
 
-        return MeasurementsByStationChannelPairsResponse(
+        return RefreshMeasurementsResult(
             deletedCount = deleted,
             insertedCount = inserted
         )

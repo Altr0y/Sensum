@@ -1,9 +1,11 @@
 package si.sensum.api.backend
 
 import si.sensum.shared.http.ServiceHttpClient
-import si.sensum.shared.models.api.measurements.MeasurementDto
-import si.sensum.shared.models.api.measurements.MeasurementsByStationChannelPairsRequest
-import si.sensum.shared.models.api.measurements.MeasurementsByStationChannelPairsResponse
+import si.sensum.shared.models.measurements.CreateMeasurementsBatchCommand
+import si.sensum.shared.models.measurements.CreateMeasurementsBatchResult
+import si.sensum.shared.models.measurements.MeasurementDto
+import si.sensum.shared.models.measurements.RefreshMeasurementsCommand
+import si.sensum.shared.models.measurements.RefreshMeasurementsResult
 
 internal class BackendMeasurementClient(
     private val backend: ServiceHttpClient
@@ -18,6 +20,12 @@ internal class BackendMeasurementClient(
 
     suspend fun createMeasurement(request: MeasurementDto): MeasurementDto {
         return backend.post("/api/v1/measurements", request)
+    }
+
+    suspend fun createMeasurementsBatch(
+        request: CreateMeasurementsBatchCommand
+    ): CreateMeasurementsBatchResult {
+        return backend.post("/api/v1/measurements/batch", request)
     }
 
     suspend fun updateMeasurement(
@@ -36,8 +44,8 @@ internal class BackendMeasurementClient(
     }
 
     suspend fun refreshMeasurements(
-        request: MeasurementsByStationChannelPairsRequest
-    ): MeasurementsByStationChannelPairsResponse {
+        request: RefreshMeasurementsCommand
+    ): RefreshMeasurementsResult {
         return backend.post("/api/v1/measurements/refresh", request)
     }
 

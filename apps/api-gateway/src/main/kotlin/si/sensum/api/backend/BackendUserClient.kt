@@ -1,9 +1,9 @@
 package si.sensum.api.backend
 
 import si.sensum.shared.http.ServiceHttpClient
-import si.sensum.shared.models.api.users.CreateUserRequest
-import si.sensum.shared.models.api.users.UpdateUserRequest
-import si.sensum.shared.models.api.users.UserDto
+import si.sensum.shared.models.users.CreateUserCommand
+import si.sensum.shared.models.users.UpdateUserCommand
+import si.sensum.shared.models.users.UserDto
 
 internal class BackendUserClient(
     private val backend: ServiceHttpClient
@@ -21,7 +21,7 @@ internal class BackendUserClient(
 
     suspend fun createUser(
         customerId: Int,
-        request: CreateUserRequest
+        request: CreateUserCommand
     ): UserDto {
         return backend.post("/api/v1/customers/$customerId/users", request)
     }
@@ -29,7 +29,7 @@ internal class BackendUserClient(
     suspend fun updateUser(
         customerId: Int,
         userId: Int,
-        request: UpdateUserRequest
+        request: UpdateUserCommand
     ): UserDto {
         return backend.put("/api/v1/customers/$customerId/users/$userId", request)
     }

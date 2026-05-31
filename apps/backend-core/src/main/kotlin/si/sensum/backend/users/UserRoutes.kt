@@ -5,8 +5,8 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import si.sensum.shared.ktor.validation.requireIntPathParameter
-import si.sensum.shared.models.api.users.CreateUserRequest
-import si.sensum.shared.models.api.users.UpdateUserRequest
+import si.sensum.shared.models.users.CreateUserCommand
+import si.sensum.shared.models.users.UpdateUserCommand
 
 fun Route.userRoutes(
     userRepository: UserRepository
@@ -24,7 +24,7 @@ fun Route.userRoutes(
 
         post {
             val customerId = call.requireIntPathParameter("customerId")
-            val request = call.receive<CreateUserRequest>()
+            val request = call.receive<CreateUserCommand>()
 
             require(request.username.isNotBlank()) {
                 "Username must not be blank"
@@ -60,7 +60,7 @@ fun Route.userRoutes(
         put("/{userId}") {
             val customerId = call.requireIntPathParameter("customerId")
             val userId = call.requireIntPathParameter("userId")
-            val request = call.receive<UpdateUserRequest>()
+            val request = call.receive<UpdateUserCommand>()
 
             val updated = userRepository.update(
                 customerId = customerId,

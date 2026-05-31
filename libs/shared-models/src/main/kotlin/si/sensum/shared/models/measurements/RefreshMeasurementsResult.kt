@@ -1,9 +1,9 @@
-package si.sensum.shared.models.api.measurements
+package si.sensum.shared.models.measurements
 
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class MeasurementsByStationChannelPairsResponse(
+data class RefreshMeasurementsResult(
     val deletedCount: Int,
     val insertedCount: Int
 )

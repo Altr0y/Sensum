@@ -1,4 +1,4 @@
-package si.sensum.shared.models.api.channels
+package si.sensum.shared.models.channels
 
 import kotlinx.serialization.Serializable
 

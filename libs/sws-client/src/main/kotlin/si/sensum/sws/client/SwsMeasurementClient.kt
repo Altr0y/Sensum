@@ -1,7 +1,7 @@
 package si.sensum.sws.client
 
-import si.sensum.shared.models.api.measurements.MeasurementDto
-import si.sensum.shared.models.api.measurements.StationChannelPairDto
+import si.sensum.shared.models.measurements.MeasurementDto
+import si.sensum.shared.models.measurements.StationChannelPairDto
 import si.sensum.sws.model.SwsChannelQuery
 import si.sensum.sws.model.SwsDateTimeRange
 import si.sensum.sws.model.SwsSession

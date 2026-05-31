@@ -1,6 +1,6 @@
 package si.sensum.gm.services
 
-import si.sensum.shared.models.api.stations.StationDto
+import si.sensum.shared.models.stations.StationDto
 import si.sensum.sws.client.SmartWebSoapClient
 import si.sensum.sws.model.SwsSession
 

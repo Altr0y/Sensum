@@ -1,7 +1,7 @@
 package si.sensum.backend.users
 
-import si.sensum.shared.models.api.users.UserDto
-import si.sensum.shared.models.api.users.UserRoleDto
+import si.sensum.shared.models.users.UserDto
+import si.sensum.shared.models.users.UserRoleDto
 
 fun UserEntity.toDto(): UserDto {
     return UserDto(
