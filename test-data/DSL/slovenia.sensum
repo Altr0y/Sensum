@@ -1,0 +1,31 @@
+country "Slovenia" {
+
+    data_source stations     from database table "stations";
+    data_source channels     from database table "channels";
+    data_source measurements from database table "measurements";
+
+    layer rivers      from "rivers.sensum";
+    layer lakes       from "lakes.sensum";
+    layer flood_zones from "flood-zones.sensum";
+    layer regions     from "regions.sensum";
+    layer municipalities from "municipalities.sensum";
+
+    station 9999 "Test Flood Station" at (15.20, 46.20) {
+        channel 901 "Water level" kind water_level unit m {
+            measurement 2026-05-21T10:00:00 value 1.42 status ok;
+        }
+    }
+
+    auto_resolve stations {
+        belongs_to type municipality by contains required;
+        belongs_to type region       by contains required;
+        inside     type flood_zone   optional;
+        near       type river        within 500m optional;
+    }
+
+    export geojson "output.geojson" {
+        include station geometry point;
+        include spatial_refs;
+        include latest_measurements after 2026-05-01T00:00:00;
+    }
+}
