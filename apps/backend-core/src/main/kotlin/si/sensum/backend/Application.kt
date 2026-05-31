@@ -23,7 +23,7 @@ import si.sensum.logging.installHttpRequestLogging
 import si.sensum.shared.auth.jwt.JwtConfig
 import si.sensum.shared.auth.jwt.JwtTokenService
 import si.sensum.shared.http.ServiceHttpClient
-import si.sensum.shared.models.api.HealthResponse
+import si.sensum.shared.models.common.HealthDto
 import si.sensum.backend.customers.CustomerRepository
 import si.sensum.backend.customers.customerRoutes
 import java.util.*
@@ -118,7 +118,7 @@ private fun Application.configureRoutes(
     routing {
         get("/health") {
             call.respond(
-                HealthResponse(
+                HealthDto(
                     status = "ok",
                     service = "backend-core"
                 )

@@ -1,9 +1,9 @@
-package si.sensum.shared.models.api.measurements
+package si.sensum.shared.models.measurements
 
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class MeasurementsByStationChannelPairsRequest(
+data class RefreshMeasurementsCommand(
     val stationChannelPairs: List<StationChannelPairDto>,
     val datetimeFrom: String,
     val datetimeTo: String

@@ -8,15 +8,15 @@ import io.ktor.server.routing.route
 import si.sensum.api.auth.requireAuthenticatedUser
 import si.sensum.api.services.AuthService
 import si.sensum.shared.ktor.response.respondOk
-import si.sensum.shared.models.api.AuthenticatedUserDto
-import si.sensum.shared.models.api.LoginRequest
+import si.sensum.shared.models.auth.LoginCommand
+import si.sensum.shared.models.auth.AuthenticatedUserDto
 
 internal fun Route.publicAuthRoutes(
     authService: AuthService
 ) {
     route("/auth") {
         post("/login") {
-            val request = call.receive<LoginRequest>()
+            val request = call.receive<LoginCommand>()
 
             call.respondOk {
                 authService.login(request)
@@ -34,7 +34,7 @@ internal fun Route.protectedAuthRoutes(
 
             call.respondOk {
                 AuthenticatedUserDto(
-                    userId = principal.userId,
+                    id = principal.userId,
                     username = principal.username,
                     customerId = principal.customerId,
                     role = principal.role

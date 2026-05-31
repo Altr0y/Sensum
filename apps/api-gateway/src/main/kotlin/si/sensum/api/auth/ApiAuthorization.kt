@@ -5,7 +5,7 @@ import io.ktor.server.application.ApplicationCall
 import io.ktor.server.auth.principal
 import io.ktor.server.auth.jwt.JWTPrincipal
 import io.ktor.server.response.respond
-import si.sensum.shared.models.api.ApiErrorResponse
+import si.sensum.shared.models.common.ApiError
 
 
 internal suspend fun ApplicationCall.requireAuthenticatedUser(): ApiPrincipal? {
@@ -14,7 +14,7 @@ internal suspend fun ApplicationCall.requireAuthenticatedUser(): ApiPrincipal? {
     if (jwtPrincipal == null) {
         respond(
             HttpStatusCode.Unauthorized,
-            ApiErrorResponse(error = "Missing or invalid user token")
+            ApiError(error = "Missing or invalid user token")
         )
         return null
     }
@@ -24,7 +24,7 @@ internal suspend fun ApplicationCall.requireAuthenticatedUser(): ApiPrincipal? {
     }.getOrElse {
         respond(
             HttpStatusCode.Unauthorized,
-            ApiErrorResponse(error = "Invalid user token claims")
+            ApiError(error = "Invalid user token claims")
         )
         null
     }
@@ -36,7 +36,7 @@ internal suspend fun ApplicationCall.requireAdminUser(): ApiPrincipal? {
     if (principal.role != "ADMIN") {
         respond(
             HttpStatusCode.Forbidden,
-            ApiErrorResponse(error = "Admin role is required")
+            ApiError(error = "Admin role is required")
         )
         return null
     }

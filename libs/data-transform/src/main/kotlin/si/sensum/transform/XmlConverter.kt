@@ -1,7 +1,7 @@
 package si.sensum.transform
 
 import org.w3c.dom.Element
-import si.sensum.shared.models.api.measurements.MeasurementDto
+import si.sensum.shared.models.measurements.MeasurementDto
 import java.io.ByteArrayInputStream
 import java.time.OffsetDateTime
 import javax.xml.parsers.DocumentBuilderFactory

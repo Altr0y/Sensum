@@ -20,7 +20,7 @@ import si.sensum.gm.routes.gmLoginRoute
 import si.sensum.gm.routes.gmLogoutRoute
 import si.sensum.gm.routes.measurementRoutes
 import si.sensum.gm.routes.stationRoutes
-import si.sensum.shared.models.api.HealthResponse
+import si.sensum.shared.models.common.HealthDto
 
 private const val SERVICE_NAME = "eltratec-gm"
 
@@ -55,7 +55,7 @@ private fun Application.configureRoutes(
 private fun Route.healthRoute() {
     get("/health") {
         call.respond(
-            HealthResponse(
+            HealthDto(
                 status = "ok",
                 service = SERVICE_NAME
             )

@@ -10,7 +10,7 @@ import si.sensum.api.di.createApiDependencies
 import si.sensum.api.plugins.installApiJwtAuthentication
 import si.sensum.api.plugins.installApiPlugins
 import si.sensum.api.routes.apiRoutes
-import si.sensum.shared.models.api.HealthResponse
+import si.sensum.shared.models.common.HealthDto
 
 private const val SERVICE_NAME = "api-gateway"
 
@@ -47,7 +47,7 @@ private fun Application.configureRoutes(
 private fun Route.healthRoute() {
     get("/health") {
         call.respond(
-            HealthResponse(
+            HealthDto(
                 status = "ok",
                 service = SERVICE_NAME
             )

@@ -1,6 +1,6 @@
 package si.sensum.backend.customers
 
-import si.sensum.shared.models.api.customers.CustomerDto
+import si.sensum.shared.models.customers.CustomerDto
 
 fun CustomerEntity.toDto(): CustomerDto {
     return CustomerDto(

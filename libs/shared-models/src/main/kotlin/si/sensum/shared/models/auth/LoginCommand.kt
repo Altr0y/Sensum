@@ -1,9 +1,9 @@
-package si.sensum.shared.models.api
+package si.sensum.shared.models.auth
 
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class LoginRequest(
+data class LoginCommand(
     val username: String,
     val password: String
 )

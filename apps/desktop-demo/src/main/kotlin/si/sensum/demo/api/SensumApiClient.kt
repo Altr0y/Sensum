@@ -9,12 +9,14 @@ import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import si.sensum.demo.model.MeasurementUi
-import si.sensum.shared.models.api.LoginRequest
-import si.sensum.shared.models.api.LoginResponse
-import si.sensum.shared.models.api.measurements.MeasurementDto
-import si.sensum.shared.models.api.measurements.MeasurementsByStationChannelPairsRequest
-import si.sensum.shared.models.api.measurements.MeasurementsByStationChannelPairsResponse
-import si.sensum.shared.models.api.measurements.StationChannelPairDto
+import si.sensum.shared.models.auth.LoginCommand
+import si.sensum.shared.models.auth.LoginResult
+import si.sensum.shared.models.measurements.CreateMeasurementsBatchCommand
+import si.sensum.shared.models.measurements.CreateMeasurementsBatchResult
+import si.sensum.shared.models.measurements.MeasurementDto
+import si.sensum.shared.models.measurements.RefreshMeasurementsCommand
+import si.sensum.shared.models.measurements.RefreshMeasurementsResult
+import si.sensum.shared.models.measurements.StationChannelPairDto
 
 class SensumApiClient(
     private val baseUrl: String = "http://localhost:8080"
@@ -33,32 +35,32 @@ class SensumApiClient(
     suspend fun login(
         username: String,
         password: String
-    ): LoginResponse {
+    ): LoginResult {
         val response = client.post("$baseUrl/api/v1/auth/login") {
             contentType(ContentType.Application.Json)
-            setBody(LoginRequest(username = username, password = password))
+            setBody(LoginCommand(username = username, password = password))
         }
 
         if (!response.status.isSuccess()) {
             error("Login failed: HTTP ${response.status.value}\n${response.bodyAsText()}")
         }
 
-        val loginResponse = response.body<LoginResponse>()
-        session.saveToken(loginResponse.token)
+        val loginResult = response.body<LoginResult>()
+        session.saveToken(loginResult.token)
 
-        return loginResponse
+        return loginResult
     }
 
     suspend fun refreshMeasurements(
         stationChannelPairs: List<StationChannelPairDto>,
         datetimeFrom: String,
         datetimeTo: String
-    ): MeasurementsByStationChannelPairsResponse {
+    ): RefreshMeasurementsResult {
         val response = client.post("$baseUrl/api/v1/measurements/refresh") {
             contentType(ContentType.Application.Json)
             header(HttpHeaders.Authorization, "Bearer ${requireToken()}")
             setBody(
-                MeasurementsByStationChannelPairsRequest(
+                RefreshMeasurementsCommand(
                     stationChannelPairs = stationChannelPairs,
                     datetimeFrom = datetimeFrom,
                     datetimeTo = datetimeTo
@@ -102,11 +104,25 @@ class SensumApiClient(
     }
 
     suspend fun createMeasurements(measurements: List<MeasurementUi>): Int {
-        measurements.forEach {
-            createMeasurement(it)
+        if (measurements.isEmpty()) {
+            return 0
         }
 
-        return measurements.size
+        val response = client.post("$baseUrl/api/v1/measurements/batch") {
+            contentType(ContentType.Application.Json)
+            header(HttpHeaders.Authorization, "Bearer ${requireToken()}")
+            setBody(
+                CreateMeasurementsBatchCommand(
+                    measurements = measurements.map { it.toDto() }
+                )
+            )
+        }
+
+        if (!response.status.isSuccess()) {
+            error("Create batch failed: HTTP ${response.status.value}\n${response.bodyAsText()}")
+        }
+
+        return response.body<CreateMeasurementsBatchResult>().insertedCount
     }
 
     suspend fun updateMeasurement(measurement: MeasurementUi): MeasurementUi {

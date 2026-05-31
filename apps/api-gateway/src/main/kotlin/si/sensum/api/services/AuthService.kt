@@ -3,14 +3,14 @@ package si.sensum.api.services
 import si.sensum.api.backend.BackendAuthClient
 import si.sensum.shared.auth.jwt.JwtTokenService
 import si.sensum.shared.auth.jwt.JwtUser
-import si.sensum.shared.models.api.LoginRequest
-import si.sensum.shared.models.api.LoginResponse
+import si.sensum.shared.models.auth.LoginCommand
+import si.sensum.shared.models.auth.LoginResult
 
 internal class AuthService(
     private val backendAuthClient: BackendAuthClient,
     private val jwtTokenService: JwtTokenService
 ) {
-    suspend fun login(request: LoginRequest): LoginResponse {
+    suspend fun login(request: LoginCommand): LoginResult {
         val user = backendAuthClient.verifyLogin(request)
 
         val token = jwtTokenService.generateToken(
@@ -22,7 +22,7 @@ internal class AuthService(
             )
         )
 
-        return LoginResponse(
+        return LoginResult(
             token = token,
             expiresAt = jwtTokenService.expiresAt().toString()
         )

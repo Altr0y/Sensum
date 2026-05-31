@@ -19,8 +19,8 @@ COPY apps/desktop-demo/build.gradle.kts ./apps/desktop-demo/build.gradle.kts
 
 COPY libs/shared-models/build.gradle.kts ./libs/shared-models/build.gradle.kts
 COPY libs/shared-auth/build.gradle.kts ./libs/shared-auth/build.gradle.kts
-COPY libs/shared-http/build.gradle.kts ./libs/shared-http/build.gradle.kts
 COPY libs/shared-ktor/build.gradle.kts ./libs/shared-ktor/build.gradle.kts
+COPY libs/shared-http/build.gradle.kts ./libs/shared-http/build.gradle.kts
 COPY libs/sws-client/build.gradle.kts ./libs/sws-client/build.gradle.kts
 COPY libs/logging/build.gradle.kts ./libs/logging/build.gradle.kts
 COPY libs/data-transform/build.gradle.kts ./libs/data-transform/build.gradle.kts
@@ -31,13 +31,13 @@ RUN ./gradlew :apps:eltratec-gm:dependencies --no-daemon
 
 # Copy actual source code only after dependencies are cached
 COPY apps/eltratec-gm ./apps/eltratec-gm
+
 COPY libs/shared-models ./libs/shared-models
 COPY libs/shared-auth ./libs/shared-auth
-COPY libs/shared-http ./libs/shared-http
 COPY libs/shared-ktor ./libs/shared-ktor
+COPY libs/shared-http ./libs/shared-http
 COPY libs/sws-client ./libs/sws-client
 COPY libs/logging ./libs/logging
-COPY libs/simulator ./libs/simulator
 
 # Build the distribution
 RUN ./gradlew :apps:eltratec-gm:installDist --no-daemon

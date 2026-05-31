@@ -1,13 +1,13 @@
 package si.sensum.api.backend
 
 import si.sensum.shared.http.ServiceHttpClient
-import si.sensum.shared.models.api.AuthenticatedUserResponse
-import si.sensum.shared.models.api.LoginRequest
+import si.sensum.shared.models.auth.AuthenticatedUserDto
+import si.sensum.shared.models.auth.LoginCommand
 
 internal class BackendAuthClient(
     private val backend: ServiceHttpClient
 ) {
-    suspend fun verifyLogin(request: LoginRequest): AuthenticatedUserResponse {
+    suspend fun verifyLogin(request: LoginCommand): AuthenticatedUserDto {
         return backend.post("/api/v1/auth/verify", request)
     }
 }

@@ -1,9 +1,9 @@
-package si.sensum.shared.models.api.users
+package si.sensum.shared.models.users
 
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class UpdateUserRequest(
+data class UpdateUserCommand(
     val username: String? = null,
     val password: String? = null,
     val role: UserRoleDto? = null,

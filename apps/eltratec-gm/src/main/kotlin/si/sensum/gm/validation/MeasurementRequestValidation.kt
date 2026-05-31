@@ -4,8 +4,8 @@ import io.ktor.server.application.ApplicationCall
 import io.ktor.server.request.receive
 import si.sensum.gm.errors.InvalidRequiredFieldException
 import si.sensum.gm.errors.MissingRequiredFieldException
-import si.sensum.shared.models.api.measurements.MeasurementRangeQuery
-import si.sensum.shared.models.api.measurements.MeasurementsByStationChannelPairsRequest
+import si.sensum.shared.models.measurements.MeasurementRangeQuery
+import si.sensum.shared.models.measurements.RefreshMeasurementsCommand
 import si.sensum.shared.models.datetime.ApiDateTime
 
 internal fun ApplicationCall.receiveMeasurementRangeQuery(): MeasurementRangeQuery {
@@ -15,8 +15,8 @@ internal fun ApplicationCall.receiveMeasurementRangeQuery(): MeasurementRangeQue
     )
 }
 
-internal suspend fun ApplicationCall.receiveStationChannelPairsMeasurementRequest(): MeasurementsByStationChannelPairsRequest {
-    val request = receive<MeasurementsByStationChannelPairsRequest>()
+internal suspend fun ApplicationCall.receiveStationChannelPairsMeasurementRequest(): RefreshMeasurementsCommand {
+    val request = receive<RefreshMeasurementsCommand>()
 
     if (request.stationChannelPairs.isEmpty()) {
         throw MissingRequiredFieldException("stationChannelPairs")

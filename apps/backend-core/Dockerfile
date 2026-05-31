@@ -31,6 +31,7 @@ RUN ./gradlew :apps:backend-core:dependencies --no-daemon
 
 # Copy actual source code only after dependencies are cached
 COPY apps/backend-core ./apps/backend-core
+
 COPY libs/shared-models ./libs/shared-models
 COPY libs/shared-auth ./libs/shared-auth
 COPY libs/shared-http ./libs/shared-http

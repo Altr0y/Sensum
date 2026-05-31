@@ -4,7 +4,7 @@ import si.sensum.gm.auth.toSwsSession
 import si.sensum.gm.model.GmUserSession
 import si.sensum.shared.auth.service.TokenService
 import si.sensum.shared.auth.store.SessionStore
-import si.sensum.shared.models.api.LoginResponse
+import si.sensum.shared.models.auth.LoginResult
 import si.sensum.sws.client.SmartWebSoapClient
 import si.sensum.sws.model.SwsSession
 import java.time.Instant
@@ -22,7 +22,7 @@ internal class AuthService(
     suspend fun login(
         username: String,
         password: String
-    ): LoginResponse {
+    ): LoginResult {
         return logged(
             operation = "login",
             details = "username=$username"
@@ -79,8 +79,8 @@ internal class AuthService(
         )
     }
 
-    private fun GmUserSession.toLoginResponse(): LoginResponse {
-        return LoginResponse(
+    private fun GmUserSession.toLoginResponse(): LoginResult {
+        return LoginResult(
             token = gmToken,
             expiresAt = expiresAt.toString()
         )

@@ -1,7 +1,7 @@
 package si.sensum.sws.parser
 
 import org.w3c.dom.Element
-import si.sensum.shared.models.api.measurements.MeasurementDto
+import si.sensum.shared.models.measurements.MeasurementDto
 import si.sensum.shared.models.datetime.ApiDateTime
 import si.sensum.sws.SwsInvalidResponseException
 import java.time.OffsetDateTime

@@ -7,9 +7,11 @@ import io.ktor.server.response.respond
 import io.ktor.server.routing.*
 import kotlinx.datetime.LocalDateTime
 import si.sensum.shared.ktor.response.respondOk
-import si.sensum.shared.models.api.ApiErrorResponse
-import si.sensum.shared.models.api.measurements.MeasurementDto
-import si.sensum.shared.models.api.measurements.MeasurementsByStationChannelPairsRequest
+import si.sensum.shared.models.common.ApiError
+import si.sensum.shared.models.measurements.CreateMeasurementsBatchCommand
+import si.sensum.shared.models.measurements.CreateMeasurementsBatchResult
+import si.sensum.shared.models.measurements.MeasurementDto
+import si.sensum.shared.models.measurements.RefreshMeasurementsCommand
 import si.sensum.shared.models.datetime.ApiDateTime
 
 fun Route.measurementRoutes(
@@ -49,13 +51,35 @@ fun Route.measurementRoutes(
             )
         }
 
+
+        post("/batch") {
+            val request = call.receive<CreateMeasurementsBatchCommand>()
+
+            if (request.measurements.isEmpty()) {
+                call.respond(
+                    HttpStatusCode.BadRequest,
+                    ApiError("Measurement batch must not be empty")
+                )
+                return@post
+            }
+
+            val insertedCount = measurementRepository.createBatch(request.measurements)
+
+            call.respond(
+                HttpStatusCode.Created,
+                CreateMeasurementsBatchResult(
+                    insertedCount = insertedCount
+                )
+            )
+        }
+
         post("/refresh") {
-            val request = call.receive<MeasurementsByStationChannelPairsRequest>()
+            val request = call.receive<RefreshMeasurementsCommand>()
 
             if (request.stationChannelPairs.isEmpty()) {
                 call.respond(
                     HttpStatusCode.BadRequest,
-                    ApiErrorResponse("Missing required field: stationChannelPairs")
+                    ApiError("Missing required field: stationChannelPairs")
                 )
                 return@post
             }
@@ -74,7 +98,7 @@ fun Route.measurementRoutes(
             } catch (error: IllegalArgumentException) {
                 call.respond(
                     HttpStatusCode.BadRequest,
-                    ApiErrorResponse(error.message ?: "Invalid datetime format")
+                    ApiError(error.message ?: "Invalid datetime format")
                 )
                 return@post
             }
@@ -105,7 +129,7 @@ fun Route.measurementRoutes(
             if (updated == null) {
                 call.respond(
                     HttpStatusCode.NotFound,
-                    ApiErrorResponse("Measurement not found")
+                    ApiError("Measurement not found")
                 )
                 return@put
             }
@@ -132,7 +156,7 @@ fun Route.measurementRoutes(
             if (!deleted) {
                 call.respond(
                     HttpStatusCode.NotFound,
-                    ApiErrorResponse("Measurement not found")
+                    ApiError("Measurement not found")
                 )
                 return@delete
             }

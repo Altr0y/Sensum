@@ -1,9 +1,9 @@
-package si.sensum.shared.models.api
+package si.sensum.shared.models.auth
 
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class AuthenticatedUserResponse(
+data class AuthenticatedUserDto(
     val id: Int,
     val username: String,
     val customerId: Int,

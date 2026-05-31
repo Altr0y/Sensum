@@ -1,4 +1,4 @@
-package si.sensum.shared.models.api.measurements
+package si.sensum.shared.models.measurements
 
 import kotlinx.serialization.Serializable
 

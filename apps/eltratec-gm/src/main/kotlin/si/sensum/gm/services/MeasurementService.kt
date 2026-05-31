@@ -1,8 +1,8 @@
 package si.sensum.gm.services
 
-import si.sensum.shared.models.api.measurements.MeasurementRangeQuery
-import si.sensum.shared.models.api.measurements.MeasurementDto
-import si.sensum.shared.models.api.measurements.MeasurementsByStationChannelPairsRequest
+import si.sensum.shared.models.measurements.MeasurementRangeQuery
+import si.sensum.shared.models.measurements.MeasurementDto
+import si.sensum.shared.models.measurements.RefreshMeasurementsCommand
 import si.sensum.sws.client.SmartWebSoapClient
 import si.sensum.sws.model.SwsSession
 
@@ -28,7 +28,7 @@ internal class MeasurementService(
 
     suspend fun getMeasurementsByStationChannelPairs(
         session: SwsSession,
-        request: MeasurementsByStationChannelPairsRequest
+        request: RefreshMeasurementsCommand
     ): List<MeasurementDto> {
         return logged(
             operation = "getMeasurementsByStationChannelPairs",
@@ -139,7 +139,7 @@ internal class MeasurementService(
         return "from=$datetimeFrom to=$datetimeTo"
     }
 
-    private fun MeasurementsByStationChannelPairsRequest.details(): String {
+    private fun RefreshMeasurementsCommand.details(): String {
         return "pairs=${stationChannelPairs.size} from=$datetimeFrom to=$datetimeTo"
     }
 }

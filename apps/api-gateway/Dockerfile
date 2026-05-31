@@ -31,6 +31,7 @@ RUN ./gradlew :apps:api-gateway:dependencies --no-daemon
 
 # Copy actual source code only after dependencies are cached
 COPY apps/api-gateway ./apps/api-gateway
+
 COPY libs/shared-models ./libs/shared-models
 COPY libs/shared-auth ./libs/shared-auth
 COPY libs/shared-http ./libs/shared-http

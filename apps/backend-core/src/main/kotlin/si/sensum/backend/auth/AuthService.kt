@@ -1,7 +1,7 @@
 package si.sensum.backend.auth
 
 import si.sensum.backend.users.UserRepository
-import si.sensum.shared.models.api.AuthenticatedUserResponse
+import si.sensum.shared.models.auth.AuthenticatedUserDto
 
 class AuthService(
     private val userRepository: UserRepository
@@ -9,7 +9,7 @@ class AuthService(
     fun verifyLogin(
         username: String,
         password: String
-    ): AuthenticatedUserResponse {
+    ): AuthenticatedUserDto {
         val user = userRepository.findByUsername(username)
             ?: throw IllegalArgumentException("Invalid username or password")
 
@@ -21,7 +21,7 @@ class AuthService(
             throw IllegalArgumentException("Invalid username or password")
         }
 
-        return AuthenticatedUserResponse(
+        return AuthenticatedUserDto(
             id = user.id,
             username = user.username,
             customerId = user.customerId,

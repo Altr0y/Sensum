@@ -1,6 +1,6 @@
 package si.sensum.gm.services
 
-import si.sensum.shared.models.api.channels.ChannelDto
+import si.sensum.shared.models.channels.ChannelDto
 import si.sensum.sws.client.SmartWebSoapClient
 import si.sensum.sws.model.SwsSession
 

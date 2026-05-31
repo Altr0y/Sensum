@@ -11,8 +11,8 @@ import si.sensum.api.auth.requireAuthenticatedUser
 import si.sensum.api.backend.BackendCustomerClient
 import si.sensum.shared.ktor.response.respondCreated
 import si.sensum.shared.ktor.response.respondOk
-import si.sensum.shared.models.api.customers.CreateCustomerRequest
-import si.sensum.shared.models.api.customers.UpdateCustomerRequest
+import si.sensum.shared.models.customers.CreateCustomerCommand
+import si.sensum.shared.models.customers.UpdateCustomerCommand
 
 internal fun Route.customerRoutes(
     customers: BackendCustomerClient
@@ -22,7 +22,7 @@ internal fun Route.customerRoutes(
         post {
             call.requireAdminUser() ?: return@post
 
-            val request = call.receive<CreateCustomerRequest>()
+            val request = call.receive<CreateCustomerCommand>()
 
             require(request.name.isNotBlank()) {
                 "Customer name must not be blank"
@@ -46,7 +46,7 @@ internal fun Route.customerRoutes(
         put("/me") {
             val principal = call.requireAdminUser() ?: return@put
 
-            val request = call.receive<UpdateCustomerRequest>()
+            val request = call.receive<UpdateCustomerCommand>()
 
             require(request.name.isNotBlank()) {
                 "Customer name must not be blank"

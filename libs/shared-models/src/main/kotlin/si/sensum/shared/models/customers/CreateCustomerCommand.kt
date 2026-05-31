@@ -1,8 +1,8 @@
-package si.sensum.shared.models.api.customers
+package si.sensum.shared.models.customers
 
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class UpdateCustomerRequest(
+data class CreateCustomerCommand(
     val name: String
 )
