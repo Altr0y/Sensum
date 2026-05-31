@@ -65,6 +65,8 @@ class Lexer(
             "point" to TokenType.POINT,
             "spatial_refs" to TokenType.SPATIAL_REFS,
             "latest_measurements" to TokenType.LATEST_MEASUREMENTS,
+            "after" to TokenType.AFTER,
+            "point_kw" to TokenType.POINT_KW,
             "river" to TokenType.RIVER,
             "lake" to TokenType.LAKE,
             "region" to TokenType.REGION,

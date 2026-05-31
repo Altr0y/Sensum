@@ -5,6 +5,7 @@ import si.sensum.geodsl.export.export
 import si.sensum.geodsl.import.*
 import si.sensum.geodsl.lexer.Lexer
 import si.sensum.geodsl.parser.Parser
+import si.sensum.geodsl.validator.Validator
 import java.io.File
 
 fun main() {
@@ -53,7 +54,13 @@ fun main() {
                 GeoType.MUNICIPALITY -> parseMunicipalitySensum(sensumBody)
                 else -> parseSensumBody(sensumBody)
             }
-
+            val errors = Validator().validate(program)
+            if (errors.isNotEmpty()) {
+                println("  Validacija:")
+                errors.forEach { println("    ValidationError: ${it.message}") }
+            } else {
+                println("  Validacija: ok")
+            }
             val geoJson = export(program)
 
             val outputGeoJsonFile = File(geoJsonOutputDir, "$baseName.geojson")
@@ -62,6 +69,24 @@ fun main() {
             println("  Sensum:  ${sensumFile.path}")
             println("  GeoJSON: ${outputGeoJsonFile.path}")
         }
+
+        println("\nTEST: slovenia.sensum")
+        val sloveniaFile = File("test-data/DSL/slovenia.sensum")
+        if (sloveniaFile.exists()) {
+            val lexer = Lexer(sloveniaFile.readText(), sloveniaFile.canonicalPath, sloveniaFile.parentFile)
+            val tokens = lexer.tokenize()
+            val program = Parser(tokens, lexer).parseProgram()
+            val errors = Validator().validate(program)
+            if (errors.isNotEmpty()) {
+                errors.forEach { println("  ValidationError: ${it.message}") }
+            } else {
+                println("  Validacija: ok")
+            }
+            println("  Export opcije: ${program.countries.firstOrNull()?.exports}")
+        } else {
+            println("  slovenia.sensum ne obstaja")
+        }
+
 
         println("Done.")
 
@@ -93,8 +118,8 @@ private fun detectFloodRisk(file: File): String? {
     val name = file.name.lowercase()
     return when {
         "very rare" in name || "zelo redke" in name -> "very_rare"
-        "rare"      in name || "redke"      in name -> "rare"
-        "often"     in name || "pogoste"    in name -> "often"
+        "rare" in name || "redke" in name -> "rare"
+        "often" in name || "pogoste" in name -> "often"
         else -> null
     }
 }

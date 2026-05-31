@@ -83,7 +83,7 @@ class Parser(
         val points = mutableListOf<PointNode>()
         while (!check(TokenType.RBRACE) && !atEnd()) points.add(parsePoint())
         expect(TokenType.RBRACE)
-        return RegionNode (name, points)
+        return RegionNode(name, points)
     }
 
     private fun parseFloodZone(): FloodZoneNode {
@@ -293,7 +293,13 @@ class Parser(
                     }
 
                     TokenType.LATEST_MEASUREMENTS -> {
-                        advance(); expect(TokenType.SEMICOLON); LatestMeasurementsOption
+                        advance()
+                        val after = if (check(TokenType.AFTER)) {
+                            advance()
+                            expect(TokenType.DATETIME).value
+                        } else null
+                        expect(TokenType.SEMICOLON)
+                        LatestMeasurementsOption(after)
                     }
 
                     TokenType.IDENT -> {

@@ -64,6 +64,7 @@ enum class TokenType {
     POINT_KW,
     SPATIAL_REFS,
     LATEST_MEASUREMENTS,
+    AFTER,
 
     // Geografski primitivi
     POINT,

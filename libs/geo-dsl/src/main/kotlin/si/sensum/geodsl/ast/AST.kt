@@ -81,5 +81,5 @@ data class ExportNode(
 sealed class ExportOptionNode
 data class StationGeometryOption(val geometryType: String) : ExportOptionNode()
 object SpatialRefsOption : ExportOptionNode()
-object LatestMeasurementsOption : ExportOptionNode()
+data class LatestMeasurementsOption(val after: String? = null) : ExportOptionNode()
 data class RawIdentOption(val name: String) : ExportOptionNode()
