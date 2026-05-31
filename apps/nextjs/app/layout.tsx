@@ -1,7 +1,8 @@
-import type {Metadata} from "next"
-import {JetBrains_Mono} from "next/font/google"
+import type { Metadata } from "next"
+import { JetBrains_Mono } from "next/font/google"
 import "./globals.css"
-import {Navbar} from "@/components/navigation/Navbar"
+import { Navbar } from "@/components/navigation/Navbar"
+import { ThemeProvider } from "@/components/theme/ThemeProvider"
 
 const jetbrainsMono = JetBrains_Mono({
     subsets: ["latin"],
@@ -19,12 +20,14 @@ export default function RootLayout({
     children: React.ReactNode
 }) {
     return (
-        <html lang="en" className="dark">
-        <body className={`${jetbrainsMono.variable} font-mono bg-[#1E1E1E] text-[#D4D4D4] min-h-screen`}>
-        <Navbar/>
-        <main className="p-6">
-            {children}
-        </main>
+        <html lang="en" suppressHydrationWarning>
+        <body className={`${jetbrainsMono.variable} font-mono min-h-screen bg-background text-foreground`}>
+        <ThemeProvider>
+            <Navbar />
+            <main className="p-6">
+                {children}
+            </main>
+        </ThemeProvider>
         </body>
         </html>
     )
