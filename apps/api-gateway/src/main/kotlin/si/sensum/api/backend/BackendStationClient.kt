@@ -13,4 +13,8 @@ internal class BackendStationClient(
     suspend fun getStationById(stationId: Long): StationDto {
         return backend.get("/api/v1/stations/$stationId")
     }
+
+    suspend fun getStationsByCustomer(customerId: Int): List<StationDto> {
+        return backend.get("/api/v1/customers/$customerId/stations")
+    }
 }

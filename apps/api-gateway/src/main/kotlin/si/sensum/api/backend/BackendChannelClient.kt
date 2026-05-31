@@ -6,7 +6,15 @@ import si.sensum.shared.models.channels.ChannelDto
 internal class BackendChannelClient(
     private val backend: ServiceHttpClient
 ) {
-    suspend fun getChannels(stationId: Long): List<ChannelDto> {
+    suspend fun getChannels(): List<ChannelDto> {
+        return backend.get("/api/v1/channels")
+    }
+
+    suspend fun getChannelById(channelId: Int): ChannelDto {
+        return backend.get("/api/v1/channels/$channelId")
+    }
+
+    suspend fun getChannelsByStation(stationId: Long): List<ChannelDto> {
         return backend.get("/api/v1/stations/$stationId/channels")
     }
 }
