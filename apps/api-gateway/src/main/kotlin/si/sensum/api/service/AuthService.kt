@@ -1,6 +1,6 @@
-package si.sensum.api.services
+package si.sensum.api.service
 
-import si.sensum.api.backend.BackendAuthClient
+import si.sensum.api.client.BackendAuthClient
 import si.sensum.shared.auth.jwt.JwtTokenService
 import si.sensum.shared.auth.jwt.JwtUser
 import si.sensum.shared.models.auth.LoginCommand

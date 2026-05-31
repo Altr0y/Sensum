@@ -1,20 +1,20 @@
-package si.sensum.api.routes
+package si.sensum.api.controller
 
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
 import io.ktor.server.routing.route
-import si.sensum.api.backend.BackendChannelClient
+import si.sensum.api.service.ChannelService
 import si.sensum.shared.ktor.response.respondOk
 import si.sensum.shared.ktor.validation.requireIntPathParameter
 import si.sensum.shared.ktor.validation.requireLongPathParameter
 
-internal fun Route.channelRoutes(
-    backendChannels: BackendChannelClient
+internal fun Route.channelController(
+    channelService: ChannelService
 ) {
     route("/channels") {
         get {
             call.respondOk {
-                backendChannels.getChannels()
+                channelService.getChannels()
             }
         }
 
@@ -22,7 +22,7 @@ internal fun Route.channelRoutes(
             val channelId = call.requireIntPathParameter("channelId")
 
             call.respondOk {
-                backendChannels.getChannelById(channelId)
+                channelService.getChannelById(channelId)
             }
         }
     }
@@ -32,7 +32,7 @@ internal fun Route.channelRoutes(
             val stationId = call.requireLongPathParameter("stationId")
 
             call.respondOk {
-                backendChannels.getChannelsByStation(stationId)
+                channelService.getChannelsByStation(stationId)
             }
         }
     }

@@ -1,4 +1,4 @@
-package si.sensum.api.auth
+package si.sensum.api.domain
 
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.ApplicationCall

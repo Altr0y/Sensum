@@ -1,4 +1,4 @@
-package si.sensum.api.backend
+package si.sensum.api.client
 
 import si.sensum.shared.http.ServiceHttpClient
 import si.sensum.shared.models.measurements.CreateMeasurementsBatchCommand

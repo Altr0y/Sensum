@@ -1,4 +1,4 @@
-package si.sensum.api.routes
+package si.sensum.api.controller
 
 import io.ktor.server.request.receive
 import io.ktor.server.routing.Route
@@ -6,16 +6,16 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.put
 import io.ktor.server.routing.route
-import si.sensum.api.auth.requireAdminUser
-import si.sensum.api.auth.requireAuthenticatedUser
-import si.sensum.api.backend.BackendCustomerClient
+import si.sensum.api.domain.requireAdminUser
+import si.sensum.api.domain.requireAuthenticatedUser
+import si.sensum.api.service.CustomerService
 import si.sensum.shared.ktor.response.respondCreated
 import si.sensum.shared.ktor.response.respondOk
 import si.sensum.shared.models.customers.CreateCustomerCommand
 import si.sensum.shared.models.customers.UpdateCustomerCommand
 
-internal fun Route.customerRoutes(
-    customers: BackendCustomerClient
+internal fun Route.customerController(
+    customerService: CustomerService
 ) {
     route("/customers") {
 
@@ -24,12 +24,8 @@ internal fun Route.customerRoutes(
 
             val request = call.receive<CreateCustomerCommand>()
 
-            require(request.name.isNotBlank()) {
-                "Customer name must not be blank"
-            }
-
             call.respondCreated {
-                customers.createCustomer(request)
+                customerService.createCustomer(request)
             }
         }
 
@@ -37,7 +33,7 @@ internal fun Route.customerRoutes(
             val principal = call.requireAuthenticatedUser() ?: return@get
 
             call.respondOk {
-                customers.getCustomer(
+                customerService.getCustomer(
                     customerId = principal.customerId
                 )
             }
@@ -48,12 +44,8 @@ internal fun Route.customerRoutes(
 
             val request = call.receive<UpdateCustomerCommand>()
 
-            require(request.name.isNotBlank()) {
-                "Customer name must not be blank"
-            }
-
             call.respondOk {
-                customers.updateCustomer(
+                customerService.updateCustomer(
                     customerId = principal.customerId,
                     request = request
                 )

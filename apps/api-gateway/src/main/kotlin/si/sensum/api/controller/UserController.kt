@@ -1,4 +1,4 @@
-package si.sensum.api.routes
+package si.sensum.api.controller
 
 import io.ktor.server.request.receive
 import io.ktor.server.routing.Route
@@ -7,23 +7,25 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.put
 import io.ktor.server.routing.route
-import si.sensum.api.auth.requireAdminUser
-import si.sensum.api.backend.BackendUserClient
+import si.sensum.api.domain.requireAdminUser
+import si.sensum.api.service.UserService
 import si.sensum.shared.ktor.response.respondCreated
 import si.sensum.shared.ktor.response.respondOk
 import si.sensum.shared.ktor.validation.requireIntPathParameter
 import si.sensum.shared.models.users.CreateUserCommand
 import si.sensum.shared.models.users.UpdateUserCommand
 
-internal fun Route.userRoutes(
-    backendUsers: BackendUserClient
+internal fun Route.userController(
+    userService: UserService
 ) {
     route("/users") {
         get {
             val principal = call.requireAdminUser() ?: return@get
 
             call.respondOk {
-                backendUsers.getUsers(principal.customerId)
+                userService.getUsers(
+                    customerId = principal.customerId
+                )
             }
         }
 
@@ -32,7 +34,7 @@ internal fun Route.userRoutes(
             val request = call.receive<CreateUserCommand>()
 
             call.respondCreated {
-                backendUsers.createUser(
+                userService.createUser(
                     customerId = principal.customerId,
                     request = request
                 )
@@ -44,7 +46,7 @@ internal fun Route.userRoutes(
             val userId = call.requireIntPathParameter("userId")
 
             call.respondOk {
-                backendUsers.getUser(
+                userService.getUser(
                     customerId = principal.customerId,
                     userId = userId
                 )
@@ -57,7 +59,7 @@ internal fun Route.userRoutes(
             val request = call.receive<UpdateUserCommand>()
 
             call.respondOk {
-                backendUsers.updateUser(
+                userService.updateUser(
                     customerId = principal.customerId,
                     userId = userId,
                     request = request
@@ -70,7 +72,7 @@ internal fun Route.userRoutes(
             val userId = call.requireIntPathParameter("userId")
 
             call.respondOk {
-                backendUsers.deleteUser(
+                userService.deleteUser(
                     customerId = principal.customerId,
                     userId = userId
                 )

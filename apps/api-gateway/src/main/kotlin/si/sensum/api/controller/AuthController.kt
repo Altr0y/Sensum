@@ -1,17 +1,17 @@
-package si.sensum.api.routes
+package si.sensum.api.controller
 
 import io.ktor.server.request.receive
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
-import si.sensum.api.auth.requireAuthenticatedUser
-import si.sensum.api.services.AuthService
+import si.sensum.api.domain.requireAuthenticatedUser
+import si.sensum.api.service.AuthService
 import si.sensum.shared.ktor.response.respondOk
 import si.sensum.shared.models.auth.LoginCommand
 import si.sensum.shared.models.auth.AuthenticatedUserDto
 
-internal fun Route.publicAuthRoutes(
+internal fun Route.publicAuthController(
     authService: AuthService
 ) {
     route("/auth") {
@@ -25,7 +25,7 @@ internal fun Route.publicAuthRoutes(
     }
 }
 
-internal fun Route.protectedAuthRoutes(
+internal fun Route.protectedAuthController(
     authService: AuthService
 ) {
     route("/auth") {

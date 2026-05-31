@@ -1,17 +1,22 @@
 package si.sensum.api.di
 
-import si.sensum.api.backend.BackendAuthClient
-import si.sensum.api.backend.BackendChannelClient
-import si.sensum.api.backend.BackendCustomerClient
-import si.sensum.api.backend.BackendMeasurementClient
-import si.sensum.api.backend.BackendStationClient
+import si.sensum.api.client.BackendAuthClient
+import si.sensum.api.client.BackendChannelClient
+import si.sensum.api.client.BackendCustomerClient
+import si.sensum.api.client.BackendMeasurementClient
+import si.sensum.api.client.BackendStationClient
+import si.sensum.api.client.BackendUserClient
 import si.sensum.api.config.ApiGatewayConfig
 import si.sensum.api.config.createHttpClient
-import si.sensum.api.services.AuthService
+import si.sensum.api.service.AuthService
+import si.sensum.api.service.ChannelService
+import si.sensum.api.service.CustomerService
+import si.sensum.api.service.MeasurementService
+import si.sensum.api.service.StationService
+import si.sensum.api.service.UserService
 import si.sensum.shared.auth.jwt.JwtConfig
 import si.sensum.shared.auth.jwt.JwtTokenService
 import si.sensum.shared.http.ServiceHttpClient
-import si.sensum.api.backend.BackendUserClient
 
 internal fun createApiDependencies(
     config: ApiGatewayConfig
@@ -32,20 +37,23 @@ internal fun createApiDependencies(
         baseUrl = config.backendCoreBaseUrl
     )
 
-    val backendAuth = BackendAuthClient(backendHttpClient)
-
-    val authService = AuthService(
-        backendAuthClient = backendAuth,
-        jwtTokenService = jwtTokenService
-    )
+    val authClient = BackendAuthClient(backendHttpClient)
+    val customerClient = BackendCustomerClient(backendHttpClient)
+    val userClient = BackendUserClient(backendHttpClient)
+    val stationClient = BackendStationClient(backendHttpClient)
+    val channelClient = BackendChannelClient(backendHttpClient)
+    val measurementClient = BackendMeasurementClient(backendHttpClient)
 
     return ApiDependencies(
         jwtTokenService = jwtTokenService,
-        authService = authService,
-        backendMeasurements = BackendMeasurementClient(backendHttpClient),
-        backendStations = BackendStationClient(backendHttpClient),
-        backendChannels = BackendChannelClient(backendHttpClient),
-        backendUsers = BackendUserClient(backendHttpClient),
-        backendCustomers = BackendCustomerClient(backendHttpClient)
+        authService = AuthService(
+            backendAuthClient = authClient,
+            jwtTokenService = jwtTokenService
+        ),
+        customerService = CustomerService(customerClient),
+        userService = UserService(userClient),
+        stationService = StationService(stationClient),
+        channelService = ChannelService(channelClient),
+        measurementService = MeasurementService(measurementClient)
     )
 }
