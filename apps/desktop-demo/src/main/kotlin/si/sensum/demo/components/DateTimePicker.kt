@@ -1,0 +1,265 @@
+package si.sensum.demo.components
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import org.jetbrains.compose.resources.painterResource
+import si.sensum.demo.components.theme.SensumThemeColors
+import si.sensum.demo.resources.Res
+import si.sensum.demo.resources.calendar
+import si.sensum.demo.resources.chevron_left
+import si.sensum.demo.resources.chevron_right
+import si.sensum.demo.resources.clock
+import java.time.LocalDateTime
+import java.time.YearMonth
+import java.time.format.DateTimeFormatter
+
+private val DISPLAY_FORMAT = DateTimeFormatter.ofPattern("dd. MM. yyyy  HH:mm")
+
+@Composable
+fun DateTimePicker(
+    label: String,
+    value: LocalDateTime,
+    onValueChange: (LocalDateTime) -> Unit
+) {
+    var showPopup by remember { mutableStateOf(false) }
+
+    var displayMonth by remember { mutableStateOf(YearMonth.from(value)) }
+    var selectedDate by remember { mutableStateOf(value.toLocalDate()) }
+    var hourText by remember { mutableStateOf(value.hour.toString().padStart(2, '0')) }
+    var minuteText by remember { mutableStateOf(value.minute.toString().padStart(2, '0')) }
+
+    Column {
+        Text(label, style = MaterialTheme.typography.labelMedium, color = SensumThemeColors.muted)
+        Spacer(Modifier.height(4.dp))
+
+        Row(
+            modifier = Modifier
+                .clip(RoundedCornerShape(6.dp))
+                .border(
+                    1.dp,
+                    if (showPopup) SensumThemeColors.accent else SensumThemeColors.border,
+                    RoundedCornerShape(6.dp)
+                )
+                .background(MaterialTheme.colorScheme.surface)
+                .clickable {
+                    displayMonth = YearMonth.from(value)
+                    selectedDate = value.toLocalDate()
+                    hourText = value.hour.toString().padStart(2, '0')
+                    minuteText = value.minute.toString().padStart(2, '0')
+                    showPopup = true
+                }
+                .padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Icon(
+                painter = painterResource(Res.drawable.calendar),
+                contentDescription = null,
+                tint = if (showPopup) SensumThemeColors.accent else SensumThemeColors.muted,
+                modifier = Modifier.size(18.dp)
+            )
+            Text(
+                text = value.format(DISPLAY_FORMAT),
+                style = MaterialTheme.typography.bodyMedium,
+                color = SensumThemeColors.onSurface
+            )
+        }
+
+        if (showPopup) {
+            Dialog(onDismissRequest = { showPopup = false }) {
+                Box(
+                    modifier = Modifier
+                        .width(400.dp)
+                        .height(550.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .border(1.dp, SensumThemeColors.border, RoundedCornerShape(12.dp))
+                        .background(MaterialTheme.colorScheme.surface)
+                        .padding(20.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            // Mesec navigacija
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                IconButton(
+                                    onClick = { displayMonth = displayMonth.minusMonths(1) },
+                                    modifier = Modifier.size(36.dp)
+                                ) {
+                                    Icon(
+                                        painter = painterResource(Res.drawable.chevron_left),
+                                        null,
+                                        tint = SensumThemeColors.muted,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                                Text(
+                                    "${
+                                        displayMonth.month.name.lowercase().replaceFirstChar { it.uppercase() }
+                                    } ${displayMonth.year}",
+                                    style = MaterialTheme.typography.titleMedium
+                                )
+                                IconButton(
+                                    onClick = { displayMonth = displayMonth.plusMonths(1) },
+                                    modifier = Modifier.size(36.dp)
+                                ) {
+                                    Icon(
+                                        painter = painterResource(Res.drawable.chevron_right),
+                                        null,
+                                        tint = SensumThemeColors.muted,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                            }
+
+                            // Dnevi v tednu
+                            Row(modifier = Modifier.fillMaxWidth()) {
+                                listOf("Mo", "Tu", "We", "Th", "Fr", "Sa", "Su").forEach { day ->
+                                    Text(
+                                        day,
+                                        modifier = Modifier.weight(1f),
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = SensumThemeColors.muted,
+                                        textAlign = TextAlign.Center
+                                    )
+                                }
+                            }
+
+                            // Dnevi v mesecu
+                            val firstDayOfWeek = displayMonth.atDay(1).dayOfWeek.value - 1
+                            val daysInMonth = displayMonth.lengthOfMonth()
+                            val totalCells = firstDayOfWeek + daysInMonth
+                            val rows = (totalCells + 6) / 7
+
+                            for (row in 0 until rows) {
+                                Row(modifier = Modifier.fillMaxWidth()) {
+                                    for (col in 0..6) {
+                                        val dayNum = row * 7 + col - firstDayOfWeek + 1
+                                        if (dayNum < 1 || dayNum > daysInMonth) {
+                                            Spacer(Modifier.weight(1f).aspectRatio(1f))
+                                        } else {
+                                            val date = displayMonth.atDay(dayNum)
+                                            val isSelected = date == selectedDate
+                                            Box(
+                                                modifier = Modifier
+                                                    .weight(1f)
+                                                    .aspectRatio(1f)
+                                                    .padding(2.dp)
+                                                    .clip(RoundedCornerShape(6.dp))
+                                                    .background(
+                                                        if (isSelected) SensumThemeColors.accent
+                                                        else MaterialTheme.colorScheme.surface
+                                                    )
+                                                    .clickable { selectedDate = date },
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Text(
+                                                    "$dayNum",
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    color = if (isSelected) SensumThemeColors.onAccent else SensumThemeColors.onSurface
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            HorizontalDivider(color = SensumThemeColors.border)
+
+                            // Ura in minute
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                Icon(
+                                    painter = painterResource(Res.drawable.clock),
+                                    null,
+                                    tint = SensumThemeColors.muted,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                TimeNumberField(
+                                    value = hourText,
+                                    onValueChange = { hourText = it },
+                                    isFocused = true,
+                                    modifier = Modifier.weight(1f)
+                                )
+
+                                Text(
+                                    ":",
+                                    style = MaterialTheme.typography.titleLarge,
+                                    color = SensumThemeColors.muted
+                                )
+
+                                TimeNumberField(
+                                    value = minuteText,
+                                    onValueChange = { minuteText = it },
+                                    isFocused = false,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                TextButton(onClick = {
+                                    val h = hourText.toIntOrNull()?.coerceIn(0, 23) ?: 0
+                                    val m = minuteText.toIntOrNull()?.coerceIn(0, 59) ?: 0
+                                    onValueChange(selectedDate.atTime(h, m))
+                                    showPopup = false
+                                }) {
+                                    Text(
+                                        "OK",
+                                        color = SensumThemeColors.accent,
+                                        style = MaterialTheme.typography.titleSmall
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun TimeNumberField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    isFocused: Boolean,
+    modifier: Modifier = Modifier
+) {
+    BasicTextField(
+        value = value,
+        onValueChange = { newValue ->
+            if (newValue.length <= 2 && newValue.all { char -> char.isDigit() }) {
+                onValueChange(newValue)
+            }
+        },
+        modifier = modifier
+            .border(
+                width = 1.dp,
+                color = if (isFocused) SensumThemeColors.accent else SensumThemeColors.border,
+                shape = RoundedCornerShape(6.dp)
+            )
+            .padding(10.dp),
+        singleLine = true,
+        textStyle = MaterialTheme.typography.bodyLarge.copy(
+            textAlign = TextAlign.Center,
+            color = SensumThemeColors.onSurface
+        )
+    )
+}

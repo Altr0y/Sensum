@@ -1,0 +1,154 @@
+services:
+
+  # ===========================
+  # BAZA - PostgreSQL
+  # ===========================
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-sensum}
+      POSTGRES_USER: ${POSTGRES_USER:-sensum}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sensum}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-sensum} -d ${POSTGRES_DB:-sensum}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ===========================
+  # ELTRATEC GM MIDDLEWARE
+  # port: 8081
+  # (potreben ker api-gateway kliče GM za meritve)
+  # ===========================
+  eltratec-gm:
+    build:
+      context: .
+      dockerfile: apps/eltratec-gm/Dockerfile
+    ports:
+      - "${GM_PORT:-8081}:8081"
+    environment:
+      JAVA_TOOL_OPTIONS: "-Xms128m -Xmx384m"
+
+      GM_PORT: ${GM_PORT:-8081}
+      GM_HOST: ${GM_HOST:-0.0.0.0}
+
+      SWS_BASE_URL: ${SWS_BASE_URL:-https://smart.eltratec.com/SmartWebDev/SmartWebService.asmx}
+      SWS_TIMEOUT_MILLIS: ${SWS_TIMEOUT_MILLIS:-30000}
+
+      GM_AUTH_TOKEN_TTL_HOURS: ${GM_AUTH_TOKEN_TTL_HOURS:-8}
+      GM_SERVICE_JWT_SECRET: ${GM_SERVICE_JWT_SECRET:-local-development-gm-service-secret-32-chars}
+      GM_SERVICE_JWT_ISSUER: ${GM_SERVICE_JWT_ISSUER:-sensum-backend-core}
+      GM_SERVICE_JWT_AUDIENCE: ${GM_SERVICE_JWT_AUDIENCE:-sensum-eltratec-gm}
+      GM_SERVICE_JWT_REALM: ${GM_SERVICE_JWT_REALM:-sensum-gm-service}
+    healthcheck:
+      test: [ "CMD-SHELL", "wget -qO- http://localhost:8081/health || exit 1" ]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  # ===========================
+  # BACKEND CORE
+  # port: 8082
+  # ===========================
+  backend-core:
+    build:
+      context: .
+      dockerfile: apps/backend-core/Dockerfile
+    ports:
+      - "${BACKEND_CORE_PORT:-8082}:8082"
+    environment:
+      JAVA_TOOL_OPTIONS: "-Xms128m -Xmx384m"
+
+      BACKEND_CORE_PORT: ${BACKEND_CORE_PORT:-8082}
+      BACKEND_CORE_HOST: ${BACKEND_CORE_HOST:-0.0.0.0}
+
+      BACKEND_CORE_DB_JDBC_URL: ${BACKEND_CORE_DB_JDBC_URL:-jdbc:postgresql://postgres:5432/sensum}
+      BACKEND_CORE_DB_USER: ${BACKEND_CORE_DB_USER:-sensum}
+      BACKEND_CORE_DB_PASSWORD: ${BACKEND_CORE_DB_PASSWORD:-sensum}
+
+      GM_BASE_URL: ${GM_BASE_URL:-http://eltratec-gm:8081}
+      GM_SERVICE_JWT_SECRET: ${GM_SERVICE_JWT_SECRET:-local-development-gm-service-secret-32-chars}
+      GM_SERVICE_JWT_ISSUER: ${GM_SERVICE_JWT_ISSUER:-sensum-backend-core}
+      GM_SERVICE_JWT_AUDIENCE: ${GM_SERVICE_JWT_AUDIENCE:-sensum-eltratec-gm}
+      GM_SERVICE_JWT_TTL_SECONDS: ${GM_SERVICE_JWT_TTL_SECONDS:-60}
+
+      SWS_USERNAME: ${SWS_USERNAME:-sensum}
+      SWS_PASSWORD: ${SWS_PASSWORD:-sensum}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      eltratec-gm:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8082/health" ]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  # ===========================
+  # API GATEWAY
+  # port: 8080
+  # ===========================
+  api-gateway:
+    build:
+      context: .
+      dockerfile: apps/api-gateway/Dockerfile
+    ports:
+      - "${API_GATEWAY_PORT:-8080}:8080"
+    environment:
+      JAVA_TOOL_OPTIONS: "-Xms128m -Xmx384m"
+
+      API_GATEWAY_PORT: ${API_GATEWAY_PORT:-8080}
+      API_GATEWAY_HOST: ${API_GATEWAY_HOST:-0.0.0.0}
+
+      BACKEND_CORE_BASE_URL: ${BACKEND_CORE_BASE_URL:-http://backend-core:8082}
+
+      JWT_SECRET: ${JWT_SECRET:-local-development-jwt-secret-change-this-32-chars}
+      JWT_ISSUER: ${JWT_ISSUER:-sensum-api-gateway}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-sensum-clients}
+      JWT_REALM: ${JWT_REALM:-sensum-api}
+      JWT_TTL_SECONDS: ${JWT_TTL_SECONDS:-3600}
+    depends_on:
+      backend-core:
+        condition: service_healthy
+
+  # ===========================
+  # GRAFANA OSS
+  # port: 3000
+  # ===========================
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "${GRAFANA_PORT:-3000}:3000"
+    environment:
+      GF_SECURITY_ALLOW_EMBEDDING: ${GF_SECURITY_ALLOW_EMBEDDING:-true}
+      GF_AUTH_ANONYMOUS_ENABLED: ${GF_AUTH_ANONYMOUS_ENABLED:-true}
+      GF_AUTH_ANONYMOUS_ORG_ROLE: ${GF_AUTH_ANONYMOUS_ORG_ROLE:-Viewer}
+    volumes:
+      - grafana_feri_data:/var/lib/grafana
+    depends_on:
+      - api-gateway
+
+  # ===========================
+  # NEXT.JS FRONTEND
+  # port: 3001
+  # ===========================
+  frontend:
+    build:
+      context: .
+      dockerfile: apps/nextjs/Dockerfile
+    ports:
+      - "${FRONTEND_PORT:-3001}:3000"
+    environment:
+      NEXT_PUBLIC_BACKEND_CORE_URL: ${NEXT_PUBLIC_BACKEND_CORE_URL:-http://localhost:8082}
+      NEXT_PUBLIC_GRAFANA_URL: ${NEXT_PUBLIC_GRAFANA_URL:-http://localhost:3000}
+    depends_on:
+      - api-gateway
+
+volumes:
+  postgres_data:
+  grafana_feri_data:
