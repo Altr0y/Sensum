@@ -1,8 +1,9 @@
-import type { Metadata } from "next"
-import { JetBrains_Mono } from "next/font/google"
+import type {Metadata} from "next"
+import {JetBrains_Mono} from "next/font/google"
+import "leaflet/dist/leaflet.css"
 import "./globals.css"
-import { Navbar } from "@/components/navigation/Navbar"
-import { ThemeProvider } from "@/components/theme/ThemeProvider"
+import {Navbar} from "@/components/navigation/Navbar"
+import {ThemeProvider} from "@/components/theme/ThemeProvider"
 
 const jetbrainsMono = JetBrains_Mono({
     subsets: ["latin"],

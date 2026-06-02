@@ -1,5 +1,6 @@
 package si.sensum.api.service
 
+import kotlinx.serialization.Serializable
 import si.sensum.api.client.BackendStationClient
 import si.sensum.shared.models.stations.StationDto
 
@@ -8,6 +9,21 @@ internal class StationService(
 ) {
     suspend fun getStations(): List<StationDto> {
         return stations.getStations()
+    }
+
+    suspend fun getStationsGeoJson(): StationGeoJsonFeatureCollectionDto {
+        val features = stations
+            .getStations()
+            .filter { station ->
+                station.latitude != null && station.longitude != null
+            }
+            .map { station ->
+                station.toGeoJsonFeature()
+            }
+
+        return StationGeoJsonFeatureCollectionDto(
+            features = features
+        )
     }
 
     suspend fun getStationById(stationId: Long): StationDto {
@@ -25,4 +41,58 @@ internal class StationService(
 
         return stations.getStationsByCustomer(customerId)
     }
+
+    private fun StationDto.toGeoJsonFeature(): StationGeoJsonFeatureDto {
+        return StationGeoJsonFeatureDto(
+            properties = StationGeoJsonPropertiesDto(
+                id = stationId,
+                stationId = stationId,
+                name = name ?: "Station $stationId",
+                type = "station",
+                layer = "stations",
+                modbusAddress = modbusAddress,
+                serialNumber = serialNumber,
+                stationType = stationType,
+                description = description
+            ),
+            geometry = StationGeoJsonPointGeometryDto(
+                coordinates = listOf(
+                    longitude ?: 0.0,
+                    latitude ?: 0.0
+                )
+            )
+        )
+    }
 }
+
+@Serializable
+internal data class StationGeoJsonFeatureCollectionDto(
+    val type: String = "FeatureCollection",
+    val features: List<StationGeoJsonFeatureDto>
+)
+
+@Serializable
+internal data class StationGeoJsonFeatureDto(
+    val type: String = "Feature",
+    val properties: StationGeoJsonPropertiesDto,
+    val geometry: StationGeoJsonPointGeometryDto
+)
+
+@Serializable
+internal data class StationGeoJsonPropertiesDto(
+    val id: Long,
+    val stationId: Long,
+    val name: String,
+    val type: String,
+    val layer: String,
+    val modbusAddress: Int? = null,
+    val serialNumber: String? = null,
+    val stationType: String? = null,
+    val description: String? = null
+)
+
+@Serializable
+internal data class StationGeoJsonPointGeometryDto(
+    val type: String = "Point",
+    val coordinates: List<Double>
+)

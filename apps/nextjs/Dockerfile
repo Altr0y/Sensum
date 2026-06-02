@@ -1,24 +1,26 @@
-FROM node:20-alpine AS deps
+FROM node:22-alpine AS deps
 WORKDIR /app
-COPY apps/nextjs/package.json apps/nextjs/package-lock.json ./
+
+COPY apps/nextjs/package*.json ./
 RUN npm ci
 
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 WORKDIR /app
+
 COPY --from=deps /app/node_modules ./node_modules
-COPY apps/nextjs/ .
+COPY apps/nextjs ./
+
 RUN npm run build
 
-FROM node:20-alpine AS runner
+FROM node:22-alpine AS runner
 WORKDIR /app
-ENV NODE_ENV=production
 
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
+ENV NODE_ENV=production
+ENV PORT=3001
+
+COPY --from=builder /app ./
 
 EXPOSE 3001
-ENV PORT=3001
-ENV HOSTNAME="0.0.0.0"
 
-CMD ["node", "server.js"]
+CMD ["npm", "run", "start"]
+#CMD ["node", "server.js"]
