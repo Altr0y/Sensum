@@ -11,15 +11,11 @@ import io.ktor.serialization.kotlinx.json.*
 import si.sensum.demo.model.MeasurementUi
 import si.sensum.shared.models.auth.LoginCommand
 import si.sensum.shared.models.auth.LoginResult
-import si.sensum.shared.models.measurements.CreateMeasurementsBatchCommand
-import si.sensum.shared.models.measurements.CreateMeasurementsBatchResult
-import si.sensum.shared.models.measurements.MeasurementDto
-import si.sensum.shared.models.measurements.RefreshMeasurementsCommand
-import si.sensum.shared.models.measurements.RefreshMeasurementsResult
-import si.sensum.shared.models.measurements.StationChannelPairDto
+import si.sensum.shared.models.measurements.*
 
 class SensumApiClient(
-    private val baseUrl: String = "http://localhost:8080"
+    private val baseUrl: String = System.getenv("SENSUM_API_BASE_URL")
+        ?: "http://localhost:3001"
 ) {
     private val client = HttpClient(CIO) {
         install(ContentNegotiation) {
