@@ -22,20 +22,17 @@ fun geoJsonToSensum(geoJsonFile: File, type: GeoType, explicitRisk: String? = nu
             GeoType.RIVER -> {
                 appendLineGeometry(result, "river", name, coordinates, geometryType)
             }
-
             GeoType.LAKE -> {
                 appendPolygonGeometry(result, "lake", name, null, coordinates, geometryType)
             }
-
             GeoType.REGION -> {
                 appendPolygonGeometry(result, "region", name, null, coordinates, geometryType)
             }
-
             GeoType.MUNICIPALITY ->{
                 appendMunicipality(result, name, coordinates, geometryType)
             }
-
             GeoType.FLOOD_ZONE -> {
+                // Use explicit risk from filename if provided, otherwise try to derive from properties
                 val risk = explicitRisk ?: extractFloodRisk(properties)
                 appendPolygonGeometry(result, "flood_zone", name, risk, coordinates, geometryType)
             }
@@ -48,14 +45,12 @@ fun geoJsonToSensum(geoJsonFile: File, type: GeoType, explicitRisk: String? = nu
 }
 
 fun convertRivers(path: String): String = geoJsonToSensum(File(path), GeoType.RIVER)
-
 fun convertLakes(path: String): String = geoJsonToSensum(File(path), GeoType.LAKE)
-
 fun convertRegions(path: String): String = geoJsonToSensum(File(path), GeoType.REGION)
-
 fun convertMunicipalities(path: String): String = geoJsonToSensum(File(path), GeoType.MUNICIPALITY)
-
 fun convertFloodZones(path: String, risk: String?): String = geoJsonToSensum(File(path), GeoType.FLOOD_ZONE, explicitRisk = risk)
+
+
 
 private fun extractName (
     properties: JsonObject,
@@ -78,8 +73,8 @@ private fun extractName (
         }
 
         // Each flood file uses a different property for the zone name:
-        // Often    -> PP_IME
-        // Rare     -> RP_IME
+        // Often -> PP_IME
+        // Rare -> RP_IME
         // Very rare-> ZR_IME
         GeoType.FLOOD_ZONE -> {
             properties.stringOrNull("PP_IME")
@@ -214,4 +209,122 @@ private fun escape(value: String): String{
     return value
         .replace("\\", "\\\\")
         .replace("\"", "\\\"")
+}
+
+fun convertGeoJsonDirToSensum(
+    inputDir: File,
+    outputDir: File,
+    countryName: String = "Slovenia"
+): String {
+    outputDir.mkdirs()
+
+    val layerLines = mutableListOf<String>()  // layer X from "file.sensum";
+    val municipalityBodies = mutableListOf<String>() // inlined into country body
+
+    val geoJsonFiles = inputDir
+        .listFiles { f -> f.extension.lowercase() == "geojson" }
+        ?.toList() ?: emptyList()
+
+    for (geoJsonFile in geoJsonFiles) {
+        val type = detectGeoJsonType(geoJsonFile) ?: continue
+
+        val body = when (type) {
+            GeoType.RIVER        -> convertRivers(geoJsonFile.path)
+            GeoType.LAKE         -> convertLakes(geoJsonFile.path)
+            GeoType.REGION       -> convertRegions(geoJsonFile.path)
+            GeoType.MUNICIPALITY -> convertMunicipalities(geoJsonFile.path)
+            GeoType.FLOOD_ZONE   -> convertFloodZones(geoJsonFile.path, detectFloodRiskFromFile(geoJsonFile))
+        }
+
+        val rawFile = File(outputDir, "${geoJsonFile.nameWithoutExtension}.sensum")
+        rawFile.writeText(body)
+
+        when (type) {
+            GeoType.MUNICIPALITY -> municipalityBodies.add(body)
+            else -> {
+                val layerName = layerIdentifier(type, geoJsonFile.nameWithoutExtension)
+                layerLines.add("""    layer $layerName from "${rawFile.name}";""")
+            }
+        }
+    }
+
+    val master = buildString {
+        appendLine("""country "$countryName" {""")
+        layerLines.forEach { appendLine(it) }
+        if (municipalityBodies.isNotEmpty()) {
+            appendLine()
+            for (body in municipalityBodies) {
+                body.lines()
+                    .filter { it.isNotBlank() }
+                    .forEach { appendLine("    $it") }
+            }
+        }
+        appendLine("}")
+    }
+
+    File(outputDir, "slovenia.sensum").writeText(master)
+    return master
+}
+
+/** Derives a valid sensum identifier for use as a layer name. */
+private fun layerIdentifier(type: GeoType, baseName: String): String = when (type) {
+    GeoType.RIVER      -> "rivers"
+    GeoType.LAKE       -> "lakes"
+    GeoType.REGION     -> "regions"
+    GeoType.FLOOD_ZONE -> baseName
+        .lowercase()
+        .replace(Regex("[^a-z0-9]+"), "_")
+        .trim('_')
+    GeoType.MUNICIPALITY -> "municipalities"
+}
+
+fun detectGeoJsonType(file: File): GeoType? {
+    val name = file.name.lowercase()
+    return when {
+        "river"   in name || "reke"   in name || "vodotok" in name -> GeoType.RIVER
+        "lake"    in name || "jezer"  in name                      -> GeoType.LAKE
+        "region"  in name || "regij"  in name                      -> GeoType.REGION
+        "municip" in name || "obcin"  in name || "občin"   in name -> GeoType.MUNICIPALITY
+        "flood"   in name || "poplav" in name                      -> GeoType.FLOOD_ZONE
+        else -> null
+    }
+}
+
+fun detectFloodRiskFromFile(file: File): String? {
+    val name = file.name.lowercase()
+    return when {
+        "very rare" in name || "zelo redke" in name -> "very_rare"
+        "rare"      in name || "redke"      in name -> "rare"
+        "often"     in name || "pogoste"    in name -> "often"
+        else -> null
+    }
+}
+
+fun convertRiversFromString(content: String): String =
+    geoJsonToSensumFromString(content, GeoType.RIVER)
+
+fun convertLakesFromString(content: String): String =
+    geoJsonToSensumFromString(content, GeoType.LAKE)
+
+fun convertRegionsFromString(content: String): String =
+    geoJsonToSensumFromString(content, GeoType.REGION)
+
+fun convertMunicipalitiesFromString(content: String): String =
+    geoJsonToSensumFromString(content, GeoType.MUNICIPALITY)
+
+fun convertFloodZonesFromString(content: String, risk: String?): String =
+    geoJsonToSensumFromString(content, GeoType.FLOOD_ZONE, explicitRisk = risk)
+
+private fun geoJsonToSensumFromString(
+    content: String,
+    type: GeoType,
+    explicitRisk: String? = null
+): String {
+    val tempFile = java.io.File.createTempFile("sensum_geo", ".geojson")
+    tempFile.writeText(content)
+    return try {
+        geoJsonToSensum(tempFile, type, explicitRisk)
+    } finally {
+        tempFile.delete()
+    }
 }

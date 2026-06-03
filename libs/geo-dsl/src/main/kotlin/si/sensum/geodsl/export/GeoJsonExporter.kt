@@ -49,7 +49,7 @@ fun export(program: ProgramNode): String {
 }
 
 private fun exportRiver(river: RiverNode, layerName: String) : String {
-    val layerProp = if (layerName.isNotEmpty()) """
+    val layerProp = if (layerName.isNotEmpty()) """,
                 "layer": "${escape(layerName)}"""" else ""
 
     return """
@@ -68,7 +68,7 @@ private fun exportRiver(river: RiverNode, layerName: String) : String {
 }
 
 private fun exportLake(lake: LakeNode, layerName: String) : String {
-    val layerProp = if (layerName.isNotEmpty()) """
+    val layerProp = if (layerName.isNotEmpty()) """,
                 "layer": "${escape(layerName)}"""" else ""
 
     return """
@@ -87,7 +87,7 @@ private fun exportLake(lake: LakeNode, layerName: String) : String {
 }
 
 private fun exportRegion (region: RegionNode, layerName: String) : String {
-    val layerProp = if (layerName.isNotEmpty()) """
+    val layerProp = if (layerName.isNotEmpty()) """,
                 "layer": "${escape(layerName)}"""" else ""
 
     return """
@@ -106,7 +106,7 @@ private fun exportRegion (region: RegionNode, layerName: String) : String {
 }
 
 private fun exportFloodZone (floodZone: FloodZoneNode, layerName: String) : String {
-    val layerProp = if (layerName.isNotEmpty()) """
+    val layerProp = if (layerName.isNotEmpty()) """,
                 "layer": "${escape(layerName)}"""" else ""
 
     return """
