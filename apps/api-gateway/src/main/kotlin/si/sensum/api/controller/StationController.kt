@@ -1,8 +1,6 @@
 package si.sensum.api.controller
 
-import io.ktor.server.routing.Route
-import io.ktor.server.routing.get
-import io.ktor.server.routing.route
+import io.ktor.server.routing.*
 import si.sensum.api.domain.requireAuthenticatedUser
 import si.sensum.api.service.StationService
 import si.sensum.shared.ktor.response.respondOk
@@ -15,6 +13,12 @@ internal fun Route.stationController(
         get {
             call.respondOk {
                 stationService.getStations()
+            }
+        }
+
+        get("/geojson") {
+            call.respondOk {
+                stationService.getStationsGeoJson()
             }
         }
 

@@ -5,6 +5,7 @@ import kotlinx.datetime.number
 import kotlinx.datetime.toKotlinLocalDateTime
 import si.sensum.backend.domain.measurement.MeasurementEntity
 import si.sensum.backend.repository.MeasurementRepository
+import si.sensum.shared.models.common.DataSourceDto
 import si.sensum.shared.models.measurements.MeasurementDto
 import si.sensum.simulator.SimulatorService
 
@@ -31,7 +32,14 @@ class MeasurementService(
     fun createMeasurement(
         request: MeasurementDto
     ): MeasurementDto {
-        return repository.create(request)
+        return repository.create(
+            request.copy(
+                source = normalizeSource(
+                    source = request.source,
+                    fallback = DataSourceDto.MANUAL
+                )
+            )
+        )
     }
 
     fun createMeasurementsBatch(
@@ -41,7 +49,16 @@ class MeasurementService(
             "Measurement batch must not be empty"
         }
 
-        return repository.createBatch(measurements)
+        return repository.createBatch(
+            measurements.map { measurement ->
+                measurement.copy(
+                    source = normalizeSource(
+                        source = measurement.source,
+                        fallback = DataSourceDto.MANUAL
+                    )
+                )
+            }
+        )
     }
 
     fun updateMeasurement(
@@ -50,7 +67,12 @@ class MeasurementService(
     ): MeasurementDto {
         return repository.update(
             id = measurementId,
-            dto = request
+            dto = request.copy(
+                source = normalizeSource(
+                    source = request.source,
+                    fallback = DataSourceDto.MANUAL
+                )
+            )
         ) ?: error("Measurement not found")
     }
 
@@ -101,7 +123,7 @@ class MeasurementService(
         from: LocalDateTime,
         to: LocalDateTime
     ): List<MeasurementDto> {
-        if (!repository.existsInRange(from, to)) {
+        if (!repository.existsInRange(channelId, from, to)) {
             val generated = simulateAndInsert(
                 from = from,
                 to = to
@@ -125,7 +147,8 @@ class MeasurementService(
                     channelId = measurement.channelId,
                     dateTime = measurement.dateTime.toKotlinLocalDateTime(),
                     value = measurement.value.toFloat(),
-                    status = false
+                    status = false,
+                    source = DataSourceDto.SIM
                 )
             }
     }
@@ -139,5 +162,16 @@ class MeasurementService(
             minute,
             second
         )
+    }
+
+    private fun normalizeSource(
+        source: DataSourceDto,
+        fallback: DataSourceDto
+    ): DataSourceDto {
+        return if (source == DataSourceDto.UNKNOWN) {
+            fallback
+        } else {
+            source
+        }
     }
 }

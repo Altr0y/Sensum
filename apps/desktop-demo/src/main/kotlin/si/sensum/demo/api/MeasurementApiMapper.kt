@@ -12,7 +12,8 @@ fun MeasurementUi.toDto(): MeasurementDto {
         channelId = channelId,
         dateTime = dateTime.atOffset(ZoneOffset.UTC),
         value = value,
-        status = status
+        status = status,
+        source = source
     )
 }
 
@@ -25,6 +26,7 @@ fun MeasurementDto.toUi(): MeasurementUi {
         channelName = DemoChannels.nameOf(channelId),
         dateTime = dateTime.toLocalDateTime(),
         value = value,
-        status = status
+        status = status,
+        source = source
     )
 }

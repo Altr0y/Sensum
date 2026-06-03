@@ -6,6 +6,7 @@ import org.jetbrains.exposed.v1.jdbc.selectAll
 import si.sensum.backend.database.ChannelTable
 import si.sensum.backend.database.DatabaseTransaction
 import si.sensum.backend.domain.channel.ChannelEntity
+import si.sensum.backend.mapper.toDataSourceDto
 
 class ChannelRepository {
 
@@ -37,7 +38,8 @@ class ChannelRepository {
             name = row[ChannelTable.name],
             description = row[ChannelTable.description],
             unit = row[ChannelTable.unit],
-            enabled = row[ChannelTable.enabled]
+            enabled = row[ChannelTable.enabled],
+            source = row[ChannelTable.dataSource].toDataSourceDto()
         )
     }
 }

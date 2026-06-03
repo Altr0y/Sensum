@@ -2,6 +2,7 @@ package si.sensum.backend.database
 
 import org.jetbrains.exposed.v1.core.Table
 import si.sensum.backend.domain.measurement.MeasurementUnit
+import si.sensum.shared.models.common.DataSourceDto
 
 object ChannelTable : Table("channels") {
     val id = integer("id").autoIncrement()
@@ -13,6 +14,8 @@ object ChannelTable : Table("channels") {
         length = 20
     )
     val enabled = bool("enabled")
+
+    val dataSource = varchar("source", 20).default("UNKNOWN")
 
     override val primaryKey = PrimaryKey(id)
 }

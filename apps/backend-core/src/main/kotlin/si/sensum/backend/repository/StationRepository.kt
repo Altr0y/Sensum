@@ -6,6 +6,7 @@ import org.jetbrains.exposed.v1.jdbc.selectAll
 import si.sensum.backend.database.DatabaseTransaction
 import si.sensum.backend.database.StationTable
 import si.sensum.backend.domain.station.StationEntity
+import si.sensum.backend.mapper.toDataSourceDto
 
 class StationRepository {
 
@@ -39,7 +40,8 @@ class StationRepository {
             serialNumber = row[StationTable.serialNumber],
             longitude = row[StationTable.longitude],
             latitude = row[StationTable.latitude],
-            location = row[StationTable.location]
+            location = row[StationTable.location],
+            source = row[StationTable.dataSource].toDataSourceDto()
         )
     }
 }

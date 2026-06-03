@@ -22,7 +22,7 @@ dependencies {
     implementation("io.ktor:ktor-server-auth:3.4.2")
     implementation("io.ktor:ktor-server-auth-jwt:3.4.2")
 
-
+    implementation("io.ktor:ktor-server-cors:3.4.2")
     implementation("io.ktor:ktor-client-core:3.4.2")
     implementation("io.ktor:ktor-client-cio:3.4.2")
     implementation("io.ktor:ktor-client-content-negotiation:3.4.2")
@@ -34,6 +34,7 @@ dependencies {
     implementation(project(":libs:shared-http"))
     implementation(project(":libs:shared-ktor"))
     implementation(project(":libs:logging"))
+    implementation(project(":libs:geo-dsl"))
 
     testImplementation(kotlin("test"))
     testImplementation("io.ktor:ktor-server-test-host:3.4.2")

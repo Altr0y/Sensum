@@ -1,8 +1,9 @@
 package si.sensum.backend.database
 
 import org.jetbrains.exposed.v1.core.Table
+import si.sensum.shared.models.common.DataSourceDto
 
-object StationTable : Table("stations"){
+object StationTable : Table("stations") {
     val id = long("id").autoIncrement()
     val customerId = integer("customer_id")
     val locationDescription = varchar("location_description", 100)
@@ -11,6 +12,8 @@ object StationTable : Table("stations"){
     val longitude = double("longitude")
     val latitude = double("latitude")
     val location = varchar("location", 500)
+
+    val dataSource = varchar("source", 20).default("UNKNOWN")
 
     override val primaryKey = PrimaryKey(id)
 }

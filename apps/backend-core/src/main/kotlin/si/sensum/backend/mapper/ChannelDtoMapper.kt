@@ -9,6 +9,7 @@ fun ChannelEntity.toDto(): ChannelDto {
         channelId = id,
         name = name,
         description = description,
-        unit = unit.name
+        unit = unit.name,
+        source = source
     )
 }

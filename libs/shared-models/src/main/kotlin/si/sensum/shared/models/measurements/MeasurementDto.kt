@@ -1,6 +1,7 @@
 package si.sensum.shared.models.measurements
 
 import kotlinx.serialization.Serializable
+import si.sensum.shared.models.common.DataSourceDto
 import si.sensum.shared.models.serialization.OffsetDateTimeIsoSerializer
 import java.time.OffsetDateTime
 
@@ -12,6 +13,8 @@ data class MeasurementDto(
 
     @Serializable(with = OffsetDateTimeIsoSerializer::class)
     val dateTime: OffsetDateTime,
+
     val value: Double,
-    val status: Int
+    val status: Int,
+    val source: DataSourceDto = DataSourceDto.UNKNOWN
 )

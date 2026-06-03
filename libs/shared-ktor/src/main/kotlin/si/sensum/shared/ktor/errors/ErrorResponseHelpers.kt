@@ -7,6 +7,7 @@ import io.ktor.server.request.httpMethod
 import io.ktor.server.request.path
 import io.ktor.server.response.respond
 import si.sensum.logging.Logger
+import si.sensum.logging.shortRequestId
 import si.sensum.shared.models.common.ApiError
 
 suspend fun ApplicationCall.respondApiWarn(
@@ -93,7 +94,7 @@ private fun ApplicationCall.apiLogMessage(
     status: HttpStatusCode,
     message: String
 ): String {
-    val requestId = callId ?: "-"
+    val requestId = callId.shortRequestId()
     val method = request.httpMethod.value
     val path = "/" + request.path().trimStart('/')
 

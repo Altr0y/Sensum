@@ -1,6 +1,7 @@
 package si.sensum.shared.models.channels
 
 import kotlinx.serialization.Serializable
+import si.sensum.shared.models.common.DataSourceDto
 
 @Serializable
 data class ChannelDto(
@@ -14,5 +15,6 @@ data class ChannelDto(
     val kota: Double? = null,
     val kotaSign: Double? = null,
     val description: String? = null,
-    val unit: String? = null
+    val unit: String? = null,
+    val source: DataSourceDto = DataSourceDto.UNKNOWN
 )
