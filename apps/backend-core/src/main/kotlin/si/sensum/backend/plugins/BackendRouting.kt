@@ -11,6 +11,7 @@ import si.sensum.backend.service.*
 import si.sensum.shared.auth.jwt.JwtConfig
 import si.sensum.shared.auth.jwt.JwtTokenService
 import si.sensum.shared.http.ServiceHttpClient
+import si.sensum.simulator.SpatialSimulatorService
 
 fun Application.configureBackendRouting(
     backendConfig: BackendConfig
@@ -73,6 +74,16 @@ fun Application.configureBackendRouting(
         swsPassword = backendConfig.swsPassword
     )
 
+    val spatialSimulatorService = SpatialSimulatorService(
+        floodZonesDir = "geojson",
+        riversPath = "geojson/Rivers.geojson",
+        regionsPath = "geojson/Regions.geojson",
+        municipalitiesPath = "geojson/Municipalities.geojson"
+    )
+    val simulatorService = SimulatorService(
+        spatialSimulatorService = spatialSimulatorService
+    )
+
     routing {
         configureHealthRoutes()
 
@@ -99,6 +110,10 @@ fun Application.configureBackendRouting(
         configureMeasurementRoutes(
             measurementService = measurementService,
             refreshService = measurementRefreshService
+        )
+
+        configureSimulatorRoutes(
+            simulatorService = simulatorService
         )
     }
 }

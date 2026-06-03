@@ -8,6 +8,7 @@ version = "unspecified"
 
 dependencies {
     implementation(project(":libs:shared-models"))
+    implementation(project(":libs:geo-dsl"))
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
     testImplementation(kotlin("test"))
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.2")
