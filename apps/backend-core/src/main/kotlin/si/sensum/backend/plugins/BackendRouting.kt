@@ -41,6 +41,7 @@ fun Application.configureBackendRouting(
     val stationRepository = StationRepository()
     val channelRepository = ChannelRepository()
     val measurementRepository = MeasurementRepository()
+    val recordsRepository = RecordsRepository()
 
     val authService = AuthService(
         userRepository = userRepository
@@ -64,6 +65,10 @@ fun Application.configureBackendRouting(
 
     val measurementService = MeasurementService(
         repository = measurementRepository
+    )
+
+    val recordsService = RecordsService(
+        repository = recordsRepository
     )
 
     val measurementRefreshService = MeasurementRefreshService(
@@ -99,6 +104,10 @@ fun Application.configureBackendRouting(
         configureMeasurementRoutes(
             measurementService = measurementService,
             refreshService = measurementRefreshService
+        )
+
+        configureRecordsRoutes(
+            recordsService = recordsService
         )
     }
 }

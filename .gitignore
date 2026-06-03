@@ -6,3 +6,10 @@ build/
 .env
 /export-all-module-files.ps1
 /exported-module-files/
+.vscode/settings.json
+/test-data/scripts/make-demo-layer.ps1
+/test-data/scripts/merge-geojson.ps1
+/test-data/scripts/merge-geojson-demo.ps1
+/apps/nextjs/public/geojson/
+/test-data/output/
+/test-data/
