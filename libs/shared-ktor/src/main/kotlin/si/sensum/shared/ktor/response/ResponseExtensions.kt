@@ -4,10 +4,20 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.ApplicationCall
 import io.ktor.server.response.respond
 
-suspend fun ApplicationCall.respondOk(block: suspend () -> Any) {
-    respond(HttpStatusCode.OK, block())
+suspend inline fun <reified T : Any> ApplicationCall.respondOk(
+    noinline block: suspend () -> T
+) {
+    respond(
+        status = HttpStatusCode.OK,
+        message = block()
+    )
 }
 
-suspend fun ApplicationCall.respondCreated(block: suspend () -> Any) {
-    respond(HttpStatusCode.Created, block())
+suspend inline fun <reified T : Any> ApplicationCall.respondCreated(
+    noinline block: suspend () -> T
+) {
+    respond(
+        status = HttpStatusCode.Created,
+        message = block()
+    )
 }
