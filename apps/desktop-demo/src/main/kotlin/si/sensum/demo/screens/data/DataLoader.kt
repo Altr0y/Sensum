@@ -1,20 +1,38 @@
-package si.sensum.demo.components.main
+package si.sensum.demo.screens.data
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import si.sensum.demo.api.SensumApiClient
-import si.sensum.demo.components.DateTimePicker
+import si.sensum.demo.components.datetime.DateTimePicker
 import si.sensum.demo.components.theme.SensumThemeColors
 import si.sensum.demo.model.DemoChannels
-import si.sensum.demo.model.MeasurementUi
 import si.sensum.demo.model.MeasurementRequestUi
+import si.sensum.demo.model.MeasurementUi
 import si.sensum.demo.model.StationChannelPairUi
 import si.sensum.demo.repository.ApiMeasurementRepository
 import java.time.LocalDateTime
@@ -40,9 +58,9 @@ fun DataLoader(
     }
 
     var datetimeFrom by remember { mutableStateOf(LocalDateTime.of(2026, 1, 1, 0, 0)) }
-    var datetimeTo   by remember { mutableStateOf(LocalDateTime.of(2026, 1, 1, 1, 0)) }
-    var isLoading    by remember { mutableStateOf(false) }
-    var statusMsg    by remember { mutableStateOf("") }
+    var datetimeTo by remember { mutableStateOf(LocalDateTime.of(2026, 1, 1, 1, 0)) }
+    var isLoading by remember { mutableStateOf(false) }
+    var statusMsg by remember { mutableStateOf("") }
 
     Column(
         modifier = Modifier
@@ -61,27 +79,35 @@ fun DataLoader(
 
         HorizontalDivider(color = SensumThemeColors.border)
 
-        // Channels
         Text("Channels", style = MaterialTheme.typography.titleSmall)
+
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             FilterChipToggle(
                 label = "Select All",
                 selected = selectedChannels.values.all { it },
                 onClick = { CHANNELS.keys.forEach { selectedChannels[it] = true } }
             )
+
             FilterChipToggle(
                 label = "Clear All",
                 selected = selectedChannels.values.none { it },
                 onClick = { CHANNELS.keys.forEach { selectedChannels[it] = false } }
             )
         }
+
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
             CHANNELS.forEach { (id, name) ->
                 val selected = selectedChannels[id] == true
+
                 FilterChip(
                     selected = selected,
                     onClick = { selectedChannels[id] = !selected },
-                    label = { Text("$id — $name", style = MaterialTheme.typography.labelMedium) },
+                    label = {
+                        Text(
+                            text = "$id — $name",
+                            style = MaterialTheme.typography.labelMedium
+                        )
+                    },
                     colors = FilterChipDefaults.filterChipColors(
                         selectedContainerColor = SensumThemeColors.accentMuted,
                         selectedLabelColor = SensumThemeColors.accent,
@@ -99,14 +125,15 @@ fun DataLoader(
 
         HorizontalDivider(color = SensumThemeColors.border)
 
-        // Date / time range
         Text("Time Range", style = MaterialTheme.typography.titleSmall)
+
         Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             DateTimePicker(
                 label = "From",
                 value = datetimeFrom,
                 onValueChange = { datetimeFrom = it }
             )
+
             DateTimePicker(
                 label = "To",
                 value = datetimeTo,
@@ -116,20 +143,24 @@ fun DataLoader(
 
         HorizontalDivider(color = SensumThemeColors.border)
 
-        // Load button
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Button(
                 onClick = {
-                    val pairs = selectedChannels.filter { it.value }.keys
-                        .map { StationChannelPairUi(STATION_ID, it) }
+                    val pairs = selectedChannels
+                        .filter { it.value }
+                        .keys
+                        .map { channelId ->
+                            StationChannelPairUi(STATION_ID, channelId)
+                        }
 
                     if (pairs.isEmpty()) {
                         statusMsg = "Select at least one channel."
                         return@Button
                     }
+
                     if (!datetimeFrom.isBefore(datetimeTo)) {
                         statusMsg = "Error: 'From' must be before 'To'."
                         return@Button
@@ -138,50 +169,74 @@ fun DataLoader(
                     scope.launch {
                         isLoading = true
                         statusMsg = ""
-                        // TODO: remove
-                        apiClient.login("sensum", "sensum")
+
                         val result = repository.getMeasurements(
-                            MeasurementRequestUi(pairs, datetimeFrom, datetimeTo)
+                            MeasurementRequestUi(
+                                pairs = pairs,
+                                datetimeFrom = datetimeFrom,
+                                datetimeTo = datetimeTo
+                            )
                         )
+
                         result.fold(
-                            onSuccess = {
-                                statusMsg = "Loaded ${it.size} measurements."
-                                onMeasurementsLoaded(it)
+                            onSuccess = { loadedMeasurements ->
+                                statusMsg = "Loaded ${loadedMeasurements.size} measurements."
+                                onMeasurementsLoaded(loadedMeasurements)
                             },
-                            onFailure = {
-                                statusMsg = "Error: ${it.message}"
+                            onFailure = { error ->
+                                statusMsg = "Error: ${error.message}"
                             }
                         )
+
                         isLoading = false
                     }
                 },
                 enabled = !isLoading,
-                colors = ButtonDefaults.buttonColors(containerColor = SensumThemeColors.accent)
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = SensumThemeColors.accent
+                )
             ) {
                 Text("Load Measurements", color = SensumThemeColors.onAccent)
             }
 
-            if (isLoading) CircularProgressIndicator(
-                modifier = Modifier.size(20.dp),
-                color = SensumThemeColors.accent,
-                strokeWidth = 2.dp
-            )
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(20.dp),
+                    color = SensumThemeColors.accent,
+                    strokeWidth = 2.dp
+                )
+            }
 
-            if (statusMsg.isNotEmpty()) Text(
-                text = statusMsg,
-                style = MaterialTheme.typography.bodyMedium,
-                color = if (statusMsg.startsWith("Error")) SensumThemeColors.error else SensumThemeColors.success
-            )
+            if (statusMsg.isNotEmpty()) {
+                Text(
+                    text = statusMsg,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = if (statusMsg.startsWith("Error")) {
+                        SensumThemeColors.error
+                    } else {
+                        SensumThemeColors.success
+                    }
+                )
+            }
         }
     }
 }
 
 @Composable
-private fun FilterChipToggle(label: String, selected: Boolean, onClick: () -> Unit) {
+private fun FilterChipToggle(
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
     FilterChip(
         selected = selected,
         onClick = onClick,
-        label = { Text(label, style = MaterialTheme.typography.labelMedium) },
+        label = {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelMedium
+            )
+        },
         colors = FilterChipDefaults.filterChipColors(
             selectedContainerColor = SensumThemeColors.accentMuted,
             selectedLabelColor = SensumThemeColors.accent,

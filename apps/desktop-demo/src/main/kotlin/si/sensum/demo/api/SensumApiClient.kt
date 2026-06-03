@@ -12,6 +12,12 @@ import si.sensum.demo.model.MeasurementUi
 import si.sensum.shared.models.auth.LoginCommand
 import si.sensum.shared.models.auth.LoginResult
 import si.sensum.shared.models.measurements.*
+import si.sensum.shared.models.records.ChannelRecordDto
+import si.sensum.shared.models.records.MeasurementRecordDto
+import si.sensum.shared.models.records.RecordsPageDto
+import si.sensum.shared.models.records.StationRecordDto
+import si.sensum.demo.screens.records.RecordsFilter
+import si.sensum.demo.screens.records.RecordsSortDirection
 
 class SensumApiClient(
     private val baseUrl: String = System.getenv("SENSUM_API_BASE_URL")
@@ -192,4 +198,109 @@ class SensumApiClient(
             error("Regenerate failed: HTTP ${response.status.value}\n${response.bodyAsText()}")
         }
     }
+
+    suspend fun getStationRecords(
+        page: Int,
+        pageSize: Int,
+        sortBy: String,
+        sortDirection: RecordsSortDirection,
+        filters: List<RecordsFilter>
+    ): RecordsPageDto<StationRecordDto> {
+        return getRecordsPage(
+            path = "/api/v1/records/stations",
+            page = page,
+            pageSize = pageSize,
+            sortBy = sortBy,
+            sortDirection = sortDirection,
+            filters = filters
+        )
+    }
+
+    suspend fun getChannelRecords(
+        page: Int,
+        pageSize: Int,
+        sortBy: String,
+        sortDirection: RecordsSortDirection,
+        filters: List<RecordsFilter>
+    ): RecordsPageDto<ChannelRecordDto> {
+        return getRecordsPage(
+            path = "/api/v1/records/channels",
+            page = page,
+            pageSize = pageSize,
+            sortBy = sortBy,
+            sortDirection = sortDirection,
+            filters = filters
+        )
+    }
+
+    suspend fun getMeasurementRecords(
+        page: Int,
+        pageSize: Int,
+        sortBy: String,
+        sortDirection: RecordsSortDirection,
+        filters: List<RecordsFilter>
+    ): RecordsPageDto<MeasurementRecordDto> {
+        return getRecordsPage(
+            path = "/api/v1/records/measurements",
+            page = page,
+            pageSize = pageSize,
+            sortBy = sortBy,
+            sortDirection = sortDirection,
+            filters = filters
+        )
+    }
+
+    private suspend inline fun <reified T> getRecordsPage(
+        path: String,
+        page: Int,
+        pageSize: Int,
+        sortBy: String,
+        sortDirection: RecordsSortDirection,
+        filters: List<RecordsFilter>
+    ): RecordsPageDto<T> {
+        val response = client.get("$baseUrl$path") {
+            header(HttpHeaders.Authorization, "Bearer ${requireToken()}")
+
+            parameter("page", page)
+            parameter("pageSize", pageSize)
+            parameter("sortBy", sortBy)
+            parameter("sortDirection", sortDirection.apiValue)
+
+            filters.forEach { filter ->
+                parameter(
+                    key = "filter",
+                    value = "${filter.field}:${filter.operator.apiValue}:${filter.value}"
+                )
+            }
+        }
+
+        if (!response.status.isSuccess()) {
+            error("Get records failed: HTTP ${response.status.value}\n${response.bodyAsText()}")
+        }
+
+        return response.body()
+    }
+
+
+    suspend fun logout() {
+        val currentToken = runCatching { requireToken() }.getOrNull()
+
+        if (currentToken != null) {
+            val response = client.post("$baseUrl/api/v1/auth/logout") {
+                header(HttpHeaders.Authorization, "Bearer $currentToken")
+            }
+
+            if (!response.status.isSuccess()) {
+                session.clear()
+                error("Logout failed: HTTP ${response.status.value}\n${response.bodyAsText()}")
+            }
+        }
+
+        session.clear()
+    }
+
+    fun clearSession() {
+        session.clear()
+    }
+
 }

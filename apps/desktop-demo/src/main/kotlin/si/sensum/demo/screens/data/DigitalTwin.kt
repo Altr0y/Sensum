@@ -1,13 +1,30 @@
-package si.sensum.demo.components.main
+package si.sensum.demo.screens.data
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Stop
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -21,10 +38,10 @@ import org.jetbrains.letsPlot.intern.Plot
 import org.jetbrains.letsPlot.label.ggtitle
 import org.jetbrains.letsPlot.label.labs
 import si.sensum.demo.api.SensumApiClient
-import si.sensum.demo.components.DateTimePicker
-import si.sensum.demo.components.EmptyState
+import si.sensum.demo.components.datetime.DateTimePicker
 import si.sensum.demo.components.theme.SensumThemeColors
 import si.sensum.demo.components.theme.letsPlotTheme
+import si.sensum.demo.components.ui.SensumEmptyState
 import si.sensum.demo.model.MeasurementRequestUi
 import si.sensum.demo.model.MeasurementUi
 import si.sensum.demo.model.StationChannelPairUi
@@ -34,7 +51,6 @@ import si.sensum.demo.resources.digital_twin
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-
 private const val STATION_ID = 2241
 private val ALL_CHANNELS = listOf(127, 128, 129, 130, 131, 132, 133, 134)
 
@@ -43,9 +59,11 @@ fun DigitalTwin(
     apiClient: SensumApiClient
 ) {
     val scope = rememberCoroutineScope()
+
     val repository = remember(apiClient) {
         ApiMeasurementRepository(apiClient)
     }
+
     var datetimeFrom by remember { mutableStateOf(LocalDateTime.of(2026, 6, 1, 0, 0)) }
     var datetimeTo by remember { mutableStateOf(LocalDateTime.of(2026, 6, 7, 0, 0)) }
     var measurements by remember { mutableStateOf<List<MeasurementUi>>(emptyList()) }
@@ -107,15 +125,21 @@ fun DigitalTwin(
     }
 
     LaunchedEffect(isLive, measurements) {
-        if (!isLive) return@LaunchedEffect
+        if (!isLive) {
+            return@LaunchedEffect
+        }
 
         liveMeasurements = emptyList()
         liveCurrentTime = null
 
-        val sortedMeasurements = measurements.sortedBy { it.dateTime }
+        val sortedMeasurements = measurements.sortedBy { measurement ->
+            measurement.dateTime
+        }
 
         for (measurement in sortedMeasurements) {
-            if (!isLive) break
+            if (!isLive) {
+                break
+            }
 
             while (isPaused && isLive) {
                 delay(200L)
@@ -138,6 +162,7 @@ fun DigitalTwin(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Text("Digital Twin", style = MaterialTheme.typography.titleLarge)
+
         Text(
             "Simulated data for RadarTest station - pick time interval",
             style = MaterialTheme.typography.bodyMedium,
@@ -155,6 +180,7 @@ fun DigitalTwin(
                 value = datetimeFrom,
                 onValueChange = { datetimeFrom = it }
             )
+
             DateTimePicker(
                 label = "To",
                 value = datetimeTo,
@@ -168,8 +194,10 @@ fun DigitalTwin(
                         to = datetimeTo
                     )
                 },
-                enabled = !isLoading && measurements.isNotEmpty(),
-                colors = ButtonDefaults.buttonColors(containerColor = SensumThemeColors.accent)
+                enabled = !isLoading,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = SensumThemeColors.accent
+                )
             ) {
                 Text("Generiraj", color = SensumThemeColors.onAccent)
             }
@@ -187,8 +215,10 @@ fun DigitalTwin(
                         to = wholeYearTo
                     )
                 },
-                enabled = !isLoading && measurements.isNotEmpty(),
-                colors = ButtonDefaults.buttonColors(containerColor = SensumThemeColors.info)
+                enabled = !isLoading,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = SensumThemeColors.info
+                )
             ) {
                 Text("Whole Year", color = SensumThemeColors.onAccent)
             }
@@ -199,36 +229,49 @@ fun DigitalTwin(
                         if (!validateDateRange(datetimeFrom, datetimeTo)) {
                             return@Button
                         }
+
                         isPaused = false
                         isLive = true
                     },
                     enabled = !isLoading && measurements.isNotEmpty(),
-                    colors = ButtonDefaults.buttonColors(containerColor = SensumThemeColors.success)
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = SensumThemeColors.success
+                    )
                 ) {
                     Text("Live", color = SensumThemeColors.onAccent)
                 }
             } else {
-                // Pause / Resume
                 Button(
-                    onClick = { isPaused = !isPaused },
+                    onClick = {
+                        isPaused = !isPaused
+                    },
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (isPaused) SensumThemeColors.success else SensumThemeColors.info
+                        containerColor = if (isPaused) {
+                            SensumThemeColors.success
+                        } else {
+                            SensumThemeColors.info
+                        }
                     )
                 ) {
                     Icon(
-                        imageVector = if (isPaused) Icons.Default.PlayArrow else Icons.Default.Pause,
+                        imageVector = if (isPaused) {
+                            Icons.Default.PlayArrow
+                        } else {
+                            Icons.Default.Pause
+                        },
                         contentDescription = if (isPaused) "Resume" else "Pause",
                         modifier = Modifier.size(25.dp)
                     )
                 }
 
-                // Stop
                 Button(
                     onClick = {
                         isLive = false
                         isPaused = false
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = SensumThemeColors.error)
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = SensumThemeColors.error
+                    )
                 ) {
                     Icon(
                         imageVector = Icons.Default.Stop,
@@ -237,19 +280,21 @@ fun DigitalTwin(
                     )
                 }
 
-                // Reset
                 Button(
                     onClick = {
                         liveMeasurements = emptyList()
                         liveCurrentTime = null
                         isPaused = false
                         isLive = false
+
                         scope.launch {
                             delay(100L)
                             isLive = true
                         }
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = SensumThemeColors.muted)
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = SensumThemeColors.muted
+                    )
                 ) {
                     Icon(
                         imageVector = Icons.Default.Refresh,
@@ -259,42 +304,56 @@ fun DigitalTwin(
                 }
             }
 
-            if (isLoading) CircularProgressIndicator(
-                modifier = Modifier.size(20.dp),
-                color = SensumThemeColors.accent,
-                strokeWidth = 2.dp
-            )
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(20.dp),
+                    color = SensumThemeColors.accent,
+                    strokeWidth = 2.dp
+                )
+            }
 
-            if (statusMsg.isNotEmpty()) Text(
-                text = statusMsg,
-                style = MaterialTheme.typography.bodyMedium,
-                color = if (statusMsg.startsWith("Error")) SensumThemeColors.error
-                else SensumThemeColors.success
-            )
+            if (statusMsg.isNotEmpty()) {
+                Text(
+                    text = statusMsg,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = if (statusMsg.startsWith("Error")) {
+                        SensumThemeColors.error
+                    } else {
+                        SensumThemeColors.success
+                    }
+                )
+            }
         }
 
         HorizontalDivider(color = SensumThemeColors.border)
 
         if (isLive && liveMeasurements.isNotEmpty()) {
-            liveCurrentTime?.let {
+            liveCurrentTime?.let { currentTime ->
                 Text(
-                    "${if (isPaused) "⏸ Paused" else "▶ Live"}: ${it.format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm"))} — vsaka sekunda = 1 ura",
+                    text = "${if (isPaused) "⏸ Paused" else "▶ Live"}: ${
+                        currentTime.format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm"))
+                    } — vsaka sekunda = 1 ura",
                     style = MaterialTheme.typography.bodySmall,
-                    color = if (isPaused) SensumThemeColors.warning else SensumThemeColors.success
+                    color = if (isPaused) {
+                        SensumThemeColors.warning
+                    } else {
+                        SensumThemeColors.success
+                    }
                 )
             }
+
             DigitalTwinChart(
                 measurements = liveMeasurements,
                 modifier = Modifier.fillMaxSize()
             )
         } else if (!hasLoaded) {
-            EmptyState(
+            SensumEmptyState(
                 icon = Res.drawable.digital_twin,
                 title = "No data",
                 subtitle = "Pick time interval and Generate."
             )
         } else if (measurements.isEmpty()) {
-            EmptyState(
+            SensumEmptyState(
                 icon = Res.drawable.digital_twin,
                 title = "No results",
                 subtitle = "Backend did not return any measurements for this interval."
@@ -319,19 +378,27 @@ private fun DigitalTwinChart(
         compareBy<MeasurementUi> { it.channelId }.thenBy { it.dateTime }
     )
 
-    fun buildPlot(title: String, channelIds: List<Int>): Plot {
-        val filtered = sorted.filter { it.channelId in channelIds }
+    fun buildPlot(
+        title: String,
+        channelIds: List<Int>
+    ): Plot {
+        val filtered = sorted.filter { measurement ->
+            measurement.channelId in channelIds
+        }
+
         val data = mapOf(
             "time" to filtered.map { it.dateTime.toString() },
             "value" to filtered.map { it.value },
             "channel" to filtered.map { "${it.channelId} - ${it.channelName}" }
         )
+
         return ggplot(data) {
             x = "time"
             y = "value"
             color = "channel"
             group = "channel"
-        } + geomLine(size = 1.0, alpha = 0.8) +
+        } +
+                geomLine() +
                 ggtitle(title) +
                 labs(x = "", y = "Vrednost", color = "Kanal") +
                 plotTheme
@@ -352,16 +419,4 @@ private fun DigitalTwinChart(
         modifier = modifier.padding(12.dp),
         computationMessagesHandler = {}
     )
-}
-
-private fun channelName(channelId: Int): String = when (channelId) {
-    127 -> "L8001H - globina voda-radar [m]"
-    128 -> "L8001H - višina vode [m]"
-    129 -> "L8001H - globina vodnjaka (PPI220) [m]"
-    130 -> "PPI220 - Nivo [m]"
-    131 -> "PPI220 - Temperatura [°C]"
-    132 -> "PPI220 - globina vode-nivo [m]"
-    133 -> "L8001H - globina vode-nivo [-]"
-    134 -> "L8001H - Nivo [-]"
-    else -> "Unknown ($channelId)"
 }

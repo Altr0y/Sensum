@@ -48,4 +48,8 @@ private fun Route.protectedControllers(
     channelController(
         channelService = dependencies.channelService
     )
+
+    recordsController(
+        recordsService = dependencies.recordsService
+    )
 }

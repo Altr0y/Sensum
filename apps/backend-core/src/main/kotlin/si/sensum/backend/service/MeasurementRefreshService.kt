@@ -2,6 +2,7 @@ package si.sensum.backend.service
 
 import si.sensum.backend.client.GmClient
 import si.sensum.backend.repository.MeasurementRepository
+import si.sensum.shared.models.common.DataSourceDto
 import si.sensum.shared.models.datetime.ApiDateTime
 import si.sensum.shared.models.measurements.RefreshMeasurementsCommand
 import si.sensum.shared.models.measurements.RefreshMeasurementsResult
@@ -30,7 +31,10 @@ class MeasurementRefreshService(
             request = normalizedRequest
         )
 
-        val (deleted, inserted) = measurementRepository.replaceAllFromDtos(measurements)
+        val (deleted, inserted) = measurementRepository.replaceAllFromDtos(
+            measurements = measurements,
+            source = DataSourceDto.SWS
+        )
 
         return RefreshMeasurementsResult(
             deletedCount = deleted,
