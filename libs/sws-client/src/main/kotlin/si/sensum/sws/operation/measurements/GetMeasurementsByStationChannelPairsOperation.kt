@@ -1,6 +1,6 @@
 package si.sensum.sws.operation.measurements
 
-import si.sensum.shared.models.api.measurements.StationChannelPairDto
+import si.sensum.shared.models.measurements.StationChannelPairDto
 import si.sensum.sws.model.SoapVersion
 import si.sensum.sws.model.SwsDateTimeRange
 import si.sensum.sws.model.SwsSoapOperation

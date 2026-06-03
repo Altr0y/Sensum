@@ -9,7 +9,7 @@ import io.ktor.server.routing.post
 import si.sensum.gm.auth.resolveGmTokenOrRespond
 import si.sensum.gm.errors.MissingRequiredFieldException
 import si.sensum.gm.services.AuthService
-import si.sensum.shared.models.api.LoginRequest
+import si.sensum.shared.models.auth.LoginCommand
 
 internal fun Route.gmLoginRoute(
     authService: AuthService
@@ -44,8 +44,8 @@ internal fun Route.gmLogoutRoute(
     }
 }
 
-private suspend fun ApplicationCall.receiveLoginRequest(): LoginRequest {
-    val request = receive<LoginRequest>()
+private suspend fun ApplicationCall.receiveLoginRequest(): LoginCommand {
+    val request = receive<LoginCommand>()
 
     if (request.username.isBlank()) {
         throw MissingRequiredFieldException("username")

@@ -1,7 +1,7 @@
 package si.sensum.sws.parser
 
 import org.w3c.dom.Element
-import si.sensum.shared.models.api.stations.StationDto
+import si.sensum.shared.models.stations.StationDto
 
 internal object SwsStationsResponseParser {
 

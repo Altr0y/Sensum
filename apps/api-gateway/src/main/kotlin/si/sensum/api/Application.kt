@@ -1,18 +1,16 @@
 package si.sensum.api
 
-import io.ktor.server.application.*
-import io.ktor.server.netty.*
-import io.ktor.server.response.*
-import io.ktor.server.routing.*
+import io.ktor.server.application.Application
+import io.ktor.server.netty.EngineMain
+import io.ktor.server.routing.route
+import io.ktor.server.routing.routing
 import si.sensum.api.config.loadApiGatewayConfig
+import si.sensum.api.controller.apiController
+import si.sensum.api.controller.healthController
 import si.sensum.api.di.ApiDependencies
 import si.sensum.api.di.createApiDependencies
 import si.sensum.api.plugins.installApiJwtAuthentication
 import si.sensum.api.plugins.installApiPlugins
-import si.sensum.api.routes.apiRoutes
-import si.sensum.shared.models.api.HealthResponse
-
-private const val SERVICE_NAME = "api-gateway"
 
 fun main(args: Array<String>) {
     EngineMain.main(args)
@@ -36,21 +34,10 @@ private fun Application.configureRoutes(
     dependencies: ApiDependencies
 ) {
     routing {
-        healthRoute()
+        healthController()
 
         route("/api/v1") {
-            apiRoutes(dependencies)
+            apiController(dependencies)
         }
-    }
-}
-
-private fun Route.healthRoute() {
-    get("/health") {
-        call.respond(
-            HealthResponse(
-                status = "ok",
-                service = SERVICE_NAME
-            )
-        )
     }
 }

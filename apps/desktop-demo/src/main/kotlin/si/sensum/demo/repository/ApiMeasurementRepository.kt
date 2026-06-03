@@ -3,6 +3,7 @@ package si.sensum.demo.repository
 import si.sensum.demo.api.SensumApiClient
 import si.sensum.demo.model.MeasurementRequestUi
 import si.sensum.demo.model.MeasurementUi
+import si.sensum.shared.models.measurements.StationChannelPairDto
 import java.time.format.DateTimeFormatter
 
 class ApiMeasurementRepository(
@@ -31,7 +32,7 @@ class ApiMeasurementRepository(
         return runCatching {
             apiClient.refreshMeasurements(
                 stationChannelPairs = request.pairs.map { pair ->
-                    si.sensum.shared.models.api.measurements.StationChannelPairDto(
+                    StationChannelPairDto(
                         stationId = pair.stationId.toLong(),
                         channelId = pair.channelId
                     )

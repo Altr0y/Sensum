@@ -8,6 +8,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -31,6 +36,30 @@ fun LoginScreen(
     var password by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
+
+    fun submitLogin() {
+        if (isLoading) return
+
+        if (username.isBlank() || password.isBlank()) {
+            errorMessage = "Username and password are required."
+            return
+        }
+
+        scope.launch {
+            isLoading = true
+            errorMessage = ""
+
+            runCatching {
+                onLogin(username.trim(), password)
+            }.onSuccess {
+                onLoginSuccess()
+            }.onFailure {
+                errorMessage = "Login failed. Check credentials or API status."
+            }
+
+            isLoading = false
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -67,7 +96,18 @@ fun LoginScreen(
                         enabled = !isLoading,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .heightIn(min = 58.dp),
+                            .heightIn(min = 58.dp)
+                            .onPreviewKeyEvent { event ->
+                                if (
+                                    (event.key == Key.Enter || event.key == Key.NumPadEnter) &&
+                                    event.type == KeyEventType.KeyDown
+                                ) {
+                                    submitLogin()
+                                    true
+                                } else {
+                                    false
+                                }
+                            },
                         colors = loginTextFieldColors()
                     )
 
@@ -84,31 +124,24 @@ fun LoginScreen(
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .heightIn(min = 58.dp),
+                            .heightIn(min = 58.dp)
+                            .onPreviewKeyEvent { event ->
+                                if (
+                                    (event.key == Key.Enter || event.key == Key.NumPadEnter) &&
+                                    event.type == KeyEventType.KeyDown
+                                ) {
+                                    submitLogin()
+                                    true
+                                } else {
+                                    false
+                                }
+                            },
                         colors = loginTextFieldColors()
                     )
 
                     Button(
                         onClick = {
-                            if (username.isBlank() || password.isBlank()) {
-                                errorMessage = "Username and password are required."
-                                return@Button
-                            }
-
-                            scope.launch {
-                                isLoading = true
-                                errorMessage = ""
-
-                                runCatching {
-                                    onLogin(username.trim(), password)
-                                }.onSuccess {
-                                    onLoginSuccess()
-                                }.onFailure {
-                                    errorMessage = "Login failed. Check credentials or API status."
-                                }
-
-                                isLoading = false
-                            }
+                            submitLogin()
                         },
                         enabled = !isLoading,
                         modifier = Modifier
@@ -184,6 +217,7 @@ private fun StretchedLoginTitle(
     modifier: Modifier = Modifier
 ) {
     val text = "SENSUM"
+
     Row(
         modifier = modifier,
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -239,5 +273,5 @@ private fun loginTextFieldColors() = OutlinedTextFieldDefaults.colors(
     unfocusedLabelColor = SensumThemeColors.muted,
     cursorColor = SensumThemeColors.accent,
     focusedTextColor = SensumThemeColors.onSurface,
-    unfocusedTextColor = SensumThemeColors.onSurface,
+    unfocusedTextColor = SensumThemeColors.onSurface
 )

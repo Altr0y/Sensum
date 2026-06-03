@@ -2,7 +2,7 @@ package si.sensum.demo.api
 
 import si.sensum.demo.model.DemoChannels
 import si.sensum.demo.model.MeasurementUi
-import si.sensum.shared.models.api.measurements.MeasurementDto
+import si.sensum.shared.models.measurements.MeasurementDto
 import java.time.ZoneOffset
 
 fun MeasurementUi.toDto(): MeasurementDto {

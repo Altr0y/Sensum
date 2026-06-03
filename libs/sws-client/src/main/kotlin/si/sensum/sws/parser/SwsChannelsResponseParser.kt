@@ -1,7 +1,7 @@
 package si.sensum.sws.parser
 
 import org.w3c.dom.Element
-import si.sensum.shared.models.api.channels.ChannelDto
+import si.sensum.shared.models.channels.ChannelDto
 
 internal object SwsChannelsResponseParser {
 

@@ -2,7 +2,7 @@ package si.sensum.transform
 
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
-import si.sensum.shared.models.api.measurements.MeasurementDto
+import si.sensum.shared.models.measurements.MeasurementDto
 
 object JsonConverter {
 
