@@ -45,8 +45,8 @@ class Validator {
     }
 
     private fun validateCoordinate(point: PointNode, context: String, errors: MutableList<ValidationError>) {
-        if (point.lon < 13.3 || point.lon > 16.6) {
-            errors.add(ValidationError("longitude ${point.lon} is out of range [13.3, 16.6] (Slovenia) in $context"))
+        if (point.lon < 13.3 || point.lon > 16.7) {
+            errors.add(ValidationError("longitude ${point.lon} is out of range [13.3, 16.7] (Slovenia) in $context"))
         }
         if (point.lat < 45.4 || point.lat > 46.9) {
             errors.add(ValidationError("latitude ${point.lat} is out of range [45.4, 46.9] (Slovenia) in $context"))
