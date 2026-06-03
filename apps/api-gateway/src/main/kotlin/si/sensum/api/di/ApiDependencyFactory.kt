@@ -4,6 +4,7 @@ import si.sensum.api.client.BackendAuthClient
 import si.sensum.api.client.BackendChannelClient
 import si.sensum.api.client.BackendCustomerClient
 import si.sensum.api.client.BackendMeasurementClient
+import si.sensum.api.client.BackendRecordsClient
 import si.sensum.api.client.BackendStationClient
 import si.sensum.api.client.BackendUserClient
 import si.sensum.api.config.ApiGatewayConfig
@@ -13,6 +14,7 @@ import si.sensum.api.service.ChannelService
 import si.sensum.api.service.CustomerService
 import si.sensum.api.service.MeasurementService
 import si.sensum.api.service.StationService
+import si.sensum.api.service.RecordsService
 import si.sensum.api.service.UserService
 import si.sensum.shared.auth.jwt.JwtConfig
 import si.sensum.shared.auth.jwt.JwtTokenService
@@ -43,6 +45,11 @@ internal fun createApiDependencies(
     val stationClient = BackendStationClient(backendHttpClient)
     val channelClient = BackendChannelClient(backendHttpClient)
     val measurementClient = BackendMeasurementClient(backendHttpClient)
+    val recordsClient = BackendRecordsClient(backendHttpClient)
+
+    val stationService = StationService(stationClient)
+    val channelService = ChannelService(channelClient)
+    val measurementService = MeasurementService(measurementClient)
 
     return ApiDependencies(
         jwtTokenService = jwtTokenService,
@@ -52,8 +59,9 @@ internal fun createApiDependencies(
         ),
         customerService = CustomerService(customerClient),
         userService = UserService(userClient),
-        stationService = StationService(stationClient),
-        channelService = ChannelService(channelClient),
-        measurementService = MeasurementService(measurementClient)
+        stationService = stationService,
+        channelService = channelService,
+        measurementService = measurementService,
+        recordsService = RecordsService(recordsClient)
     )
 }
