@@ -1,0 +1,29 @@
+// Primer razdelitve v več datotek z include direktivo
+// Datoteka: test-data/slovenia-split.sensum
+
+include "layers.sensum";
+include "stations.sensum";
+
+country "Slovenia" {
+
+    // Plasti so vključene iz layers.sensum
+    // Postaje so vključene iz stations.sensum
+
+    data_source stations     from database table "stations";
+    data_source channels     from database table "channels";
+    data_source measurements from database table "measurements";
+
+    auto_resolve stations {
+        belongs_to type municipality by contains required;
+        belongs_to type region       by contains required;
+        inside     type flood_zone   optional;
+        near       type river        within 500m optional;
+        near       type lake         within 700m optional;
+    }
+
+    export geojson "stations-enriched.geojson" {
+        include station geometry point;
+        include spatial_refs;
+        include latest_measurements;
+    }
+}

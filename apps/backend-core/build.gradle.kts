@@ -34,6 +34,7 @@ dependencies {
     implementation(project(":libs:shared-ktor"))
     implementation(project(":libs:logging"))
     implementation(project(":libs:simulator"))
+    implementation(project(":libs:geo-dsl"))
 
     testImplementation(kotlin("test"))
     testImplementation("io.ktor:ktor-server-test-host:3.4.2")
