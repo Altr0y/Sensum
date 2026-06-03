@@ -1,69 +1,73 @@
-package si.sensum.demo.components.main
+package si.sensum.demo.screens.info
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import si.sensum.demo.components.layout.ScreenContainer
 import si.sensum.demo.components.theme.SensumThemeColors
-
+import si.sensum.demo.components.ui.SensumButton
+import si.sensum.demo.components.ui.SensumCard
+import si.sensum.demo.components.ui.SensumPasswordField
+import si.sensum.demo.components.ui.SensumTextField
+// TODO: USER ADD SCREEN, CUSTOMER ADD
 @Composable
 fun User() {
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var loginMessage by remember { mutableStateOf("") }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 24.dp, vertical = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Text("Login Page", style = MaterialTheme.typography.titleLarge)
+    ScreenContainer {
+        Text(
+            text = "User",
+            style = MaterialTheme.typography.titleLarge
+        )
 
         Text(
-            "Local demo login placeholder",
+            text = "Local demo user placeholder",
             style = MaterialTheme.typography.bodyMedium,
             color = SensumThemeColors.muted
         )
 
         HorizontalDivider(color = SensumThemeColors.border)
 
-        Surface(
+        SensumCard(
             modifier = Modifier.widthIn(max = 420.dp),
-            color = MaterialTheme.colorScheme.surface,
-            shape = MaterialTheme.shapes.medium,
-            tonalElevation = 0.dp
+            fillMaxWidth = false
         ) {
             Column(
-                modifier = Modifier.padding(20.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                OutlinedTextField(
+                SensumTextField(
                     value = username,
-                    onValueChange = {
-                        username = it
+                    onValueChange = { value ->
+                        username = value
                         loginMessage = ""
                     },
-                    label = { Text("Username") },
-                    singleLine = true,
+                    label = "Username",
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                OutlinedTextField(
+                SensumPasswordField(
                     value = password,
-                    onValueChange = {
-                        password = it
+                    onValueChange = { value ->
+                        password = value
                         loginMessage = ""
                     },
-                    label = { Text("Password") },
-                    singleLine = true,
-                    visualTransformation = PasswordVisualTransformation(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    label = "Password",
                     modifier = Modifier.fillMaxWidth()
                 )
 
@@ -72,7 +76,8 @@ fun User() {
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Button(
+                    SensumButton(
+                        text = "Login",
                         onClick = {
                             loginMessage =
                                 if (username.isBlank() || password.isBlank()) {
@@ -80,11 +85,8 @@ fun User() {
                                 } else {
                                     "Logged in as $username."
                                 }
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = SensumThemeColors.accent)
-                    ) {
-                        Text("Login", color = SensumThemeColors.onAccent)
-                    }
+                        }
+                    )
 
                     OutlinedButton(
                         onClick = {
@@ -93,7 +95,10 @@ fun User() {
                             loginMessage = ""
                         }
                     ) {
-                        Text("Clear", color = SensumThemeColors.muted)
+                        Text(
+                            text = "Clear",
+                            color = SensumThemeColors.muted
+                        )
                     }
                 }
 
