@@ -13,5 +13,8 @@ data class StationDto(
     val description: String? = null,
     val latitude: Double? = null,
     val longitude: Double? = null,
+    val countryId: Int? = null,
+    val regionId: Int? = null,
+    val municipalityId: Int? = null,
     val source: DataSourceDto = DataSourceDto.UNKNOWN
 )

@@ -29,4 +29,12 @@ class StationService(
             .findByCustomerId(customerId)
             .map { it.toDto() }
     }
+
+    fun getStationsByMunicipality(
+        municipalityId: Int
+    ): List<StationDto> {
+        return stationRepository
+            .findByMunicipalityId(municipalityId)
+            .map { it.toDto() }
+    }
 }
