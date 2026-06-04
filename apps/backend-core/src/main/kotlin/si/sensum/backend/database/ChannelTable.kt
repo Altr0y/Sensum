@@ -2,11 +2,10 @@ package si.sensum.backend.database
 
 import org.jetbrains.exposed.v1.core.Table
 import si.sensum.backend.domain.measurement.MeasurementUnit
-import si.sensum.shared.models.common.DataSourceDto
 
 object ChannelTable : Table("channels") {
     val id = integer("id").autoIncrement()
-    val stationId = long("station_id")
+    val stationId = long("station_id").references(StationTable.id)
     val name = varchar("name", 50)
     val description = varchar("description", 500)
     val unit = enumerationByName<MeasurementUnit>(

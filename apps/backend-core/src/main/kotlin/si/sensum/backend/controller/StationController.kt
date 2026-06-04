@@ -46,4 +46,17 @@ fun Route.configureStationRoutes(
             )
         }
     }
+
+    route("/api/v1/municipalities/{municipalityId}/stations") {
+        get {
+            val municipalityId = call.requireIntPathParameter("municipalityId")
+
+            val stations = stationService.getStationsByMunicipality(municipalityId)
+
+            call.respond(
+                HttpStatusCode.OK,
+                stations
+            )
+        }
+    }
 }
