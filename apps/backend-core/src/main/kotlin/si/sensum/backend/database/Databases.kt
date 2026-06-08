@@ -20,6 +20,10 @@ fun Application.configureDatabases() {
 
     transaction {
         SchemaUtils.create(
+            CountryTable,
+            RegionTable,
+            MunicipalityTable,
+
             CustomerTable,
             UserTable,
             StationTable,

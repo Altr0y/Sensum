@@ -45,4 +45,12 @@ class StationService(
             source = command.source
         ).toDto()
     }
+
+    fun getStationsByMunicipality(
+        municipalityId: Int
+    ): List<StationDto> {
+        return stationRepository
+            .findByMunicipalityId(municipalityId)
+            .map { it.toDto() }
+    }
 }

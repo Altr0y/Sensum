@@ -149,7 +149,7 @@ services:
       GF_AUTH_JWT_EMAIL_CLAIM: "sub"
       GF_AUTH_JWT_AUTO_SIGN_UP: "true"
       GF_AUTH_JWT_ROLE_ATTRIBUTE_PATH: "contains(role, 'ADMIN') && 'Admin' || 'Viewer'"
-      GF_SERVER_ROOT_URL: "http://localhost:3001/grafana/"
+      GF_SERVER_ROOT_URL: "${GF_SERVER_ROOT_URL:-http://localhost:3001/grafana/}"
       GF_SERVER_SERVE_FROM_SUB_PATH: "true"
       # The JSON API datasource lets Grafana read data through the API
       # gateway's /api/v1/stats endpoints (plain JSON + JSONPath) instead of talking to Postgres directly.
@@ -159,6 +159,7 @@ services:
     volumes:
       - grafana_feri_data:/var/lib/grafana
       - ./infra/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./infra/nginx/${NGINX_CONF:-nginx.local.conf}:/etc/nginx/nginx.conf:ro
       - jwks_data:/etc/grafana/jwks:ro
     depends_on:
       api-gateway:
@@ -173,7 +174,7 @@ services:
     ports:
       - "${FRONTEND_PORT:-3001}:80"
     volumes:
-      - ./infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./infra/nginx/${NGINX_CONF:-nginx.local.conf}:/etc/nginx/nginx.conf:ro
     depends_on:
       - frontend
       - api-gateway

@@ -33,6 +33,13 @@ class StationRepository {
             .map(::toStation)
     }
 
+    fun findByMunicipalityId(municipalityId: Int): List<StationEntity> = DatabaseTransaction.run {
+        StationTable
+            .selectAll()
+            .where { StationTable.municipalityId eq municipalityId }
+            .map(::toStation)
+    }
+
     fun create(
         customerId: Int,
         name: String,
@@ -60,6 +67,9 @@ class StationRepository {
         return StationEntity(
             id = row[StationTable.id],
             customerId = row[StationTable.customerId],
+            countryId = row[StationTable.countryId],
+            regionId = row[StationTable.regionId],
+            municipalityId = row[StationTable.municipalityId],
             locationDescription = row[StationTable.locationDescription],
             alias = row[StationTable.alias],
             serialNumber = row[StationTable.serialNumber],

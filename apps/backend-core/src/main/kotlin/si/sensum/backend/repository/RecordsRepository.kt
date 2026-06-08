@@ -79,6 +79,9 @@ class RecordsRepository {
             description = row[StationTable.locationDescription],
             latitude = row[StationTable.latitude],
             longitude = row[StationTable.longitude],
+            countryId = row[StationTable.countryId],
+            regionId = row[StationTable.regionId],
+            municipalityId = row[StationTable.municipalityId],
             source = row[StationTable.dataSource].toDataSourceDto()
         )
     }
@@ -127,6 +130,9 @@ class RecordsRepository {
             "description" -> item.description
             "latitude" -> item.latitude?.toString()
             "longitude" -> item.longitude?.toString()
+            "countryId" -> item.countryId?.toString()
+            "regionId" -> item.regionId?.toString()
+            "municipalityId" -> item.municipalityId?.toString()
             "source" -> item.source.name
             else -> null
         }

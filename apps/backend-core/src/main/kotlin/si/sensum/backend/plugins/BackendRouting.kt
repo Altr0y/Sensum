@@ -42,6 +42,9 @@ fun Application.configureBackendRouting(
     val stationRepository = StationRepository()
     val channelRepository = ChannelRepository()
     val measurementRepository = MeasurementRepository()
+    val countryRepository = CountryRepository()
+    val regionRepository = RegionRepository()
+    val municipalityRepository = MunicipalityRepository()
     val recordsRepository = RecordsRepository()
     val statsRepository = StatsRepository()
 
@@ -63,6 +66,18 @@ fun Application.configureBackendRouting(
 
     val channelService = ChannelService(
         channelRepository = channelRepository
+    )
+
+    val countryService = CountryService(
+        countryRepository = countryRepository
+    )
+
+    val regionService = RegionService(
+        regionRepository = regionRepository
+    )
+
+    val municipalityService = MunicipalityService(
+        municipalityRepository = municipalityRepository
     )
 
     val measurementService = MeasurementService(
@@ -126,6 +141,18 @@ fun Application.configureBackendRouting(
 
         configureSimulatorRoutes(
             simulatorService = simulatorService
+        )
+
+        configureCountryRoutes(
+            countryService = countryService
+        )
+
+        configureRegionRoutes(
+            regionService = regionService
+        )
+
+        configureMunicipalityRoutes(
+            municipalityService = municipalityService
         )
 
         configureDslRoutes(

@@ -5,6 +5,9 @@ import si.sensum.shared.models.common.DataSourceDto
 data class StationEntity(
     val id: Long,
     val customerId: Int,
+    val countryId: Int?,
+    val regionId: Int?,
+    val municipalityId: Int?,
     val locationDescription: String,
     val alias: String,
     val serialNumber: String,
