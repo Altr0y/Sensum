@@ -1,10 +1,14 @@
 package si.sensum.api.controller
 
+import io.ktor.http.HttpStatusCode
+import io.ktor.server.request.receive
+import io.ktor.server.response.respond
 import io.ktor.server.routing.*
 import si.sensum.api.domain.requireAuthenticatedUser
 import si.sensum.api.service.StationService
 import si.sensum.shared.ktor.response.respondOk
 import si.sensum.shared.ktor.validation.requireLongPathParameter
+import si.sensum.shared.models.stations.CreateStationCommand
 
 internal fun Route.stationController(
     stationService: StationService
@@ -14,6 +18,13 @@ internal fun Route.stationController(
             call.respondOk {
                 stationService.getStations()
             }
+        }
+
+        post {
+            val principal = call.requireAuthenticatedUser() ?: return@post
+            val command = call.receive<CreateStationCommand>()
+            val created = stationService.createStation(command.copy(customerId = principal.customerId))
+            call.respond(HttpStatusCode.Created, created)
         }
 
         get("/geojson") {

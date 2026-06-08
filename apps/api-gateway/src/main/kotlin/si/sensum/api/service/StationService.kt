@@ -2,6 +2,7 @@ package si.sensum.api.service
 
 import kotlinx.serialization.Serializable
 import si.sensum.api.client.BackendStationClient
+import si.sensum.shared.models.stations.CreateStationCommand
 import si.sensum.shared.models.stations.StationDto
 
 internal class StationService(
@@ -42,6 +43,10 @@ internal class StationService(
         return stations.getStationsByCustomer(customerId)
     }
 
+    suspend fun createStation(command: CreateStationCommand): StationDto {
+        return stations.createStation(command)
+    }
+
     private fun StationDto.toGeoJsonFeature(): StationGeoJsonFeatureDto {
         return StationGeoJsonFeatureDto(
             properties = StationGeoJsonPropertiesDto(
@@ -50,6 +55,7 @@ internal class StationService(
                 name = name ?: "Station $stationId",
                 type = "station",
                 layer = "stations",
+                source = source.name,
                 modbusAddress = modbusAddress,
                 serialNumber = serialNumber,
                 stationType = stationType,
@@ -85,6 +91,7 @@ internal data class StationGeoJsonPropertiesDto(
     val name: String,
     val type: String,
     val layer: String,
+    val source: String? = null,
     val modbusAddress: Int? = null,
     val serialNumber: String? = null,
     val stationType: String? = null,
