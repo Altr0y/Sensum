@@ -2,6 +2,7 @@ package si.sensum.demo.api
 
 import si.sensum.demo.model.DemoChannels
 import si.sensum.demo.model.MeasurementUi
+import si.sensum.demo.util.DateTimeFormat.parseApiDateTime
 import si.sensum.shared.models.measurements.MeasurementDto
 import java.time.ZoneOffset
 
@@ -24,7 +25,8 @@ fun MeasurementDto.toUi(): MeasurementUi {
         stationName = DemoChannels.DEFAULT_STATION_NAME,
         channelId = channelId,
         channelName = DemoChannels.nameOf(channelId),
-        dateTime = dateTime.toLocalDateTime(),
+        // Normalize to UTC — handles SWS format "2026-02-01T00:00:00+01:00"
+        dateTime = dateTime.withOffsetSameInstant(ZoneOffset.UTC).toLocalDateTime(),
         value = value,
         status = status,
         source = source
