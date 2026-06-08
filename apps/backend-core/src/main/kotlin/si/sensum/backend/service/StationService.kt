@@ -2,6 +2,7 @@ package si.sensum.backend.service
 
 import si.sensum.backend.mapper.toDto
 import si.sensum.backend.repository.StationRepository
+import si.sensum.shared.models.stations.CreateStationCommand
 import si.sensum.shared.models.stations.StationDto
 
 class StationService(
@@ -28,5 +29,20 @@ class StationService(
         return stationRepository
             .findByCustomerId(customerId)
             .map { it.toDto() }
+    }
+
+    fun createStation(command: CreateStationCommand): StationDto {
+        require(command.name.isNotBlank()) { "Station name must not be blank" }
+        require(command.customerId > 0) { "Customer id must be positive" }
+
+        return stationRepository.create(
+            customerId = command.customerId,
+            name = command.name.trim(),
+            latitude = command.latitude,
+            longitude = command.longitude,
+            description = command.description.trim(),
+            serialNumber = command.serialNumber.trim(),
+            source = command.source
+        ).toDto()
     }
 }

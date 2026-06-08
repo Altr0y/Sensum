@@ -2,11 +2,13 @@ package si.sensum.backend.repository
 
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import si.sensum.backend.database.DatabaseTransaction
 import si.sensum.backend.database.StationTable
 import si.sensum.backend.domain.station.StationEntity
 import si.sensum.backend.mapper.toDataSourceDto
+import si.sensum.shared.models.common.DataSourceDto
 
 class StationRepository {
 
@@ -29,6 +31,29 @@ class StationRepository {
             .selectAll()
             .where { StationTable.customerId eq customerId }
             .map(::toStation)
+    }
+
+    fun create(
+        customerId: Int,
+        name: String,
+        latitude: Double,
+        longitude: Double,
+        description: String,
+        serialNumber: String,
+        source: DataSourceDto
+    ): StationEntity = DatabaseTransaction.run {
+        val id = StationTable.insert {
+            it[StationTable.customerId] = customerId
+            it[StationTable.alias] = name
+            it[StationTable.latitude] = latitude
+            it[StationTable.longitude] = longitude
+            it[StationTable.locationDescription] = description
+            it[StationTable.serialNumber] = serialNumber
+            it[StationTable.dataSource] = source.name
+            it[StationTable.location] = "$latitude,$longitude"
+        } get StationTable.id
+
+        findById(id)!!
     }
 
     private fun toStation(row: ResultRow): StationEntity {

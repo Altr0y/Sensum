@@ -42,6 +42,8 @@ fun Application.configureBackendRouting(
     val stationRepository = StationRepository()
     val channelRepository = ChannelRepository()
     val measurementRepository = MeasurementRepository()
+    val recordsRepository = RecordsRepository()
+    val statsRepository = StatsRepository()
 
     val authService = AuthService(
         userRepository = userRepository
@@ -84,6 +86,16 @@ fun Application.configureBackendRouting(
         spatialSimulatorService = spatialSimulatorService
     )
 
+    val recordsService = RecordsService(
+        repository = recordsRepository
+    )
+
+    val statsService = StatsService(
+        statsRepository = statsRepository
+    )
+
+    val dslService = DslService()
+
     routing {
         configureHealthRoutes()
 
@@ -114,6 +126,18 @@ fun Application.configureBackendRouting(
 
         configureSimulatorRoutes(
             simulatorService = simulatorService
+        )
+
+        configureDslRoutes(
+            dslService = dslService
+        )
+
+        configureRecordsRoutes(
+            recordsService = recordsService
+        )
+
+        configureStatsRoutes(
+            statsService = statsService
         )
     }
 }
