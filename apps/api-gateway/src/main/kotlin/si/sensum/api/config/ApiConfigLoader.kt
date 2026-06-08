@@ -7,7 +7,7 @@ internal fun Application.loadApiGatewayConfig(): ApiGatewayConfig {
 
     val backendCoreBaseUrl = config.property("backendCore.baseUrl").getString()
 
-    val jwtSecret = config.property("jwt.secret").getString()
+    val jwtPrivateKeyBase64 = config.propertyOrNull("jwt.privateKey")?.getString() ?: ""
     val jwtIssuer = config.property("jwt.issuer").getString()
     val jwtAudience = config.property("jwt.audience").getString()
     val jwtRealm = config.property("jwt.realm").getString()
@@ -17,13 +17,9 @@ internal fun Application.loadApiGatewayConfig(): ApiGatewayConfig {
         "Missing backendCore baseUrl. Set BACKEND_CORE_BASE_URL env variable."
     }
 
-    require(jwtSecret.length >= 32) {
-        "JWT secret must be at least 32 characters long."
-    }
-
     return ApiGatewayConfig(
         backendCoreBaseUrl = backendCoreBaseUrl,
-        jwtSecret = jwtSecret,
+        jwtPrivateKeyBase64 = jwtPrivateKeyBase64,
         jwtIssuer = jwtIssuer,
         jwtAudience = jwtAudience,
         jwtRealm = jwtRealm,
