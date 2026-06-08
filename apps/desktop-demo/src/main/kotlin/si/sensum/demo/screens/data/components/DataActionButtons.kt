@@ -16,6 +16,7 @@ fun DataActionButtons(
     previewVisible: Boolean,
     onRun: () -> Unit,
     onOpenRecords: () -> Unit,
+    onOpenOnline: () -> Unit,
     onTogglePreview: () -> Unit
 ) {
     val isLoading = status is UiStatus.Loading
@@ -40,6 +41,15 @@ fun DataActionButtons(
             enabled = !isLoading,
             variant = SensumButtonVariant.Outline
         )
+
+        if (sourceType == DataSourceType.SIM) {
+            SensumButton(
+                text = "View online",
+                onClick = onOpenOnline,
+                enabled = !isLoading,
+                variant = SensumButtonVariant.Outline
+            )
+        }
 
         SensumButton(
             text = if (previewVisible) "Hide preview" else "Show preview",

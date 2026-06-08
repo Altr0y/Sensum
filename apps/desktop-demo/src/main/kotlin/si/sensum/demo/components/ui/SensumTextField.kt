@@ -31,9 +31,10 @@ fun SensumTextField(
         onValueChange = onValueChange,
         label = {
             if (label.isNotBlank()) {
-                Text(label)
+                Text(label, style = MaterialTheme.typography.labelMedium)
             }
         },
+        textStyle = MaterialTheme.typography.bodyMedium,
         singleLine = singleLine,
         enabled = enabled,
         isError = isError,

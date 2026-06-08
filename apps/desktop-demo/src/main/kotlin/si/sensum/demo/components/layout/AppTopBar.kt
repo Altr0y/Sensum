@@ -3,12 +3,11 @@ package si.sensum.demo.components.layout
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
@@ -22,8 +21,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import si.sensum.demo.components.theme.SensumSizes
 import si.sensum.demo.components.theme.SensumSpacing
@@ -32,7 +33,7 @@ import si.sensum.demo.components.ui.AppThemeToggle
 import si.sensum.demo.model.UiStatus
 import si.sensum.demo.resources.Res
 import si.sensum.demo.resources.brightness_alert
-import si.sensum.demo.resources.logo_transparent
+import si.sensum.demo.resources.logo_simple_vector
 import si.sensum.demo.resources.verified
 
 @Composable
@@ -53,10 +54,8 @@ fun AppTopBar(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(SensumSizes.topBarHeight)
-                .padding(horizontal = SensumSpacing.lg),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(SensumSpacing.md)
+                .height(SensumSizes.topBarHeight),
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Row(
                 modifier = Modifier
@@ -70,35 +69,38 @@ fun AppTopBar(
                     )
                     .clickable { onToggleSidebar() },
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(SensumSpacing.sm)
+                horizontalArrangement = Arrangement.Center
             ) {
                 Image(
-                    painter = painterResource(Res.drawable.logo_transparent),
+                    painter = painterResource(Res.drawable.logo_simple_vector),
                     contentDescription = "Toggle sidebar",
-                    modifier = Modifier.height(SensumSizes.topBarLogoHeight)
-                )
-
-                Text(
-                    text = if (sidebarExpanded) "<" else ">",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = SensumThemeColors.muted
+                    modifier = Modifier.size(42.dp)
                 )
             }
 
-            Box(
-                modifier = Modifier.weight(1f),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = activeTab.title,
-                    style = MaterialTheme.typography.titleLarge.copy(
-                        fontWeight = FontWeight.ExtraBold
-                    ),
-                    color = SensumThemeColors.onSurface
+            Spacer(Modifier.width(22.dp))
+
+            StretchedTopBarTitle(
+                text = activeTab.title,
+                modifier = Modifier.width(
+                    when (activeTab) {
+                        SideBarTab.DATA -> 132.dp
+                        SideBarTab.HOME -> 142.dp
+                        SideBarTab.RECORDS -> 190.dp
+                        SideBarTab.MEASUREMENT_CHART -> 178.dp
+                        SideBarTab.DIGITAL_TWIN -> 270.dp
+                        SideBarTab.USER -> 142.dp
+                        SideBarTab.SETTINGS -> 218.dp
+                        SideBarTab.INFO -> 132.dp
+                    }
                 )
-            }
+            )
+
+            Spacer(Modifier.width(48.dp))
 
             TopBarStatus(status = status)
+
+            Spacer(Modifier.weight(1f))
 
             IconButton(onClick = onRefreshClick) {
                 Icon(
@@ -122,6 +124,31 @@ fun AppTopBar(
                     modifier = Modifier.size(SensumSizes.topBarIconSize)
                 )
             }
+
+            Spacer(Modifier.width(SensumSpacing.md))
+        }
+    }
+}
+
+@Composable
+private fun StretchedTopBarTitle(
+    text: String,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        text.uppercase().forEach { character ->
+            Text(
+                text = character.toString(),
+                style = MaterialTheme.typography.titleLarge.copy(
+                    fontFamily = FontFamily.Monospace,
+                    fontWeight = FontWeight.ExtraBold
+                ),
+                color = SensumThemeColors.accent
+            )
         }
     }
 }
@@ -159,10 +186,10 @@ private fun TopBarStatus(status: UiStatus) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(SensumSpacing.sm)
     ) {
-        if (statusUi.icon != null) {
+        statusUi.icon?.let { icon ->
             Icon(
-                painter = painterResource(statusUi.icon),
-                contentDescription = null,
+                painter = painterResource(icon),
+                contentDescription = statusUi.text,
                 tint = statusUi.color,
                 modifier = Modifier.size(SensumSizes.statusIconSize)
             )
@@ -170,9 +197,12 @@ private fun TopBarStatus(status: UiStatus) {
 
         Text(
             text = statusUi.text,
-            maxLines = 1,
-            style = MaterialTheme.typography.labelMedium,
-            color = statusUi.color
+            style = MaterialTheme.typography.labelMedium.copy(
+                fontFamily = FontFamily.Monospace,
+                fontWeight = FontWeight.SemiBold
+            ),
+            color = statusUi.color,
+            maxLines = 1
         )
     }
 }
@@ -180,5 +210,5 @@ private fun TopBarStatus(status: UiStatus) {
 private data class StatusUi(
     val text: String,
     val color: androidx.compose.ui.graphics.Color,
-    val icon: org.jetbrains.compose.resources.DrawableResource?
+    val icon: DrawableResource?
 )

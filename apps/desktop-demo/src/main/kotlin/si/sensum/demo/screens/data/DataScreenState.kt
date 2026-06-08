@@ -16,6 +16,9 @@ import si.sensum.demo.screens.data.model.DataEntityType
 import si.sensum.demo.screens.data.model.DataSourceType
 import si.sensum.shared.models.common.DataSourceDto
 import si.sensum.shared.models.measurements.StationChannelPairDto
+import java.awt.Desktop
+import java.net.URI
+import java.net.URLEncoder
 import java.time.LocalDateTime
 import kotlin.math.roundToInt
 import kotlin.random.Random
@@ -478,6 +481,23 @@ class DataScreenState(
                 VALUES (${stationIdText.sqlOrNull()}, ${channelIdText.sqlOrNull()}, '${datetimeFrom.toApiString()}', ${measurementValueText.sqlOrNull()}, ${measurementStatusText.sqlOrNull()}, '$source');
                 $channelComment
             """.trimIndent()
+        }
+    }
+
+    fun openGeneratedMeasurementsOnline() {
+        if (generatedPreview.isEmpty()) {
+            showError("Nothing to open", "Generate measurements first, then open them online.")
+            return
+        }
+
+        val from = URLEncoder.encode(datetimeFrom.toApiString(), Charsets.UTF_8)
+        val to = URLEncoder.encode(effectiveTo().toApiString(), Charsets.UTF_8)
+        val url = "${apiClient.baseUrl.trimEnd('/')}/monitoring?dashboard=measurements&from=$from&to=$to"
+
+        runCatching {
+            Desktop.getDesktop().browse(URI(url))
+        }.onFailure { error ->
+            showError("Could not open browser", error.message ?: "Unable to launch the system browser for $url")
         }
     }
 

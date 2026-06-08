@@ -2,17 +2,16 @@ package si.sensum.demo.screens.records
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import si.sensum.demo.components.theme.SensumThemeColors
+import si.sensum.demo.components.theme.SensumSpacing
 import si.sensum.demo.components.ui.SensumButton
+import si.sensum.demo.components.ui.SensumButtonVariant
+import si.sensum.demo.components.ui.SensumTabButton
 
 @Composable
 fun RecordsHeader(
@@ -21,31 +20,23 @@ fun RecordsHeader(
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
+        horizontalArrangement = Arrangement.spacedBy(SensumSpacing.md),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
-            text = "Records",
-            style = MaterialTheme.typography.titleLarge
-        )
 
-        Spacer(modifier = Modifier.weight(1f))
 
-        RecordsEntityType.entries.forEach { type ->
-            FilterChip(
-                selected = state.entityType == type,
-                onClick = { state.changeEntityType(type) },
-                label = { Text(type.label) },
-                colors = FilterChipDefaults.filterChipColors(
-                    selectedContainerColor = SensumThemeColors.accentMuted,
-                    selectedLabelColor = SensumThemeColors.accent,
-                    labelColor = SensumThemeColors.onSurface
-                )
-            )
+        Row(
+            modifier = Modifier.weight(1f),
+            horizontalArrangement = Arrangement.spacedBy(SensumSpacing.sm)
+        ) {
+
         }
 
         SensumButton(
             text = "+ Add data",
-            onClick = onAddData
+            onClick = onAddData,
+            variant = SensumButtonVariant.Outline,
+            compact = true
         )
     }
 }

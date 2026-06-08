@@ -41,7 +41,8 @@ fun <T> SensumSelector(
             onValueChange = {},
             readOnly = true,
             enabled = enabled,
-            label = { Text(label) },
+            label = { Text(label, style = MaterialTheme.typography.labelMedium) },
+            textStyle = MaterialTheme.typography.bodyMedium,
             trailingIcon = {
                 Icon(
                     painter = painterResource(Res.drawable.chevron_down),

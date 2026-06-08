@@ -272,6 +272,7 @@ private fun ActionControls(
             previewVisible = state.previewVisible,
             onRun = state::runPrimaryAction,
             onOpenRecords = { state.openCurrentRecords() },
+            onOpenOnline = { state.openGeneratedMeasurementsOnline() },
             onTogglePreview = {
                 state.previewVisible = !state.previewVisible
             }

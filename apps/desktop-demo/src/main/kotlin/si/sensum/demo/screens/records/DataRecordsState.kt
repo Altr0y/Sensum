@@ -8,9 +8,11 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import si.sensum.demo.api.SensumApiClient
 import si.sensum.demo.model.UiStatus
+import si.sensum.demo.util.DateTimeFormat.toApiString
 import si.sensum.shared.models.records.ChannelRecordDto
 import si.sensum.shared.models.records.MeasurementRecordDto
 import si.sensum.shared.models.records.StationRecordDto
+import java.time.LocalDateTime
 
 class DataRecordsState(
     private val apiClient: SensumApiClient,
@@ -42,6 +44,10 @@ class DataRecordsState(
 
     val filters = mutableStateListOf<RecordsFilter>()
 
+    /** Date range applied as a pre-filter on the measurements entity. */
+    var datetimeFrom by mutableStateOf<LocalDateTime?>(null)
+    var datetimeTo by mutableStateOf<LocalDateTime?>(null)
+
     var stations by mutableStateOf<List<StationRecordDto>>(emptyList())
         private set
 
@@ -64,6 +70,13 @@ class DataRecordsState(
         }
         sortDirection = RecordsSortDirection.ASC
         filters.clear()
+        load()
+    }
+
+    fun changeDateRange(from: LocalDateTime?, to: LocalDateTime?) {
+        datetimeFrom = from
+        datetimeTo = to
+        page = 0
         load()
     }
 
@@ -106,6 +119,8 @@ class DataRecordsState(
 
     fun resetFilters() {
         filters.clear()
+        datetimeFrom = null
+        datetimeTo = null
         page = 0
         pageSize = 10
         sortBy = when (entityType) {
@@ -160,12 +175,16 @@ class DataRecordsState(
                     }
 
                     RecordsEntityType.MEASUREMENTS -> {
+                        val dateFilters = buildList {
+                            datetimeFrom?.let { add(RecordsFilter("dateTime", RecordsFilterOperator.GTE, it.toApiString())) }
+                            datetimeTo?.let { add(RecordsFilter("dateTime", RecordsFilterOperator.LTE, it.toApiString())) }
+                        }
                         val result = apiClient.getMeasurementRecords(
                             page = page,
                             pageSize = pageSize,
                             sortBy = sortBy,
                             sortDirection = sortDirection,
-                            filters = filters
+                            filters = dateFilters + filters
                         )
 
                         measurements = result.items

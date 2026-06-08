@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
@@ -25,6 +24,8 @@ import org.jetbrains.compose.resources.painterResource
 import si.sensum.demo.components.theme.SensumSizes
 import si.sensum.demo.components.theme.SensumSpacing
 import si.sensum.demo.components.theme.SensumThemeColors
+import si.sensum.demo.components.ui.SensumButton
+import si.sensum.demo.components.ui.SensumButtonVariant
 import si.sensum.demo.components.ui.SensumCard
 import si.sensum.demo.components.ui.SensumSourceLabel
 import si.sensum.demo.components.ui.SensumTextField
@@ -308,19 +309,8 @@ private fun RowScope.DisabledActionsCell(
         horizontalArrangement = Arrangement.spacedBy(SensumSpacing.xs),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        OutlinedButton(
-            onClick = { },
-            enabled = false
-        ) {
-            Text("Update")
-        }
-
-        OutlinedButton(
-            onClick = { },
-            enabled = false
-        ) {
-            Text("Delete")
-        }
+        SensumButton(text = "Update", onClick = {}, variant = SensumButtonVariant.Outline, compact = true, enabled = false)
+        SensumButton(text = "Delete", onClick = {}, variant = SensumButtonVariant.Danger, compact = true, enabled = false)
     }
 }
 
@@ -337,30 +327,21 @@ private fun RowScope.MeasurementActionsCell(
         horizontalArrangement = Arrangement.spacedBy(SensumSpacing.xs),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        OutlinedButton(
-            onClick = {
-                state.updateMeasurement(
-                    measurement = measurement,
-                    valueText = valueText,
-                    statusText = statusText
-                )
-            },
+        SensumButton(
+            text = "Update",
+            onClick = { state.updateMeasurement(measurement, valueText, statusText) },
+            variant = SensumButtonVariant.Outline,
+            compact = true,
             enabled = measurement.id != null && !state.isLoading
-        ) {
-            Text("Update")
-        }
+        )
 
-        OutlinedButton(
-            onClick = {
-                state.deleteMeasurement(measurement.id)
-            },
+        SensumButton(
+            text = "Delete",
+            onClick = { state.deleteMeasurement(measurement.id) },
+            variant = SensumButtonVariant.Danger,
+            compact = true,
             enabled = measurement.id != null && !state.isLoading
-        ) {
-            Text(
-                text = "Delete",
-                color = SensumThemeColors.error
-            )
-        }
+        )
     }
 }
 
