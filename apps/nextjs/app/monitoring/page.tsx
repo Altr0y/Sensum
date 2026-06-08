@@ -1,21 +1,21 @@
-"use client"
+import { cookies } from "next/headers"
+import { MonitoringViewer } from "@/components/monitoring/MonitoringViewer"
 
-export default function MonitoringPage() {
-    const grafanaUrl =
-        "/grafana/d/adv7vjj/sensum-digital-twin" +
-        "?orgId=1" +
-        "&kiosk" +
-        "&theme=dark" +
-        "&from=2026-01-01T00:00:00.000Z" +
-        "&to=2026-12-31T23:59:59.000Z"
+export default async function MonitoringPage({
+    searchParams,
+}: {
+    searchParams: Promise<{ dashboard?: string; from?: string; to?: string }>
+}) {
+    const cookieStore = await cookies()
+    const token = cookieStore.get("sensum_token")?.value ?? ""
+    const params = await searchParams
 
     return (
-        <div className="-m-6 h-[calc(100vh-3.5rem)] bg-background">
-            <iframe
-                src={grafanaUrl}
-                className="h-full w-full border-0"
-                title="Sensum Digital Twin Dashboard"
-            />
-        </div>
+        <MonitoringViewer
+            token={token}
+            dashboardId={params.dashboard}
+            from={params.from}
+            to={params.to}
+        />
     )
 }
