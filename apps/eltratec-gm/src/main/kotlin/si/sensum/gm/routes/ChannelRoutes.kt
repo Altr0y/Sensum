@@ -12,6 +12,9 @@ internal fun Route.channelRoutes(
     channelService: ChannelService
 ) {
     route("/stations/{stationId}/channels") {
+        // SWS: GetChannels
+        // REST field: stationId
+        // SWS field: StationID
         get {
             call.gmRouteCall(authService) { session ->
                 val stationId = call.requireLongPathParameter("stationId")

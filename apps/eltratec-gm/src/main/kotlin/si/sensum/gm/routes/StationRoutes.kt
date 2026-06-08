@@ -11,6 +11,7 @@ internal fun Route.stationRoutes(
     stationService: StationService
 ) {
     route("/stations") {
+        // SWS: GetStations
         get {
             call.gmRouteCall(authService) { session ->
                 stationService.getStations(session)

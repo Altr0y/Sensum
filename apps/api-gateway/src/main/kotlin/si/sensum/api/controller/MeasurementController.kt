@@ -20,8 +20,31 @@ import si.sensum.shared.models.measurements.RefreshMeasurementsCommand
 internal fun Route.measurementController(
     measurementService: MeasurementService
 ) {
-    route("/measurements") {
+    /**
+     * GM import routes.
+     *
+     * Public API naj uporablja GM ime, ker desktop-demo kliče Eltratec GM integracijo.
+     * SWS ostane skrit znotraj eltratec-gm servisa in libs:sws-client.
+     *
+     * Desktop-demo:
+     * POST /api/v1/gm/measurements/refresh
+     */
+    route("/gm/measurements") {
+        post("/refresh") {
+            val request = call.receive<RefreshMeasurementsCommand>()
 
+            call.respondCreated {
+                measurementService.refreshMeasurements(request)
+            }
+        }
+    }
+
+    /**
+     * Normal backend measurement CRUD routes.
+     *
+     * To pusti za delo s podatki, ki so že v naši bazi.
+     */
+    route("/measurements") {
         get {
             call.respondOk {
                 measurementService.getMeasurements()
@@ -66,6 +89,11 @@ internal fun Route.measurementController(
             }
         }
 
+        /**
+         * Legacy route.
+         *
+         * POST /api/v1/gm/measurements/refresh
+         */
         post("/refresh") {
             val request = call.receive<RefreshMeasurementsCommand>()
 
