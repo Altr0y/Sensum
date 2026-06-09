@@ -65,4 +65,8 @@ private fun Route.protectedControllers(
     statsController(
         statsService = dependencies.statsService
     )
+
+    dataImportController(
+        service = dependencies.dataImportService
+    )
 }
