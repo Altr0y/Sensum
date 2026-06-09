@@ -1,4 +1,4 @@
-package si.sensum.backend.service
+package si.sensum.api.service
 
 import si.sensum.logging.loggedCall
 import si.sensum.logging.loggedSuspendCall
@@ -11,7 +11,7 @@ internal object ServiceLogger {
         block: () -> T
     ): T {
         return loggedCall(
-            service = "backend-core.$service",
+            service = "api-gateway.$service",
             operation = operation,
             details = details,
             block = block
@@ -25,7 +25,7 @@ internal object ServiceLogger {
         block: suspend () -> T
     ): T {
         return loggedSuspendCall(
-            service = "backend-core.$service",
+            service = "api-gateway.$service",
             operation = operation,
             details = details,
             block = block
