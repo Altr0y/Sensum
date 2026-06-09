@@ -6,6 +6,7 @@ import si.sensum.api.client.BackendCustomerClient
 import si.sensum.api.client.BackendDslClient
 import si.sensum.api.client.BackendMeasurementClient
 import si.sensum.api.client.BackendRecordsClient
+import si.sensum.api.client.BackendSimulatorClient
 import si.sensum.api.client.BackendStatsClient
 import si.sensum.api.client.BackendStationClient
 import si.sensum.api.client.BackendUserClient
@@ -17,6 +18,7 @@ import si.sensum.api.service.CustomerService
 import si.sensum.api.service.DslService
 import si.sensum.api.service.MeasurementService
 import si.sensum.api.service.RecordsService
+import si.sensum.api.service.SimulatorService
 import si.sensum.api.service.StationService
 import si.sensum.api.service.StatsService
 import si.sensum.api.service.UserService
@@ -51,6 +53,7 @@ internal fun createApiDependencies(
     val measurementClient = BackendMeasurementClient(backendHttpClient)
     val recordsClient = BackendRecordsClient(backendHttpClient)
     val dslClient = BackendDslClient(backendHttpClient)
+    val simulatorClient = BackendSimulatorClient(backendHttpClient)
     val statsClient = BackendStatsClient(backendHttpClient)
 
     val stationService = StationService(stationClient)
@@ -70,6 +73,7 @@ internal fun createApiDependencies(
         measurementService = measurementService,
         recordsService = RecordsService(recordsClient),
         dslService = DslService(dslClient),
+        simulatorService = SimulatorService(simulatorClient),
         statsService = StatsService(statsClient)
     )
 }

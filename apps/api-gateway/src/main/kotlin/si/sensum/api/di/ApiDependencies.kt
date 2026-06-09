@@ -6,6 +6,7 @@ import si.sensum.api.service.CustomerService
 import si.sensum.api.service.DslService
 import si.sensum.api.service.MeasurementService
 import si.sensum.api.service.RecordsService
+import si.sensum.api.service.SimulatorService
 import si.sensum.api.service.StationService
 import si.sensum.api.service.StatsService
 import si.sensum.api.service.UserService
@@ -21,5 +22,6 @@ internal data class ApiDependencies(
     val measurementService: MeasurementService,
     val recordsService: RecordsService,
     val dslService: DslService,
+    val simulatorService: SimulatorService,
     val statsService: StatsService
 )

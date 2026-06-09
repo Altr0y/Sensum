@@ -17,18 +17,18 @@ class SimulatorService(
     ): List<SimulatedStationDto> = ServiceLogger.call(
         service = "simulator",
         operation = "simulate",
-        details = "mode=${dto.mode} count=${dto.count}"
+        details = "mode=${dto.mode} count=${dto.count} from=${dto.from} to=${dto.to}"
     ) {
         val request = buildRequest(dto)
 
-        val results = spatialSimulatorService.handle(request)
-
-        results.map { context ->
-            context.station.toDto(
-                floodRisk = context.floodRisk,
-                nearRiver = context.nearRiver
-            )
-        }
+        spatialSimulatorService
+            .handle(request)
+            .map { context ->
+                context.station.toDto(
+                    floodRisk = context.floodRisk,
+                    nearRiver = context.nearRiver
+                )
+            }
     }
 
     private fun buildRequest(dto: SimulateRequestDto): SimulateRequest {
@@ -40,9 +40,20 @@ class SimulatorService(
             ?.let { LocalDateTime.parse(it) }
             ?: LocalDateTime.now()
 
-        val kinds = dto.channelKinds.mapNotNull { kind ->
-            parseChannelKind(kind)
+        require(!to.isBefore(from)) {
+            "Field 'to' must be after or equal to field 'from'"
         }
+
+        val kinds = dto.channelKinds
+            .ifEmpty {
+                listOf(
+                    "water_level",
+                    "temperature",
+                    "rainfall",
+                    "flow_rate"
+                )
+            }
+            .mapNotNull { parseChannelKind(it) }
 
         return when (dto.mode) {
             "full" -> SimulateRequest.Full(
@@ -64,19 +75,21 @@ class SimulatorService(
             )
 
             "channels_only" -> SimulateRequest.ChannelsOnly(
-                stationId = dto.stationId ?: error("stationId required for channels_only"),
+                stationId = dto.stationId
+                    ?: error("stationId required for channels_only"),
                 channelKinds = kinds
             )
 
             "measurements_only" -> SimulateRequest.MeasurementsOnly(
-                stationId = dto.stationId ?: error("stationId required for measurements_only"),
+                stationId = dto.stationId
+                    ?: error("stationId required for measurements_only"),
                 channelIds = dto.channelIds,
                 from = from,
                 to = to,
                 intervalMinutes = dto.intervalMinutes
             )
 
-            else -> error("Unknown mode: ${dto.mode}")
+            else -> error("Unknown simulator mode: ${dto.mode}")
         }
     }
 

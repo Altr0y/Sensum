@@ -58,6 +58,10 @@ private fun Route.protectedControllers(
         dslService = dependencies.dslService
     )
 
+    simulatorController(
+        simulatorService = dependencies.simulatorService
+    )
+
     statsController(
         statsService = dependencies.statsService
     )
