@@ -21,11 +21,13 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
 import si.sensum.demo.components.theme.SensumSpacing
 import si.sensum.demo.components.theme.SensumThemeColors
 import si.sensum.demo.components.ui.SensumButton
@@ -34,13 +36,15 @@ import si.sensum.demo.components.ui.SensumCard
 import si.sensum.demo.components.ui.SensumTextField
 import si.sensum.demo.model.MeasurementUi
 import si.sensum.demo.screens.data.DataScreenState
+import java.awt.datatransfer.StringSelection
 
 @Composable
 fun DataPreviewPanel(
     state: DataScreenState,
     modifier: Modifier = Modifier
 ) {
-    val clipboard = LocalClipboardManager.current
+    val clipboard = LocalClipboard.current
+    val coroutineScope = rememberCoroutineScope()
 
     Column(
         modifier = modifier,
@@ -84,9 +88,13 @@ fun DataPreviewPanel(
                     SensumButton(
                         text = "Copy",
                         onClick = {
-                            clipboard.setText(
-                                AnnotatedString(state.sqlText)
-                            )
+                            coroutineScope.launch {
+                                clipboard.setClipEntry(
+                                    ClipEntry(
+                                        StringSelection(state.sqlText)
+                                    )
+                                )
+                            }
                         },
                         variant = SensumButtonVariant.Secondary
                     )
