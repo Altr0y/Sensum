@@ -46,6 +46,8 @@ import si.sensum.shared.models.records.MeasurementRecordDto
 import si.sensum.shared.models.records.RecordsPageDto
 import si.sensum.shared.models.records.StationRecordDto
 import si.sensum.shared.models.stations.StationDto
+import si.sensum.shared.models.simulator.SimulateRequestDto
+import si.sensum.shared.models.simulator.SimulatedStationDto
 import java.io.IOException
 
 class SensumApiClient(
@@ -169,6 +171,17 @@ class SensumApiClient(
             path = "/api/v1/measurements",
             operation = "Delete all measurements"
         )
+    }
+
+    suspend fun simulate(
+        request: SimulateRequestDto
+    ): List<SimulatedStationDto> {
+        return post(
+            path = "/api/v1/simulator/generate",
+            operation = "Generate simulator data"
+        ) {
+            setBody(request)
+        }
     }
 
     suspend fun processDsl(source: String): DslProcessResult {

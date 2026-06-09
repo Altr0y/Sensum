@@ -11,17 +11,17 @@ import si.sensum.demo.api.SensumApiClient
 import si.sensum.demo.model.DemoChannels
 import si.sensum.demo.model.MeasurementUi
 import si.sensum.demo.model.UiStatus
+import si.sensum.demo.util.DateTimeFormat.toApiString
 import si.sensum.demo.screens.data.model.DataActionDialog
 import si.sensum.demo.screens.data.model.DataEntityType
 import si.sensum.demo.screens.data.model.DataSourceType
 import si.sensum.shared.models.common.DataSourceDto
 import si.sensum.shared.models.measurements.StationChannelPairDto
+import si.sensum.shared.models.simulator.SimulateRequestDto
 import java.awt.Desktop
 import java.net.URI
 import java.net.URLEncoder
 import java.time.LocalDateTime
-import kotlin.math.roundToInt
-import kotlin.random.Random
 
 enum class ChannelSortField {
     ID,
@@ -44,8 +44,15 @@ class DataScreenState(
     var singleTimestamp by mutableStateOf(false)
     var previewVisible by mutableStateOf(true)
 
-    var datetimeFrom by mutableStateOf(LocalDateTime.of(2026, 1, 1, 0, 0))
-    var datetimeTo by mutableStateOf(LocalDateTime.of(2026, 1, 1, 6, 0))
+    var datetimeFrom: LocalDateTime by mutableStateOf(
+        LocalDateTime.of(2026, 1, 1, 0, 0)
+    )
+
+    var datetimeTo: LocalDateTime by mutableStateOf(
+        LocalDateTime.of(2026, 1, 1, 6, 0)
+    )
+
+    var intervalMinutesText by mutableStateOf("60")
 
     var specificChannelsEnabled by mutableStateOf(false)
     var channelSortField by mutableStateOf(ChannelSortField.ID)
@@ -115,6 +122,7 @@ class DataScreenState(
         singleTimestamp = false
         datetimeFrom = LocalDateTime.of(2026, 1, 1, 0, 0)
         datetimeTo = LocalDateTime.of(2026, 1, 1, 6, 0)
+        intervalMinutesText = "60"
         specificChannelsEnabled = false
         channelSortField = ChannelSortField.ID
         channelSortDirection = ChannelSortDirection.ASC
@@ -236,34 +244,35 @@ class DataScreenState(
             updateStatus(UiStatus.Loading)
 
             runCatching {
-                val escaped = source
-                    .replace("\\", "\\\\")
-                    .replace("\"", "\\\"")
-                    .lineSequence()
-                    .take(12)
-                    .joinToString("\\n")
-
-                """
-                {
-                  "type": "FeatureCollection",
-                  "features": [],
-                  "properties": {
-                    "source": "DSL",
-                    "sourcePreview": "$escaped"
-                  }
-                }
-                """.trimIndent()
+                apiClient.processDsl(source)
             }.fold(
-                onSuccess = { geoJson ->
-                    geoJsonText = geoJson
-                    updateStatus(UiStatus.Success("DSL preview prepared"))
+                onSuccess = { result ->
+                    geoJsonText = result.geoJson
+
+                    updateStatus(
+                        UiStatus.Success(
+                            "DSL processed: ${result.featureCount} features"
+                        )
+                    )
+
                     dialog = DataActionDialog(
-                        title = "DSL preview",
-                        message = geoJson.take(1200) + if (geoJson.length > 1200) "\n…" else ""
+                        title = "DSL processed",
+                        message = buildString {
+                            append("Features: ")
+                            append(result.featureCount)
+                            append("\n\n")
+                            append(result.geoJson.take(1200))
+                            if (result.geoJson.length > 1200) {
+                                append("\n…")
+                            }
+                        }
                     )
                 },
                 onFailure = { error ->
-                    showError("DSL parser error", error.message ?: "Invalid DSL input.")
+                    showError(
+                        title = "DSL parser error",
+                        message = error.message ?: "Invalid DSL input."
+                    )
                 }
             )
         }
@@ -271,55 +280,84 @@ class DataScreenState(
 
     private fun runSimulation() {
         val stationId = stationIdText.toIntOrNull() ?: DemoChannels.DEFAULT_STATION_ID
-        val channelIds = selectedChannelIdsForLocalActions()
+        val selectedChannelIds = selectedChannelIdsForLocalActions()
 
-        if (
-            entityType == DataEntityType.STATION ||
-            entityType == DataEntityType.CHANNEL ||
-            entityType == DataEntityType.ALL
-        ) {
-            updateStatus(UiStatus.Success("${entityType.label} simulator prepared"))
-
-            dialog = DataActionDialog(
-                title = "Simulator",
-                message = "Preview is prepared. Backend create routes for station/channel still need to be connected."
-            )
-
-            return
+        val mode = when (entityType) {
+            DataEntityType.ALL -> "full"
+            DataEntityType.STATION -> "stations_only"
+            DataEntityType.CHANNEL -> "channels_only"
+            DataEntityType.MEASUREMENT -> "measurements_only"
         }
 
-        if (channelIds.isEmpty()) {
-            showError("Missing channels", "Select at least one channel for simulated measurements.")
-            return
-        }
-
-        val measurements = buildSimulatedMeasurements(
-            stationId = stationId,
-            channelIds = channelIds
+        val channelKinds = listOf(
+            "water_level",
+            "temperature",
+            "rainfall",
+            "flow_rate"
         )
 
-        generatedPreview.clear()
-        generatedPreview.addAll(measurements.take(100))
+        val intervalMinutes = intervalMinutesText.toLongOrNull() ?: 60L
+
+        val request = SimulateRequestDto(
+            mode = mode,
+            count = 3,
+            prefix = "SIM Station",
+            channelKinds = channelKinds,
+            stationId = stationId,
+            channelIds = selectedChannelIds,
+            from = datetimeFrom.toApiString(),
+            to = effectiveTo().toApiString(),
+            intervalMinutes = intervalMinutes
+        )
 
         scope.launch {
             updateStatus(UiStatus.Loading)
 
             runCatching {
-                apiClient.createMeasurements(measurements)
-                apiClient.getMeasurements()
+                apiClient.simulate(request)
             }.fold(
-                onSuccess = { allMeasurements ->
-                    updateStatus(UiStatus.Success("Saved ${measurements.size} simulated measurements"))
+                onSuccess = { stations ->
+                    generatedPreview.clear()
 
-                    dialog = DataActionDialog(
-                        title = "Simulation completed",
-                        message = "Generated and saved ${measurements.size} rows."
+                    updateStatus(
+                        UiStatus.Success(
+                            "Simulator returned ${stations.size} stations"
+                        )
                     )
 
-                    onOpenRecords(allMeasurements)
+                    dialog = DataActionDialog(
+                        title = "Simulator completed",
+                        message = stations.joinToString(separator = "\n\n") { station ->
+                            buildString {
+                                append(station.name)
+                                append(" [")
+                                append(station.stationId)
+                                append("]")
+                                append("\nlat=")
+                                append(station.latitude)
+                                append(", lon=")
+                                append(station.longitude)
+                                append("\nfloodRisk=")
+                                append(station.floodRisk ?: "none")
+                                append(", nearRiver=")
+                                append(station.nearRiver)
+                                append("\nchannels=")
+                                append(
+                                    station.channels.joinToString { channel ->
+                                        "${channel.name}(${channel.kind}, ${channel.measurementCount})"
+                                    }
+                                )
+                            }
+                        }.ifBlank {
+                            "Simulator returned no stations."
+                        }
+                    )
                 },
                 onFailure = { error ->
-                    showError("Simulation failed", error.message ?: "Unknown API error.")
+                    showError(
+                        title = "Simulation failed",
+                        message = error.message ?: "Unknown API error."
+                    )
                 }
             )
         }
@@ -394,53 +432,6 @@ class DataScreenState(
         }
     }
 
-    private fun buildSimulatedMeasurements(
-        stationId: Int,
-        channelIds: List<Int>
-    ): List<MeasurementUi> {
-        val result = mutableListOf<MeasurementUi>()
-        var current = datetimeFrom
-        val end = effectiveTo()
-
-        while (!current.isAfter(end)) {
-            channelIds.forEach { channelId ->
-                val base = when (channelId) {
-                    131 -> 18.0
-                    127,
-                    128,
-                    130,
-                    132,
-                    133,
-                    134 -> 1.2
-
-                    else -> 5.0
-                }
-
-                val noise = Random.nextDouble(-0.18, 0.18)
-                val value = ((base + noise) * 1000.0).roundToInt() / 1000.0
-
-                result += MeasurementUi(
-                    stationId = stationId,
-                    stationName = stationNameText.ifBlank { DemoChannels.DEFAULT_STATION_NAME },
-                    channelId = channelId,
-                    channelName = DemoChannels.nameOf(channelId),
-                    dateTime = current,
-                    value = value,
-                    status = if (value > base + 0.12) 1 else 0,
-                    source = DataSourceDto.SIM
-                )
-            }
-
-            if (singleTimestamp) {
-                break
-            }
-
-            current = current.plusHours(1)
-        }
-
-        return result
-    }
-
     private fun effectiveTo(): LocalDateTime {
         return if (singleTimestamp) {
             datetimeFrom
@@ -486,18 +477,22 @@ class DataScreenState(
 
     fun openGeneratedMeasurementsOnline() {
         if (generatedPreview.isEmpty()) {
-            showError("Nothing to open", "Generate measurements first, then open them online.")
+            showError("Nothing to open", "Generate or refresh measurements first, then open them online.")
             return
         }
 
-        val from = URLEncoder.encode(datetimeFrom.toApiString(), Charsets.UTF_8)
-        val to = URLEncoder.encode(effectiveTo().toApiString(), Charsets.UTF_8)
+        val from: String = URLEncoder.encode(datetimeFrom.toApiString(), Charsets.UTF_8)
+        val to: String = URLEncoder.encode(effectiveTo().toApiString(), Charsets.UTF_8)
         val url = "${apiClient.baseUrl.trimEnd('/')}/monitoring?dashboard=measurements&from=$from&to=$to"
 
         runCatching {
-            Desktop.getDesktop().browse(URI(url))
+            val desktop: Desktop = Desktop.getDesktop()
+            desktop.browse(URI(url))
         }.onFailure { error ->
-            showError("Could not open browser", error.message ?: "Unable to launch the system browser for $url")
+            showError(
+                title = "Could not open browser",
+                message = error.message ?: "Unable to launch the system browser for $url"
+            )
         }
     }
 
