@@ -9,6 +9,7 @@ import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 import si.sensum.backend.service.StationService
 import si.sensum.shared.ktor.validation.requireIntPathParameter
+import si.sensum.shared.ktor.validation.requireLongPathParameter
 import si.sensum.shared.models.stations.CreateStationCommand
 
 fun Route.configureStationRoutes(
@@ -52,6 +53,49 @@ fun Route.configureStationRoutes(
             call.respond(
                 HttpStatusCode.OK,
                 stations
+            )
+        }
+
+        get("/{stationId}") {
+            val customerId = call.requireIntPathParameter("customerId")
+            val stationId = call.requireLongPathParameter("stationId")
+
+            call.respond(
+                HttpStatusCode.OK,
+                stationService.getStationByCustomer(
+                    customerId = customerId,
+                    stationId = stationId
+                )
+            )
+        }
+    }
+
+    route("/api/v1/customers/{customerId}/users/{userId}/stations") {
+        get {
+            val customerId = call.requireIntPathParameter("customerId")
+            val userId = call.requireIntPathParameter("userId")
+
+            call.respond(
+                HttpStatusCode.OK,
+                stationService.getStationsByUser(
+                    customerId = customerId,
+                    userId = userId
+                )
+            )
+        }
+
+        get("/{stationId}") {
+            val customerId = call.requireIntPathParameter("customerId")
+            val userId = call.requireIntPathParameter("userId")
+            val stationId = call.requireLongPathParameter("stationId")
+
+            call.respond(
+                HttpStatusCode.OK,
+                stationService.getStationByUser(
+                    customerId = customerId,
+                    userId = userId,
+                    stationId = stationId
+                )
             )
         }
     }

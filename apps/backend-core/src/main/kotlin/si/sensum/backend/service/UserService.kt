@@ -3,6 +3,7 @@ package si.sensum.backend.service
 import si.sensum.backend.mapper.toDomain
 import si.sensum.backend.mapper.toDto
 import si.sensum.backend.repository.UserRepository
+import si.sensum.backend.security.PasswordHasher
 import si.sensum.shared.models.users.CreateUserCommand
 import si.sensum.shared.models.users.UpdateUserCommand
 import si.sensum.shared.models.users.UserDto
@@ -12,8 +13,12 @@ class UserService(
 ) {
     fun getUsersByCustomer(
         customerId: Int
-    ): List<UserDto> {
-        return userRepository
+    ): List<UserDto> = ServiceLogger.call(
+        service = "user",
+        operation = "getUsersByCustomer",
+        details = "customerId=$customerId"
+    ) {
+        userRepository
             .findByCustomerId(customerId)
             .map { it.toDto() }
     }
@@ -21,7 +26,15 @@ class UserService(
     fun createUser(
         customerId: Int,
         request: CreateUserCommand
-    ): UserDto {
+    ): UserDto = ServiceLogger.call(
+        service = "user",
+        operation = "createUser",
+        details = "customerId=$customerId username=${request.username.trim().lowercase()}"
+    ) {
+        require(customerId > 0) {
+            "Customer id must be positive"
+        }
+
         require(request.username.isNotBlank()) {
             "Username must not be blank"
         }
@@ -30,11 +43,11 @@ class UserService(
             "Password must not be blank"
         }
 
-        return userRepository
+        userRepository
             .create(
                 customerId = customerId,
-                username = request.username,
-                passwordHash = request.password, // TODO: kasneje hash
+                username = request.username.trim().lowercase(),
+                passwordHash = PasswordHasher.hash(request.password),
                 role = request.role.toDomain(),
                 enabled = request.enabled
             )
@@ -44,8 +57,12 @@ class UserService(
     fun getUser(
         customerId: Int,
         userId: Int
-    ): UserDto {
-        return userRepository
+    ): UserDto = ServiceLogger.call(
+        service = "user",
+        operation = "getUser",
+        details = "customerId=$customerId userId=$userId"
+    ) {
+        userRepository
             .findByCustomerAndId(
                 customerId = customerId,
                 userId = userId
@@ -58,13 +75,26 @@ class UserService(
         customerId: Int,
         userId: Int,
         request: UpdateUserCommand
-    ): UserDto {
-        return userRepository
+    ): UserDto = ServiceLogger.call(
+        service = "user",
+        operation = "updateUser",
+        details = "customerId=$customerId userId=$userId"
+    ) {
+        val normalizedUsername = request.username
+            ?.trim()
+            ?.lowercase()
+            ?.takeIf { it.isNotBlank() }
+
+        val passwordHash = request.password
+            ?.takeIf { it.isNotBlank() }
+            ?.let { PasswordHasher.hash(it) }
+
+        userRepository
             .update(
                 customerId = customerId,
                 userId = userId,
-                username = request.username,
-                passwordHash = request.password,
+                username = normalizedUsername,
+                passwordHash = passwordHash,
                 role = request.role?.toDomain(),
                 enabled = request.enabled
             )
@@ -75,6 +105,10 @@ class UserService(
     fun deleteUser(
         customerId: Int,
         userId: Int
+    ) = ServiceLogger.call(
+        service = "user",
+        operation = "deleteUser",
+        details = "customerId=$customerId userId=$userId"
     ) {
         val deleted = userRepository.delete(
             customerId = customerId,

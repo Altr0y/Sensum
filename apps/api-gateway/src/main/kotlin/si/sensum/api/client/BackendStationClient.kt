@@ -19,6 +19,28 @@ internal class BackendStationClient(
         return backend.get("/api/v1/customers/$customerId/stations")
     }
 
+    suspend fun getStationsByUser(
+        customerId: Int,
+        userId: Int
+    ): List<StationDto> {
+        return backend.get("/api/v1/customers/$customerId/users/$userId/stations")
+    }
+
+    suspend fun getStationByCustomer(
+        customerId: Int,
+        stationId: Long
+    ): StationDto {
+        return backend.get("/api/v1/customers/$customerId/stations/$stationId")
+    }
+
+    suspend fun getStationByUser(
+        customerId: Int,
+        userId: Int,
+        stationId: Long
+    ): StationDto {
+        return backend.get("/api/v1/customers/$customerId/users/$userId/stations/$stationId")
+    }
+
     suspend fun createStation(command: CreateStationCommand): StationDto {
         return backend.post("/api/v1/stations", command)
     }

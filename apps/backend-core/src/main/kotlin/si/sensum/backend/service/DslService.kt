@@ -8,18 +8,28 @@ import si.sensum.geodsl.parser.ParseException
 import si.sensum.shared.models.dsl.DslProcessResult
 
 internal class DslService {
+    fun processSource(
+        source: String
+    ): DslProcessResult = ServiceLogger.call(
+        service = "dsl",
+        operation = "processSource",
+        details = "length=${source.length}"
+    ) {
+        require(source.isNotBlank()) {
+            "DSL source must not be blank"
+        }
 
-    fun processSource(source: String): DslProcessResult {
         val program = try {
             GeoDslProcessor.parseString(source)
-        } catch (e: LexerException) {
-            throw IllegalArgumentException("DSL lexer error: ${e.message}", e)
-        } catch (e: ParseException) {
-            throw IllegalArgumentException("DSL parse error: ${e.message}", e)
+        } catch (error: LexerException) {
+            throw IllegalArgumentException("DSL lexer error: ${error.message}", error)
+        } catch (error: ParseException) {
+            throw IllegalArgumentException("DSL parse error: ${error.message}", error)
         }
 
         val geoJson = export(program)
-        return DslProcessResult(
+
+        DslProcessResult(
             geoJson = geoJson,
             featureCount = countFeatures(program)
         )
@@ -28,9 +38,9 @@ internal class DslService {
     private fun countFeatures(program: ProgramNode): Int {
         return program.countries.sumOf { country ->
             country.stations.size +
-            country.geoElements.size +
-            country.municipalities.size +
-            country.layers.sumOf { layer -> layer.elements.size }
+                    country.geoElements.size +
+                    country.municipalities.size +
+                    country.layers.sumOf { layer -> layer.elements.size }
         }
     }
 }

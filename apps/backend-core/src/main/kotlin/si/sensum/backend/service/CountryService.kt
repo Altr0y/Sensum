@@ -7,16 +7,23 @@ import si.sensum.shared.models.countries.CountryDto
 class CountryService(
     private val countryRepository: CountryRepository
 ) {
-    fun getAllCountries(): List<CountryDto> {
-        return countryRepository
+    fun getAllCountries(): List<CountryDto> = ServiceLogger.call(
+        service = "country",
+        operation = "getAllCountries"
+    ) {
+        countryRepository
             .findAll()
             .map { it.toDto() }
     }
 
     fun getCountry(
         countryId: Int
-    ): CountryDto {
-        return countryRepository
+    ): CountryDto = ServiceLogger.call(
+        service = "country",
+        operation = "getCountry",
+        details = "countryId=$countryId"
+    ) {
+        countryRepository
             .findById(countryId)
             ?.toDto()
             ?: error("Country not found")

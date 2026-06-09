@@ -15,16 +15,38 @@ class MeasurementRefreshService(
 ) {
     suspend fun refresh(
         request: RefreshMeasurementsCommand
-    ): RefreshMeasurementsResult {
-        require(swsUsername.isNotBlank()) { "Missing SWS_USERNAME" }
-        require(swsPassword.isNotBlank()) { "Missing SWS_PASSWORD" }
+    ): RefreshMeasurementsResult = ServiceLogger.suspendCall(
+        service = "measurement-refresh",
+        operation = "refresh",
+        details = "pairs=${request.stationChannelPairs.size} from=${request.datetimeFrom} to=${request.datetimeTo}"
+    ) {
+        require(swsUsername.isNotBlank()) {
+            "Missing SWS_USERNAME"
+        }
+
+        require(swsPassword.isNotBlank()) {
+            "Missing SWS_PASSWORD"
+        }
+
+        require(request.stationChannelPairs.isNotEmpty()) {
+            "Missing required field: stationChannelPairs"
+        }
 
         val normalizedRequest = request.copy(
-            datetimeFrom = ApiDateTime.requireNormalizedLocal("datetimeFrom", request.datetimeFrom),
-            datetimeTo = ApiDateTime.requireNormalizedLocal("datetimeTo", request.datetimeTo)
+            datetimeFrom = ApiDateTime.requireNormalizedLocal(
+                fieldName = "datetimeFrom",
+                value = request.datetimeFrom
+            ),
+            datetimeTo = ApiDateTime.requireNormalizedLocal(
+                fieldName = "datetimeTo",
+                value = request.datetimeTo
+            )
         )
 
-        val gmLogin = gmClient.login(swsUsername, swsPassword)
+        val gmLogin = gmClient.login(
+            username = swsUsername,
+            password = swsPassword
+        )
 
         val measurements = gmClient.getMeasurements(
             gmSessionToken = gmLogin.token,
@@ -36,7 +58,7 @@ class MeasurementRefreshService(
             source = DataSourceDto.SWS
         )
 
-        return RefreshMeasurementsResult(
+        RefreshMeasurementsResult(
             deletedCount = deleted,
             insertedCount = inserted
         )

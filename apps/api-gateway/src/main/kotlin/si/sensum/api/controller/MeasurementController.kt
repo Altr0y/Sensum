@@ -16,6 +16,7 @@ import si.sensum.shared.ktor.validation.requireStringQueryParameter
 import si.sensum.shared.models.measurements.CreateMeasurementsBatchCommand
 import si.sensum.shared.models.measurements.MeasurementDto
 import si.sensum.shared.models.measurements.RefreshMeasurementsCommand
+import si.sensum.api.domain.requireAdminUser
 
 internal fun Route.measurementController(
     measurementService: MeasurementService
@@ -31,6 +32,7 @@ internal fun Route.measurementController(
      */
     route("/gm/measurements") {
         post("/refresh") {
+            call.requireAdminUser() ?: return@post
             val request = call.receive<RefreshMeasurementsCommand>()
 
             call.respondCreated {
@@ -74,6 +76,7 @@ internal fun Route.measurementController(
         }
 
         post {
+            call.requireAdminUser() ?: return@post
             val request = call.receive<MeasurementDto>()
 
             call.respondCreated {
@@ -82,6 +85,7 @@ internal fun Route.measurementController(
         }
 
         post("/batch") {
+            call.requireAdminUser() ?: return@post
             val request = call.receive<CreateMeasurementsBatchCommand>()
 
             call.respondCreated {
@@ -95,6 +99,7 @@ internal fun Route.measurementController(
          * POST /api/v1/gm/measurements/refresh
          */
         post("/refresh") {
+            call.requireAdminUser() ?: return@post
             val request = call.receive<RefreshMeasurementsCommand>()
 
             call.respondCreated {
@@ -103,6 +108,7 @@ internal fun Route.measurementController(
         }
 
         post("/regenerate") {
+            call.requireAdminUser() ?: return@post
             val datetimeFrom = call.requireStringQueryParameter("from")
             val datetimeTo = call.requireStringQueryParameter("to")
 
@@ -115,6 +121,7 @@ internal fun Route.measurementController(
         }
 
         put("/{id}") {
+            call.requireAdminUser() ?: return@put
             val id = call.requireLongPathParameter("id")
             val request = call.receive<MeasurementDto>()
 
@@ -127,6 +134,7 @@ internal fun Route.measurementController(
         }
 
         delete("/range") {
+            call.requireAdminUser() ?: return@delete
             val datetimeFrom = call.requireStringQueryParameter("from")
             val datetimeTo = call.requireStringQueryParameter("to")
 
@@ -139,6 +147,7 @@ internal fun Route.measurementController(
         }
 
         delete("/{id}") {
+            call.requireAdminUser() ?: return@delete
             val id = call.requireLongPathParameter("id")
 
             call.respondOk {
@@ -148,6 +157,7 @@ internal fun Route.measurementController(
         }
 
         delete {
+            call.requireAdminUser() ?: return@delete
             call.respondOk {
                 measurementService.deleteAllMeasurements()
                 mapOf("deletedAll" to true)

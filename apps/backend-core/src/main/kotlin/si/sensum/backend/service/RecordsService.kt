@@ -10,15 +10,33 @@ import si.sensum.shared.models.records.StationRecordDto
 class RecordsService(
     private val repository: RecordsRepository
 ) {
-    fun getStations(query: RecordsQuery): RecordsPageDto<StationRecordDto> {
-        return repository.findStations(query)
+    fun getStations(
+        query: RecordsQuery
+    ): RecordsPageDto<StationRecordDto> = ServiceLogger.call(
+        service = "records",
+        operation = "getStations",
+        details = "page=${query.page} pageSize=${query.pageSize} sortBy=${query.sortBy}"
+    ) {
+        repository.findStations(query)
     }
 
-    fun getChannels(query: RecordsQuery): RecordsPageDto<ChannelRecordDto> {
-        return repository.findChannels(query)
+    fun getChannels(
+        query: RecordsQuery
+    ): RecordsPageDto<ChannelRecordDto> = ServiceLogger.call(
+        service = "records",
+        operation = "getChannels",
+        details = "page=${query.page} pageSize=${query.pageSize} sortBy=${query.sortBy}"
+    ) {
+        repository.findChannels(query)
     }
 
-    fun getMeasurements(query: RecordsQuery): RecordsPageDto<MeasurementRecordDto> {
-        return repository.findMeasurements(query)
+    fun getMeasurements(
+        query: RecordsQuery
+    ): RecordsPageDto<MeasurementRecordDto> = ServiceLogger.call(
+        service = "records",
+        operation = "getMeasurements",
+        details = "page=${query.page} pageSize=${query.pageSize} sortBy=${query.sortBy}"
+    ) {
+        repository.findMeasurements(query)
     }
 }

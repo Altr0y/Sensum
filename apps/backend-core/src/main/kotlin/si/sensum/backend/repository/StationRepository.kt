@@ -1,23 +1,28 @@
 package si.sensum.backend.repository
 
 import org.jetbrains.exposed.v1.core.ResultRow
+import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.insert
+import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import si.sensum.backend.database.DatabaseTransaction
 import si.sensum.backend.database.StationTable
+import si.sensum.backend.database.UserStationTable
 import si.sensum.backend.domain.station.StationEntity
 import si.sensum.backend.mapper.toDataSourceDto
 import si.sensum.shared.models.common.DataSourceDto
 
 class StationRepository {
 
+    // all stations
     fun findAll(): List<StationEntity> = DatabaseTransaction.run {
         StationTable
             .selectAll()
             .map(::toStation)
     }
 
+    // single station by id
     fun findById(stationId: Long): StationEntity? = DatabaseTransaction.run {
         StationTable
             .selectAll()
@@ -26,6 +31,7 @@ class StationRepository {
             .singleOrNull()
     }
 
+    // all stations by customer id
     fun findByCustomerId(customerId: Int): List<StationEntity> = DatabaseTransaction.run {
         StationTable
             .selectAll()
@@ -33,6 +39,53 @@ class StationRepository {
             .map(::toStation)
     }
 
+    // single station by customer and station id
+    fun findByCustomerAndId(
+        customerId: Int,
+        stationId: Long
+    ): StationEntity? = DatabaseTransaction.run {
+        StationTable
+            .selectAll()
+            .where {
+                (StationTable.customerId eq customerId) and
+                        (StationTable.id eq stationId)
+            }
+            .map(::toStation)
+            .singleOrNull()
+    }
+
+    // all stations by customer and user id
+    fun findByCustomerAndUserId(
+        customerId: Int,
+        userId: Int
+    ): List<StationEntity> = DatabaseTransaction.run {
+        (StationTable innerJoin UserStationTable)
+            .select(StationTable.columns)
+            .where {
+                (StationTable.customerId eq customerId) and
+                        (UserStationTable.userId eq userId)
+            }
+            .map(::toStation)
+    }
+
+    // single station by customer, user and station id
+    fun findByCustomerUserAndId(
+        customerId: Int,
+        userId: Int,
+        stationId: Long
+    ): StationEntity? = DatabaseTransaction.run {
+        (StationTable innerJoin UserStationTable)
+            .select(StationTable.columns)
+            .where {
+                (StationTable.customerId eq customerId) and
+                        (UserStationTable.userId eq userId) and
+                        (StationTable.id eq stationId)
+            }
+            .map(::toStation)
+            .singleOrNull()
+    }
+
+    // all stations by municipality id
     fun findByMunicipalityId(municipalityId: Int): List<StationEntity> = DatabaseTransaction.run {
         StationTable
             .selectAll()

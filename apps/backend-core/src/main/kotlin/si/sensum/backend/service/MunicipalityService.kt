@@ -7,16 +7,23 @@ import si.sensum.shared.models.municipalities.MunicipalityDto
 class MunicipalityService(
     private val municipalityRepository: MunicipalityRepository
 ) {
-    fun getAllMunicipalities(): List<MunicipalityDto> {
-        return municipalityRepository
+    fun getAllMunicipalities(): List<MunicipalityDto> = ServiceLogger.call(
+        service = "municipality",
+        operation = "getAllMunicipalities"
+    ) {
+        municipalityRepository
             .findAll()
             .map { it.toDto() }
     }
 
     fun getMunicipality(
         municipalityId: Int
-    ): MunicipalityDto {
-        return municipalityRepository
+    ): MunicipalityDto = ServiceLogger.call(
+        service = "municipality",
+        operation = "getMunicipality",
+        details = "municipalityId=$municipalityId"
+    ) {
+        municipalityRepository
             .findById(municipalityId)
             ?.toDto()
             ?: error("Municipality not found")
@@ -24,8 +31,12 @@ class MunicipalityService(
 
     fun getMunicipalitiesByRegion(
         regionId: Int
-    ): List<MunicipalityDto> {
-        return municipalityRepository
+    ): List<MunicipalityDto> = ServiceLogger.call(
+        service = "municipality",
+        operation = "getMunicipalitiesByRegion",
+        details = "regionId=$regionId"
+    ) {
+        municipalityRepository
             .findByRegionId(regionId)
             .map { it.toDto() }
     }

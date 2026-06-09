@@ -27,6 +27,9 @@ dependencies {
     implementation("io.ktor:ktor-client-core:3.4.2")
     implementation("io.ktor:ktor-client-cio:3.4.2")
     implementation("io.ktor:ktor-client-content-negotiation:3.4.2")
+    implementation("at.favre.lib:bcrypt:0.10.2")
+
+
 
     implementation(project(":libs:shared-models"))
     implementation(project(":libs:shared-auth"))

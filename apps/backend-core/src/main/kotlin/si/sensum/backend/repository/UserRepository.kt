@@ -15,9 +15,11 @@ import si.sensum.backend.domain.user.UserRole
 class UserRepository {
 
     fun findByUsername(username: String): UserEntity? = DatabaseTransaction.run {
+        val normalizedUsername = username.trim().lowercase()
+
         UserTable
             .selectAll()
-            .where { UserTable.username eq username }
+            .where { UserTable.username eq normalizedUsername }
             .map(::toUser)
             .singleOrNull()
     }
@@ -53,7 +55,7 @@ class UserRepository {
         val id = DatabaseTransaction.run {
             UserTable.insert {
                 it[UserTable.customerId] = customerId
-                it[UserTable.username] = username
+                it[UserTable.username] = username.trim().lowercase()
                 it[UserTable.passwordHash] = passwordHash
                 it[UserTable.role] = role
                 it[UserTable.enabled] = enabled
@@ -79,7 +81,9 @@ class UserRepository {
                             (UserTable.id eq userId)
                 }
             ) {
-                username?.let { value -> it[UserTable.username] = value }
+                username?.let { value ->
+                    it[UserTable.username] = value.trim().lowercase()
+                }
                 passwordHash?.let { value -> it[UserTable.passwordHash] = value }
                 role?.let { value -> it[UserTable.role] = value }
                 enabled?.let { value -> it[UserTable.enabled] = value }

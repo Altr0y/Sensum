@@ -4,6 +4,7 @@ import kotlinx.serialization.Serializable
 import si.sensum.api.client.BackendStationClient
 import si.sensum.shared.models.stations.CreateStationCommand
 import si.sensum.shared.models.stations.StationDto
+import si.sensum.api.domain.ApiPrincipal
 
 internal class StationService(
     private val stations: BackendStationClient
@@ -43,6 +44,57 @@ internal class StationService(
         return stations.getStationsByCustomer(customerId)
     }
 
+    suspend fun getVisibleStations(
+        principal: ApiPrincipal
+    ): List<StationDto> {
+        return if (principal.isAdmin()) {
+            stations.getStationsByCustomer(principal.customerId)
+        } else {
+            stations.getStationsByUser(
+                customerId = principal.customerId,
+                userId = principal.userId
+            )
+        }
+    }
+
+    suspend fun getVisibleStationById(
+        principal: ApiPrincipal,
+        stationId: Long
+    ): StationDto {
+        require(stationId > 0) {
+            "Station id must be positive"
+        }
+
+        return if (principal.isAdmin()) {
+            stations.getStationByCustomer(
+                customerId = principal.customerId,
+                stationId = stationId
+            )
+        } else {
+            stations.getStationByUser(
+                customerId = principal.customerId,
+                userId = principal.userId,
+                stationId = stationId
+            )
+        }
+    }
+
+    suspend fun getVisibleStationsGeoJson(
+        principal: ApiPrincipal
+    ): StationGeoJsonFeatureCollectionDto {
+        val features = getVisibleStations(principal)
+            .filter { station ->
+                station.latitude != null && station.longitude != null
+            }
+            .map { station ->
+                station.toGeoJsonFeature()
+            }
+
+        return StationGeoJsonFeatureCollectionDto(
+            features = features
+        )
+    }
+
     suspend fun createStation(command: CreateStationCommand): StationDto {
         return stations.createStation(command)
     }
@@ -68,6 +120,10 @@ internal class StationService(
                 )
             )
         )
+    }
+
+    private fun ApiPrincipal.isAdmin(): Boolean {
+        return role == "ADMIN"
     }
 }
 

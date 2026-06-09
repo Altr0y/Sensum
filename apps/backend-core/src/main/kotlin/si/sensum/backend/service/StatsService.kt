@@ -13,12 +13,15 @@ private const val ACTIVE_ALARM_WINDOW_HOURS = 1L
 class StatsService(
     private val statsRepository: StatsRepository
 ) {
-    fun overview(): OverviewStatsDto {
+    fun overview(): OverviewStatsDto = ServiceLogger.call(
+        service = "stats",
+        operation = "overview"
+    ) {
         val activeAlarmsSince = java.time.LocalDateTime.now()
             .minusHours(ACTIVE_ALARM_WINDOW_HOURS)
             .toKotlinLocalDateTime()
 
-        return OverviewStatsDto(
+        OverviewStatsDto(
             stationCount = statsRepository.stationCount(),
             channelCount = statsRepository.channelCount(),
             measurementCount = statsRepository.measurementCount(),
@@ -29,10 +32,17 @@ class StatsService(
         )
     }
 
-    fun measurementsInRange(from: LocalDateTime, to: LocalDateTime): MeasurementRangeStatsDto {
+    fun measurementsInRange(
+        from: LocalDateTime,
+        to: LocalDateTime
+    ): MeasurementRangeStatsDto = ServiceLogger.call(
+        service = "stats",
+        operation = "measurementsInRange",
+        details = "from=$from to=$to"
+    ) {
         val (average, minimum, maximum) = statsRepository.aggregateInRange(from, to)
 
-        return MeasurementRangeStatsDto(
+        MeasurementRangeStatsDto(
             average = average,
             minimum = minimum,
             maximum = maximum,

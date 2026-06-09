@@ -7,16 +7,23 @@ import si.sensum.shared.models.regions.RegionDto
 class RegionService(
     private val regionRepository: RegionRepository
 ) {
-    fun getAllRegions(): List<RegionDto> {
-        return regionRepository
+    fun getAllRegions(): List<RegionDto> = ServiceLogger.call(
+        service = "region",
+        operation = "getAllRegions"
+    ) {
+        regionRepository
             .findAll()
             .map { it.toDto() }
     }
 
     fun getRegion(
         regionId: Int
-    ): RegionDto {
-        return regionRepository
+    ): RegionDto = ServiceLogger.call(
+        service = "region",
+        operation = "getRegion",
+        details = "regionId=$regionId"
+    ) {
+        regionRepository
             .findById(regionId)
             ?.toDto()
             ?: error("Region not found")
@@ -24,8 +31,12 @@ class RegionService(
 
     fun getRegionsByCountry(
         countryId: Int
-    ): List<RegionDto> {
-        return regionRepository
+    ): List<RegionDto> = ServiceLogger.call(
+        service = "region",
+        operation = "getRegionsByCountry",
+        details = "countryId=$countryId"
+    ) {
+        regionRepository
             .findByCountryId(countryId)
             .map { it.toDto() }
     }
