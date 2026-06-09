@@ -8,20 +8,31 @@ import androidx.compose.runtime.setValue
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import si.sensum.demo.api.SensumApiClient
-import si.sensum.demo.model.DemoChannels
+import si.sensum.demo.api.toUi
 import si.sensum.demo.model.MeasurementUi
 import si.sensum.demo.model.UiStatus
-import si.sensum.demo.util.DateTimeFormat.toApiString
 import si.sensum.demo.screens.data.model.DataActionDialog
 import si.sensum.demo.screens.data.model.DataEntityType
 import si.sensum.demo.screens.data.model.DataSourceType
+import si.sensum.demo.util.DateTimeFormat.toApiString
+import si.sensum.shared.models.channels.ChannelDto
 import si.sensum.shared.models.common.DataSourceDto
-import si.sensum.shared.models.measurements.StationChannelPairDto
+import si.sensum.shared.models.data.DataImportCommand
+import si.sensum.shared.models.data.DataImportResult
+import si.sensum.shared.models.datetime.ApiDateTime
+import si.sensum.shared.models.measurements.MeasurementDto
 import si.sensum.shared.models.simulator.SimulateRequestDto
+import si.sensum.shared.models.simulator.SimulatedStationDto
+import si.sensum.shared.models.stations.StationDto
 import java.awt.Desktop
 import java.net.URI
 import java.net.URLEncoder
 import java.time.LocalDateTime
+import kotlin.math.max
+import kotlin.math.sin
+import javax.swing.JFileChooser
+import javax.swing.UIManager
+import javax.swing.filechooser.FileNameExtensionFilter
 
 enum class ChannelSortField {
     ID,
@@ -64,22 +75,21 @@ class DataScreenState(
     var dialog by mutableStateOf<DataActionDialog?>(null)
         private set
 
-    val selectedChannels = mutableStateMapOf<Int, Boolean>().apply {
-        DemoChannels.names.keys.forEach { channelId ->
-            put(channelId, channelId == 127 || channelId == 128)
-        }
-    }
+    val userStations = mutableStateListOf<StationDto>()
+    val userChannels = mutableStateListOf<ChannelDto>()
 
-    var stationIdText by mutableStateOf(DemoChannels.DEFAULT_STATION_ID.toString())
-    var stationNameText by mutableStateOf(DemoChannels.DEFAULT_STATION_NAME)
-    var stationLatitudeText by mutableStateOf("46.662512")
-    var stationLongitudeText by mutableStateOf("16.160122")
-    var stationDescriptionText by mutableStateOf("Manual demo station")
+    val selectedChannels = mutableStateMapOf<Int, Boolean>()
 
-    var channelIdText by mutableStateOf("127")
-    var channelNameText by mutableStateOf(DemoChannels.nameOf(127))
+    var stationIdText by mutableStateOf("")
+    var stationNameText by mutableStateOf("")
+    var stationLatitudeText by mutableStateOf("")
+    var stationLongitudeText by mutableStateOf("")
+    var stationDescriptionText by mutableStateOf("Manual station")
+
+    var channelIdText by mutableStateOf("")
+    var channelNameText by mutableStateOf("")
     var channelUnitText by mutableStateOf("m")
-    var channelDescriptionText by mutableStateOf("Manual demo channel")
+    var channelDescriptionText by mutableStateOf("Manual channel")
 
     var measurementValueText by mutableStateOf("1.25")
     var measurementStatusText by mutableStateOf("0")
@@ -102,17 +112,134 @@ class DataScreenState(
 
     val generatedPreview = mutableStateListOf<MeasurementUi>()
 
+    init {
+        updateSqlPreview()
+        loadUserStationsAndChannels()
+    }
+
     fun dismissDialog() {
         dialog = null
     }
 
+    fun loadUserStationsAndChannels() {
+        scope.launch {
+            runCatching {
+                val stations = apiClient.getStations()
+                stations
+            }.onSuccess { stations ->
+                userStations.clear()
+                userStations.addAll(stations)
+
+                if (stations.isNotEmpty() && stationIdText.isBlank()) {
+                    applyStationToInputs(stations.first())
+                }
+
+                val stationId = stationIdText.toLongOrNull()
+                if (stationId != null) {
+                    loadUserChannels(stationId)
+                }
+
+                updateSqlPreview()
+            }.onFailure { error ->
+                showError(
+                    title = "Could not load user stations",
+                    message = error.message ?: "Stations could not be loaded from database."
+                )
+            }
+        }
+    }
+
+    fun loadUserChannelsForCurrentStation() {
+        val stationId = stationIdText.toLongOrNull()
+
+        if (stationId == null) {
+            showError("Invalid station", "Station ID must be a number.")
+            return
+        }
+
+        loadUserChannels(stationId)
+    }
+
+    private fun loadUserChannels(stationId: Long) {
+        scope.launch {
+            runCatching {
+                apiClient.getChannelsByStation(stationId)
+            }.onSuccess { channels ->
+                setUserChannels(channels)
+
+                if (channels.isNotEmpty() && channelIdText.isBlank()) {
+                    applyChannelToInputs(channels.first())
+                }
+
+                updateSqlPreview()
+            }.onFailure { error ->
+                showError(
+                    title = "Could not load user channels",
+                    message = error.message ?: "Channels could not be loaded from database."
+                )
+            }
+        }
+    }
+
+    private fun setUserChannels(channels: List<ChannelDto>) {
+        val sorted = sortChannels(channels)
+
+        userChannels.clear()
+        userChannels.addAll(sorted)
+
+        selectedChannels.clear()
+
+        sorted.forEachIndexed { index, channel ->
+            selectedChannels[channel.channelId] = index == 0
+        }
+    }
+
+    private fun sortChannels(channels: List<ChannelDto>): List<ChannelDto> {
+        val sorted = when (channelSortField) {
+            ChannelSortField.ID -> channels.sortedBy { it.channelId }
+            ChannelSortField.NAME -> channels.sortedBy { it.name.orEmpty().lowercase() }
+        }
+
+        return when (channelSortDirection) {
+            ChannelSortDirection.ASC -> sorted
+            ChannelSortDirection.DESC -> sorted.reversed()
+        }
+    }
+
     fun selectAllChannels() {
-        DemoChannels.names.keys.forEach { selectedChannels[it] = true }
+        if (userChannels.isEmpty()) {
+            loadUserChannelsForCurrentStation()
+            return
+        }
+
+        userChannels.forEach { channel ->
+            selectedChannels[channel.channelId] = true
+        }
+
         updateSqlPreview()
     }
 
     fun clearChannels() {
-        DemoChannels.names.keys.forEach { selectedChannels[it] = false }
+        selectedChannels.keys.toList().forEach { channelId ->
+            selectedChannels[channelId] = false
+        }
+
+        updateSqlPreview()
+    }
+
+
+    fun selectChannel(
+        channel: ChannelDto,
+        selected: Boolean
+    ) {
+        val id = channel.channelId
+
+        selectedChannels[id] = selected
+        channelIdText = id.toString()
+        channelNameText = channel.name ?: "Channel $id"
+        channelUnitText = channel.unit ?: channelUnitText
+        channelDescriptionText = channel.description.orEmpty()
+
         updateSqlPreview()
     }
 
@@ -120,13 +247,24 @@ class DataScreenState(
         sourceType = DataSourceType.SWS
         entityType = DataEntityType.STATION
         singleTimestamp = false
+
         datetimeFrom = LocalDateTime.of(2026, 1, 1, 0, 0)
         datetimeTo = LocalDateTime.of(2026, 1, 1, 6, 0)
+
         intervalMinutesText = "60"
         specificChannelsEnabled = false
         channelSortField = ChannelSortField.ID
         channelSortDirection = ChannelSortDirection.ASC
-        DemoChannels.names.keys.forEach { selectedChannels[it] = false }
+
+        selectedChannels.keys.toList().forEach { channelId ->
+            selectedChannels[channelId] = false
+        }
+
+        userChannels.firstOrNull()?.let { channel ->
+            selectedChannels[channel.channelId] = true
+            applyChannelToInputs(channel)
+        }
+
         updateSqlPreview()
     }
 
@@ -148,37 +286,93 @@ class DataScreenState(
         lastSqlText = sqlText
     }
 
+    fun importDslFile() {
+        chooseDslFile()?.let { path ->
+            dslSourceText = java.io.File(path).readText()
+            updateSqlPreview()
+
+            dialog = DataActionDialog(
+                title = "DSL file loaded",
+                message = path,
+                isError = false
+            )
+        }
+    }
+
+    private fun chooseDslFile(): String? {
+        runCatching {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName())
+        }
+
+        val chooser = JFileChooser().apply {
+            fileSelectionMode = JFileChooser.FILES_ONLY
+            dialogTitle = "Select Sensum DSL file"
+            approveButtonText = "Select"
+
+            fileFilter = FileNameExtensionFilter(
+                "Sensum DSL files (*.sensum, *.txt)",
+                "sensum",
+                "txt"
+            )
+        }
+
+        val result = chooser.showOpenDialog(null)
+
+        return if (result == JFileChooser.APPROVE_OPTION) {
+            chooser.selectedFile.absolutePath
+        } else {
+            null
+        }
+    }
+
     fun runPrimaryAction() {
         updateSqlPreview()
 
         when (sourceType) {
-            DataSourceType.ALL -> showError("Select source", "Choose SWS, DSL, SIM or Manual.")
-            DataSourceType.SWS -> refreshFromSws()
+            DataSourceType.SWS -> runSwsAction()
             DataSourceType.DSL -> runDslAction()
             DataSourceType.SIM -> runSimulation()
             DataSourceType.MANUAL -> runManualInsert()
         }
     }
 
-    private fun selectedOrAllChannelIdsForSws(): List<Int> {
-        return if (specificChannelsEnabled) {
-            selectedChannels
-                .filterValues { it }
-                .keys
-                .toList()
-        } else {
-            DemoChannels.names.keys.toList()
+    private fun runSwsAction() {
+        when (entityType) {
+            DataEntityType.STATION -> importSwsStations()
+            DataEntityType.CHANNEL -> importSwsChannels()
+            DataEntityType.MEASUREMENT -> importSwsMeasurements()
         }
     }
 
-    private fun selectedChannelIdsForLocalActions(): List<Int> {
-        return selectedChannels
-            .filterValues { it }
-            .keys
-            .toList()
+    private fun importSwsStations() {
+        scope.launch {
+            updateStatus(UiStatus.Loading)
+
+            runCatching {
+                apiClient.importSwsStations()
+            }.fold(
+                onSuccess = { result ->
+                    userStations.clear()
+                    userStations.addAll(result.stations)
+
+                    result.stations.firstOrNull()?.let { station ->
+                        applyStationToInputs(station)
+                        loadUserChannels(station.stationId)
+                    }
+
+                    showImportResult(
+                        title = "SWS stations imported",
+                        result = result
+                    )
+                },
+                onFailure = { error ->
+                    showError("SWS station import failed", error.message ?: "Unknown API error.")
+                }
+            )
+        }
     }
 
-    private fun refreshFromSws() {
+    private fun importSwsChannels() {
         val stationId = stationIdText.toLongOrNull()
 
         if (stationId == null) {
@@ -186,10 +380,36 @@ class DataScreenState(
             return
         }
 
-        val channelIds = selectedOrAllChannelIdsForSws()
+        scope.launch {
+            updateStatus(UiStatus.Loading)
 
-        if (channelIds.isEmpty()) {
-            showError("Missing channels", "Select at least one channel or turn off specific channel filtering.")
+            runCatching {
+                apiClient.importSwsChannels(stationId)
+            }.fold(
+                onSuccess = { result ->
+                    setUserChannels(result.channels)
+
+                    result.channels.firstOrNull()?.let { channel ->
+                        applyChannelToInputs(channel)
+                    }
+
+                    showImportResult(
+                        title = "SWS channels imported",
+                        result = result
+                    )
+                },
+                onFailure = { error ->
+                    showError("SWS channel import failed", error.message ?: "Unknown API error.")
+                }
+            )
+        }
+    }
+
+    private fun importSwsMeasurements() {
+        val stationId = stationIdText.toLongOrNull()
+
+        if (stationId == null) {
+            showError("Invalid station", "Station ID must be a number.")
             return
         }
 
@@ -197,38 +417,53 @@ class DataScreenState(
             updateStatus(UiStatus.Loading)
 
             runCatching {
-                val result = apiClient.refreshMeasurements(
-                    stationChannelPairs = channelIds.map { channelId ->
-                        StationChannelPairDto(
-                            stationId = stationId,
-                            channelId = channelId
-                        )
-                    },
-                    datetimeFrom = datetimeFrom.toApiString(),
-                    datetimeTo = effectiveTo().toApiString()
-                )
+                val channelIds = resolveSelectedChannelIdsForMeasurements(stationId)
 
-                result to apiClient.getMeasurements()
+                if (channelIds.isEmpty()) {
+                    error("No channels found for station $stationId. Import or load channels first.")
+                }
+
+                val results = channelIds.map { channelId ->
+                    apiClient.importSwsMeasurements(
+                        stationId = stationId,
+                        channelId = channelId,
+                        datetimeFrom = datetimeFrom.toApiString(),
+                        datetimeTo = effectiveTo().toApiString()
+                    )
+                }
+
+                combineSwsMeasurementResults(results)
             }.fold(
-                onSuccess = { (result, allMeasurements) ->
-                    updateStatus(
-                        UiStatus.Success(
-                            "Inserted ${result.insertedCount}, deleted ${result.deletedCount}"
-                        )
+                onSuccess = { result ->
+                    showImportResult(
+                        title = "SWS measurements imported",
+                        result = result
                     )
-
-                    dialog = DataActionDialog(
-                        title = "SWS refresh",
-                        message = "Inserted: ${result.insertedCount}\nDeleted/replaced: ${result.deletedCount}"
-                    )
-
-                    generatedPreview.clear()
-                    generatedPreview.addAll(allMeasurements.take(100))
                 },
                 onFailure = { error ->
-                    showError("SWS refresh failed", error.message ?: "Unknown API error.")
+                    showError("SWS measurement import failed", error.message ?: "Unknown API error.")
                 }
             )
+        }
+    }
+
+    private suspend fun resolveSelectedChannelIdsForMeasurements(
+        stationId: Long
+    ): List<Int> {
+        if (userChannels.isEmpty()) {
+            val channels = apiClient.getChannelsByStation(stationId)
+            setUserChannels(channels)
+        }
+
+        return if (specificChannelsEnabled) {
+            selectedChannels
+                .filterValues { it }
+                .keys
+                .toList()
+        } else {
+            userChannels.map { channel ->
+                channel.channelId
+            }
         }
     }
 
@@ -244,33 +479,28 @@ class DataScreenState(
             updateStatus(UiStatus.Loading)
 
             runCatching {
-                apiClient.processDsl(source)
+                apiClient.importDsl(source)
             }.fold(
                 onSuccess = { result ->
-                    geoJsonText = result.geoJson
+                    geoJsonText = result.geoJson.orEmpty()
 
-                    updateStatus(
-                        UiStatus.Success(
-                            "DSL processed: ${result.featureCount} features"
-                        )
-                    )
+                    result.stations.firstOrNull()?.let { station ->
+                        applyStationToInputs(station)
+                    }
 
-                    dialog = DataActionDialog(
-                        title = "DSL processed",
-                        message = buildString {
-                            append("Features: ")
-                            append(result.featureCount)
-                            append("\n\n")
-                            append(result.geoJson.take(1200))
-                            if (result.geoJson.length > 1200) {
-                                append("\n…")
-                            }
-                        }
+                    if (result.channels.isNotEmpty()) {
+                        setUserChannels(result.channels)
+                        applyChannelToInputs(result.channels.first())
+                    }
+
+                    showImportResult(
+                        title = "DSL imported",
+                        result = result
                     )
                 },
                 onFailure = { error ->
                     showError(
-                        title = "DSL parser error",
+                        title = "DSL import failed",
                         message = error.message ?: "Invalid DSL input."
                     )
                 }
@@ -279,14 +509,13 @@ class DataScreenState(
     }
 
     private fun runSimulation() {
-        val stationId = stationIdText.toIntOrNull() ?: DemoChannels.DEFAULT_STATION_ID
+        val stationId = stationIdText.toIntOrNull()
         val selectedChannelIds = selectedChannelIdsForLocalActions()
 
         val mode = when (entityType) {
-            DataEntityType.ALL -> "full"
             DataEntityType.STATION -> "stations_only"
             DataEntityType.CHANNEL -> "channels_only"
-            DataEntityType.MEASUREMENT -> "measurements_only"
+            DataEntityType.MEASUREMENT -> "full"
         }
 
         val channelKinds = listOf(
@@ -314,43 +543,57 @@ class DataScreenState(
             updateStatus(UiStatus.Loading)
 
             runCatching {
-                apiClient.simulate(request)
-            }.fold(
-                onSuccess = { stations ->
-                    generatedPreview.clear()
+                val simulatedStations = apiClient.simulate(request)
 
-                    updateStatus(
-                        UiStatus.Success(
-                            "Simulator returned ${stations.size} stations"
-                        )
+                val stations = simulatedStations.toStationDtos()
+                val channels = simulatedStations.toChannelDtos()
+                val measurements = if (entityType == DataEntityType.MEASUREMENT) {
+                    simulatedStations.toGeneratedMeasurementDtos(
+                        from = datetimeFrom,
+                        to = effectiveTo(),
+                        intervalMinutes = intervalMinutes
+                    )
+                } else {
+                    emptyList()
+                }
+
+                val command = when (entityType) {
+                    DataEntityType.STATION -> DataImportCommand(
+                        source = DataSourceDto.SIM,
+                        stations = stations
                     )
 
-                    dialog = DataActionDialog(
-                        title = "Simulator completed",
-                        message = stations.joinToString(separator = "\n\n") { station ->
-                            buildString {
-                                append(station.name)
-                                append(" [")
-                                append(station.stationId)
-                                append("]")
-                                append("\nlat=")
-                                append(station.latitude)
-                                append(", lon=")
-                                append(station.longitude)
-                                append("\nfloodRisk=")
-                                append(station.floodRisk ?: "none")
-                                append(", nearRiver=")
-                                append(station.nearRiver)
-                                append("\nchannels=")
-                                append(
-                                    station.channels.joinToString { channel ->
-                                        "${channel.name}(${channel.kind}, ${channel.measurementCount})"
-                                    }
-                                )
-                            }
-                        }.ifBlank {
-                            "Simulator returned no stations."
-                        }
+                    DataEntityType.CHANNEL -> DataImportCommand(
+                        source = DataSourceDto.SIM,
+                        stations = stations,
+                        channels = channels
+                    )
+
+                    DataEntityType.MEASUREMENT -> DataImportCommand(
+                        source = DataSourceDto.SIM,
+                        stations = stations,
+                        channels = channels,
+                        measurements = measurements
+                    )
+                }
+
+                apiClient.importSimulation(command)
+            }.fold(
+                onSuccess = { result ->
+                    if (result.stations.isNotEmpty()) {
+                        userStations.clear()
+                        userStations.addAll(result.stations)
+                        applyStationToInputs(result.stations.first())
+                    }
+
+                    if (result.channels.isNotEmpty()) {
+                        setUserChannels(result.channels)
+                        applyChannelToInputs(result.channels.first())
+                    }
+
+                    showImportResult(
+                        title = "Simulation imported",
+                        result = result
                     )
                 },
                 onFailure = { error ->
@@ -364,72 +607,146 @@ class DataScreenState(
     }
 
     private fun runManualInsert() {
-        when (entityType) {
-            DataEntityType.ALL,
-            DataEntityType.STATION,
-            DataEntityType.CHANNEL -> {
-                updateStatus(UiStatus.Success("${entityType.label} form prepared"))
-
-                dialog = DataActionDialog(
-                    title = "${entityType.label} form",
-                    message = "Fields are ready. Connect backend route before insert."
+        val command = when (entityType) {
+            DataEntityType.STATION -> {
+                val station = buildManualStation() ?: return
+                DataImportCommand(
+                    source = DataSourceDto.MANUAL,
+                    stations = listOf(station)
                 )
             }
 
-            DataEntityType.MEASUREMENT -> insertManualMeasurement()
+            DataEntityType.CHANNEL -> {
+                val station = buildManualStation() ?: return
+                val channel = buildManualChannel(station.stationId) ?: return
+
+                DataImportCommand(
+                    source = DataSourceDto.MANUAL,
+                    stations = listOf(station),
+                    channels = listOf(channel)
+                )
+            }
+
+            DataEntityType.MEASUREMENT -> {
+                val station = buildManualStation() ?: return
+                val channel = buildManualChannel(station.stationId) ?: return
+                val measurement = buildManualMeasurement(station.stationId, channel.channelId) ?: return
+
+                DataImportCommand(
+                    source = DataSourceDto.MANUAL,
+                    stations = listOf(station),
+                    channels = listOf(channel),
+                    measurements = listOf(measurement)
+                )
+            }
         }
-    }
-
-    private fun insertManualMeasurement() {
-        val stationId = stationIdText.toIntOrNull()
-        val channelId = channelIdText.toIntOrNull()
-        val value = measurementValueText.toDoubleOrNull()
-        val statusValue = measurementStatusText.toIntOrNull()
-
-        if (stationId == null || channelId == null || value == null || statusValue == null) {
-            showError(
-                title = "Manual measurement error",
-                message = "Station ID, channel ID, value and status must be numeric."
-            )
-            return
-        }
-
-        val measurement = MeasurementUi(
-            stationId = stationId,
-            stationName = stationNameText.ifBlank { "Station $stationId" },
-            channelId = channelId,
-            channelName = channelNameText.ifBlank { DemoChannels.nameOf(channelId) },
-            dateTime = datetimeFrom,
-            value = value,
-            status = statusValue,
-            source = DataSourceDto.MANUAL
-        )
-
-        generatedPreview.clear()
-        generatedPreview.add(measurement)
 
         scope.launch {
             updateStatus(UiStatus.Loading)
 
             runCatching {
-                apiClient.createMeasurement(measurement)
-                apiClient.getMeasurements()
+                apiClient.importManual(command)
             }.fold(
-                onSuccess = { allMeasurements ->
-                    updateStatus(UiStatus.Success("Manual measurement inserted"))
+                onSuccess = { result ->
+                    if (result.stations.isNotEmpty()) {
+                        userStations.removeAll { station ->
+                            result.stations.any { it.stationId == station.stationId }
+                        }
+                        userStations.addAll(result.stations)
+                    }
 
-                    dialog = DataActionDialog(
-                        title = "Measurement inserted",
-                        message = "station=$stationId\nchannel=$channelId\ntime=$datetimeFrom\nvalue=$value"
+                    if (result.channels.isNotEmpty()) {
+                        setUserChannels(result.channels)
+                    }
+
+                    showImportResult(
+                        title = "Manual data imported",
+                        result = result
                     )
-
-                    onOpenRecords(allMeasurements)
                 },
                 onFailure = { error ->
-                    showError("Manual insert failed", error.message ?: "Unknown API error.")
+                    showError("Manual import failed", error.message ?: "Unknown API error.")
                 }
             )
         }
+    }
+
+    private fun buildManualStation(): StationDto? {
+        val stationId = stationIdText.toLongOrNull()
+        val latitude = stationLatitudeText.toDoubleOrNull()
+        val longitude = stationLongitudeText.toDoubleOrNull()
+
+        if (stationId == null || latitude == null || longitude == null) {
+            showError(
+                title = "Manual station error",
+                message = "Station ID, latitude and longitude must be numeric."
+            )
+            return null
+        }
+
+        return StationDto(
+            stationId = stationId,
+            name = stationNameText.ifBlank { "Station $stationId" },
+            serialNumber = stationId.toString(),
+            description = stationDescriptionText.ifBlank { "Manual station" },
+            latitude = latitude,
+            longitude = longitude,
+            source = DataSourceDto.MANUAL
+        )
+    }
+
+    private fun buildManualChannel(stationId: Long): ChannelDto? {
+        val channelId = channelIdText.toIntOrNull()
+
+        if (channelId == null) {
+            showError(
+                title = "Manual channel error",
+                message = "Channel ID must be numeric."
+            )
+            return null
+        }
+
+        return ChannelDto(
+            stationId = stationId,
+            channelId = channelId,
+            name = channelNameText.ifBlank { "Channel $channelId" },
+            unit = channelUnitText.ifBlank { "unknown" },
+            description = channelDescriptionText.ifBlank { "Manual channel" },
+            source = DataSourceDto.MANUAL
+        )
+    }
+
+    private fun buildManualMeasurement(
+        stationId: Long,
+        channelId: Int
+    ): MeasurementDto? {
+        val value = measurementValueText.toDoubleOrNull()
+        val statusValue = measurementStatusText.toIntOrNull()
+
+        if (value == null || statusValue == null) {
+            showError(
+                title = "Manual measurement error",
+                message = "Measurement value and status must be numeric."
+            )
+            return null
+        }
+
+        return MeasurementDto(
+            id = null,
+            stationId = stationId,
+            channelId = channelId,
+            dateTime = ApiDateTime.fromAppLocal(datetimeFrom),
+            value = value,
+            status = statusValue,
+            source = DataSourceDto.MANUAL
+        )
+    }
+
+    private fun selectedChannelIdsForLocalActions(): List<Int> {
+        return selectedChannels
+            .filterValues { it }
+            .keys
+            .toList()
     }
 
     private fun effectiveTo(): LocalDateTime {
@@ -440,31 +757,143 @@ class DataScreenState(
         }
     }
 
+    private fun showImportResult(
+        title: String,
+        result: DataImportResult
+    ) {
+        updateStatus(
+            UiStatus.Success(
+                "Stations: ${result.stationCount}, channels: ${result.channelCount}, measurements: ${result.measurementCount}"
+            )
+        )
+
+        generatedPreview.clear()
+
+        val previewMeasurements = result.measurements.map { measurement ->
+            measurement.toUi(
+                stations = result.stations,
+                channels = result.channels
+            )
+        }
+
+        generatedPreview.addAll(previewMeasurements)
+
+        dialog = DataActionDialog(
+            title = title,
+            message = buildString {
+                append("Source: ")
+                append(result.source)
+                append("\nStations: ")
+                append(result.stationCount)
+                append("\nChannels: ")
+                append(result.channelCount)
+                append("\nMeasurements: ")
+                append(result.measurementCount)
+                append("\nUser stations: ")
+                append(result.userStationCount)
+
+                if (result.message.isNotBlank()) {
+                    append("\n\n")
+                    append(result.message)
+                }
+
+                if (result.stations.isNotEmpty()) {
+                    append("\n\nStations:")
+                    result.stations.take(10).forEach { station ->
+                        append("\n- ")
+                        append(station.stationId)
+                        append(" ")
+                        append(station.name ?: "Station ${station.stationId}")
+                    }
+                }
+
+                if (result.channels.isNotEmpty()) {
+                    append("\n\nChannels:")
+                    result.channels.take(10).forEach { channel ->
+                        append("\n- ")
+                        append(channel.channelId)
+                        append(" ")
+                        append(channel.name ?: "Channel ${channel.channelId}")
+                    }
+                }
+
+                if (result.measurements.isNotEmpty()) {
+                    append("\n\nMeasurements preview:")
+                    result.measurements.take(10).forEach { measurement ->
+                        append("\n- ch=")
+                        append(measurement.channelId)
+                        append(" time=")
+                        append(measurement.dateTime)
+                        append(" value=")
+                        append(measurement.value)
+                    }
+                }
+            }
+        )
+
+        updateSqlPreview()
+    }
+
+    private fun combineSwsMeasurementResults(
+        results: List<DataImportResult>
+    ): DataImportResult {
+        return DataImportResult(
+            source = DataSourceDto.SWS,
+            stationCount = results.sumOf { it.stationCount },
+            channelCount = results.sumOf { it.channelCount },
+            measurementCount = results.sumOf { it.measurementCount },
+            userStationCount = results.sumOf { it.userStationCount },
+            stations = results.flatMap { it.stations }.distinctBy { it.stationId },
+            channels = results.flatMap { it.channels }.distinctBy { it.channelId },
+            measurements = results.flatMap { it.measurements }.take(100),
+            geoJson = results.firstNotNullOfOrNull { it.geoJson },
+            message = "SWS measurements imported."
+        )
+    }
+
+    private fun applyStationToInputs(station: StationDto) {
+        stationIdText = station.stationId.toString()
+        stationNameText = station.name ?: "Station ${station.stationId}"
+        stationLatitudeText = station.latitude?.toString() ?: ""
+        stationLongitudeText = station.longitude?.toString() ?: ""
+        stationDescriptionText = station.description ?: ""
+    }
+
+    private fun applyChannelToInputs(channel: ChannelDto) {
+        channelIdText = channel.channelId.toString()
+        channelNameText = channel.name ?: "Channel ${channel.channelId}"
+        channelUnitText = channel.unit ?: "unknown"
+        channelDescriptionText = channel.description ?: ""
+    }
+
     private fun buildSqlPreview(): String {
         val source = sourceType.label.uppercase()
-        val channelComment = if (sourceType == DataSourceType.SWS && !specificChannelsEnabled) {
-            "-- channels: all station channels"
+
+        if (sourceType == DataSourceType.DSL) {
+            return """
+                -- source: DSL
+                -- DSL source will be parsed by backend-core
+                -- inserted records will use source='DSL'
+                POST /api/v1/data/import/dsl
+            """.trimIndent()
+        }
+
+        val channelComment = if (specificChannelsEnabled) {
+            "-- channels from database: ${selectedChannels.filterValues { it }.keys.joinToString(", ").ifBlank { "none" }}"
         } else {
-            "-- channels: ${selectedChannels.filterValues { it }.keys.joinToString(", ").ifBlank { "none" }}"
+            "-- channels from database: all user/station channels"
         }
 
         return when (entityType) {
-            DataEntityType.ALL -> """
-                -- target: all
-                -- source: $source
-                $channelComment
-                -- run will apply current form context to stations, channels and measurements where supported
-            """.trimIndent()
-
             DataEntityType.STATION -> """
                 INSERT INTO stations (id, alias, longitude, latitude, location_description, source)
                 VALUES (${stationIdText.sqlOrNull()}, ${stationNameText.sqlString()}, ${stationLongitudeText.sqlOrNull()}, ${stationLatitudeText.sqlOrNull()}, ${stationDescriptionText.sqlString()}, '$source');
-                $channelComment
             """.trimIndent()
 
             DataEntityType.CHANNEL -> """
                 INSERT INTO channels (id, station_id, name, unit, description, source)
                 VALUES (${channelIdText.sqlOrNull()}, ${stationIdText.sqlOrNull()}, ${channelNameText.sqlString()}, ${channelUnitText.sqlString()}, ${channelDescriptionText.sqlString()}, '$source');
+                $channelComment
             """.trimIndent()
 
             DataEntityType.MEASUREMENT -> """
@@ -477,7 +906,7 @@ class DataScreenState(
 
     fun openGeneratedMeasurementsOnline() {
         if (generatedPreview.isEmpty()) {
-            showError("Nothing to open", "Generate or refresh measurements first, then open them online.")
+            showError("Nothing to open", "Generate, import or refresh measurements first, then open them online.")
             return
         }
 
@@ -508,6 +937,80 @@ class DataScreenState(
 
         updateStatus(UiStatus.Error(message))
     }
+}
+
+private fun List<SimulatedStationDto>.toStationDtos(): List<StationDto> {
+    return map { station ->
+        StationDto(
+            stationId = station.stationId.toLong(),
+            name = station.name,
+            description = "Simulated station",
+            latitude = station.latitude,
+            longitude = station.longitude,
+            serialNumber = station.stationId.toString(),
+            source = DataSourceDto.SIM
+        )
+    }
+}
+
+private fun List<SimulatedStationDto>.toChannelDtos(): List<ChannelDto> {
+    return flatMap { station ->
+        station.channels.map { channel ->
+            ChannelDto(
+                stationId = station.stationId.toLong(),
+                channelId = channel.channelId,
+                name = channel.name,
+                unit = channel.unit,
+                description = "Simulated ${channel.kind} channel",
+                source = DataSourceDto.SIM
+            )
+        }
+    }
+}
+
+private fun List<SimulatedStationDto>.toGeneratedMeasurementDtos(
+    from: LocalDateTime,
+    to: LocalDateTime,
+    intervalMinutes: Long
+): List<MeasurementDto> {
+    val safeInterval = max(1L, intervalMinutes)
+    val result = mutableListOf<MeasurementDto>()
+
+    forEach { station ->
+        station.channels.forEach { channel ->
+            var current = from
+            var index = 0
+
+            while (!current.isAfter(to)) {
+                val baseValue = when (channel.kind) {
+                    "water_level" -> 1.0
+                    "temperature" -> 12.0
+                    "rainfall" -> 0.4
+                    "flow_rate" -> 15.0
+                    else -> 1.0
+                }
+
+                val value = baseValue + sin(index.toDouble() / 3.0)
+
+                result.add(
+                    MeasurementDto(
+                        id = null,
+                        stationId = station.stationId.toLong(),
+                        channelId = channel.channelId,
+                        dateTime = ApiDateTime.fromAppLocal(current),
+                        value = value,
+                        status = 0,
+                        source = DataSourceDto.SIM
+                    )
+                )
+
+                current = current.plusMinutes(safeInterval)
+                index++
+            }
+        }
+    }
+
+    return result
 }
 
 private fun String.sqlString(): String {

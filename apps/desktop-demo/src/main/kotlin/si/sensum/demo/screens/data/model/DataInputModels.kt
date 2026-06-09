@@ -3,7 +3,6 @@ package si.sensum.demo.screens.data.model
 enum class DataSourceType(
     val label: String
 ) {
-    ALL("ALL"),
     SWS("SWS"),
     DSL("DSL"),
     SIM("SIM"),
@@ -13,7 +12,6 @@ enum class DataSourceType(
 enum class DataEntityType(
     val label: String
 ) {
-    ALL("All"),
     STATION("Station"),
     CHANNEL("Channel"),
     MEASUREMENT("Measurement")

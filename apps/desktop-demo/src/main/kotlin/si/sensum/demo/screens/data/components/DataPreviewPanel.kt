@@ -8,8 +8,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -19,6 +21,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
@@ -57,12 +60,14 @@ fun DataPreviewPanel(
 
                     SensumButton(
                         text = "Open",
-                        onClick = { },
+                        onClick = state::openCurrentRecords,
                         variant = SensumButtonVariant.Secondary
                     )
                 }
 
-                PreviewTable(state.generatedPreview)
+                PreviewTable(
+                    rows = state.generatedPreview
+                )
             }
         }
 
@@ -78,7 +83,11 @@ fun DataPreviewPanel(
 
                     SensumButton(
                         text = "Copy",
-                        onClick = { clipboard.setText(AnnotatedString(state.sqlText)) },
+                        onClick = {
+                            clipboard.setText(
+                                AnnotatedString(state.sqlText)
+                            )
+                        },
                         variant = SensumButtonVariant.Secondary
                     )
 
@@ -91,10 +100,15 @@ fun DataPreviewPanel(
 
                 SensumTextField(
                     value = state.sqlText,
-                    onValueChange = { state.sqlText = it },
+                    onValueChange = {
+                        state.sqlText = it
+                    },
                     label = "Executed / prepared SQL",
                     singleLine = false,
-                    modifier = Modifier.heightIn(min = 170.dp)
+                    modifier = Modifier.heightIn(
+                        min = 170.dp,
+                        max = 260.dp
+                    )
                 )
             }
         }
@@ -102,7 +116,9 @@ fun DataPreviewPanel(
 }
 
 @Composable
-private fun PreviewTable(rows: List<MeasurementUi>) {
+private fun PreviewTable(
+    rows: List<MeasurementUi>
+) {
     val vScroll = rememberScrollState()
     val hScroll = rememberScrollState()
 
@@ -115,30 +131,44 @@ private fun PreviewTable(rows: List<MeasurementUi>) {
         return
     }
 
-    Box {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(260.dp)
+    ) {
         Column(
             modifier = Modifier
-                .heightIn(max = 260.dp)
-                .verticalScroll(vScroll)
+                .fillMaxHeight()
                 .horizontalScroll(hScroll)
+                .verticalScroll(vScroll)
+                .padding(
+                    end = 14.dp,
+                    bottom = 14.dp
+                )
         ) {
             PreviewHeader()
+
             rows.take(100).forEach { row ->
                 PreviewRow(row)
-                HorizontalDivider(color = SensumThemeColors.border.copy(alpha = 0.45f))
+
+                HorizontalDivider(
+                    color = SensumThemeColors.border.copy(alpha = 0.45f)
+                )
             }
         }
 
         VerticalScrollbar(
             adapter = rememberScrollbarAdapter(vScroll),
             modifier = Modifier
-                .align(androidx.compose.ui.Alignment.CenterEnd)
+                .align(Alignment.CenterEnd)
+                .fillMaxHeight()
         )
 
         HorizontalScrollbar(
             adapter = rememberScrollbarAdapter(hScroll),
             modifier = Modifier
-                .align(androidx.compose.ui.Alignment.BottomStart)
+                .align(Alignment.BottomStart)
+                .fillMaxWidth()
         )
     }
 }
@@ -160,8 +190,12 @@ private fun PreviewHeader() {
 }
 
 @Composable
-private fun PreviewRow(row: MeasurementUi) {
-    Row(modifier = Modifier.padding(vertical = 6.dp)) {
+private fun PreviewRow(
+    row: MeasurementUi
+) {
+    Row(
+        modifier = Modifier.padding(vertical = 6.dp)
+    ) {
         Cell(row.stationId.toString(), 90)
         Cell(row.channelId.toString(), 90)
         Cell(row.dateTime.toString(), 170)

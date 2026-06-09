@@ -92,17 +92,21 @@ fun DataScreen(
                         verticalArrangement = Arrangement.spacedBy(SensumSpacing.md)
                     ) {
                         when (state.sourceType) {
-                            DataSourceType.ALL -> {
+                            DataSourceType.SWS -> {
                                 SwsDataForm(state)
-                                DslDataForm(state)
-                                SimDataForm(state)
-                                ManualDataForm(state)
                             }
 
-                            DataSourceType.SWS -> SwsDataForm(state)
-                            DataSourceType.DSL -> DslDataForm(state)
-                            DataSourceType.SIM -> SimDataForm(state)
-                            DataSourceType.MANUAL -> ManualDataForm(state)
+                            DataSourceType.DSL -> {
+                                DslDataForm(state)
+                            }
+
+                            DataSourceType.SIM -> {
+                                SimDataForm(state)
+                            }
+
+                            DataSourceType.MANUAL -> {
+                                ManualDataForm(state)
+                            }
                         }
                     }
 
@@ -128,47 +132,51 @@ private fun DataTopToolbar(
     state: DataScreenState,
     compact: Boolean
 ) {
-    SensumCard(
-        overlay = true
-    ) {
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(SensumSpacing.md)
-        ) {
-            if (compact) {
+    SensumCard {
+        if (compact) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(SensumSpacing.md)
+            ) {
+                SourceAndEntityControls(state)
+
+                if (state.sourceType != DataSourceType.DSL) {
+                    DateControls(state)
+                }
+
+                ActionControls(state)
+            }
+        } else {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(SensumSpacing.lg)
+            ) {
                 Column(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.weight(0.34f),
                     verticalArrangement = Arrangement.spacedBy(SensumSpacing.md)
                 ) {
-                    SelectionChips(state)
-                    DateControls(state)
-                    ActionControls(state)
+                    SourceAndEntityControls(state)
                 }
-            } else {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(SensumSpacing.lg)
-                ) {
-                    Column(
-                        modifier = Modifier.weight(0.46f),
-                        verticalArrangement = Arrangement.spacedBy(SensumSpacing.sm)
-                    ) {
-                        SelectionChips(state)
-                    }
 
+                if (state.sourceType != DataSourceType.DSL) {
                     Column(
-                        modifier = Modifier.weight(0.36f),
-                        verticalArrangement = Arrangement.spacedBy(SensumSpacing.sm)
+                        modifier = Modifier.weight(0.42f),
+                        verticalArrangement = Arrangement.spacedBy(SensumSpacing.md)
                     ) {
                         DateControls(state)
                     }
+                }
 
-                    Column(
-                        modifier = Modifier.weight(0.18f),
-                        verticalArrangement = Arrangement.spacedBy(SensumSpacing.sm)
-                    ) {
-                        ActionControls(state)
-                    }
+                Column(
+                    modifier = Modifier.weight(
+                        if (state.sourceType == DataSourceType.DSL) {
+                            0.66f
+                        } else {
+                            0.24f
+                        }
+                    ),
+                    verticalArrangement = Arrangement.spacedBy(SensumSpacing.md)
+                ) {
+                    ActionControls(state)
                 }
             }
         }
@@ -176,7 +184,7 @@ private fun DataTopToolbar(
 }
 
 @Composable
-private fun SelectionChips(
+private fun SourceAndEntityControls(
     state: DataScreenState
 ) {
     Column(
@@ -188,24 +196,31 @@ private fun SelectionChips(
         ) {
             DataSourceTabs(
                 selected = state.sourceType,
-                onSelected = {
-                    state.sourceType = it
+                onSelected = { selected ->
+                    state.sourceType = selected
+
+                    if (selected == DataSourceType.DSL) {
+                        state.previewVisible = true
+                    }
+
                     state.updateSqlPreview()
                 }
             )
         }
 
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(SensumSpacing.sm),
-            verticalArrangement = Arrangement.spacedBy(SensumSpacing.sm)
-        ) {
-            DataEntitySelector(
-                selected = state.entityType,
-                onSelected = {
-                    state.entityType = it
-                    state.updateSqlPreview()
-                }
-            )
+        if (state.sourceType != DataSourceType.DSL) {
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(SensumSpacing.sm),
+                verticalArrangement = Arrangement.spacedBy(SensumSpacing.sm)
+            ) {
+                DataEntitySelector(
+                    selected = state.entityType,
+                    onSelected = { selected ->
+                        state.entityType = selected
+                        state.updateSqlPreview()
+                    }
+                )
+            }
         }
     }
 }
@@ -229,9 +244,11 @@ private fun DateControls(
         },
         onCurrentYearSelected = {
             val now = LocalDateTime.now()
+
             state.singleTimestamp = false
             state.datetimeFrom = LocalDateTime.of(now.year, 1, 1, 0, 0)
             state.datetimeTo = LocalDateTime.of(now.year, 12, 31, 23, 59)
+
             state.updateSqlPreview()
         },
         onCurrentMonthSelected = {
@@ -241,19 +258,20 @@ private fun DateControls(
             state.singleTimestamp = false
             state.datetimeFrom = start
             state.datetimeTo = start.plusMonths(1).minusMinutes(1)
+
             state.updateSqlPreview()
         },
-        onFromChange = {
-            state.datetimeFrom = it
+        onFromChange = { value ->
+            state.datetimeFrom = value
 
             if (state.singleTimestamp) {
-                state.datetimeTo = it
+                state.datetimeTo = value
             }
 
             state.updateSqlPreview()
         },
-        onToChange = {
-            state.datetimeTo = it
+        onToChange = { value ->
+            state.datetimeTo = value
             state.updateSqlPreview()
         }
     )
@@ -271,8 +289,8 @@ private fun ActionControls(
             status = state.status,
             previewVisible = state.previewVisible,
             onRun = state::runPrimaryAction,
-            onOpenRecords = { state.openCurrentRecords() },
-            onOpenOnline = { state.openGeneratedMeasurementsOnline() },
+            onOpenRecords = state::openCurrentRecords,
+            onOpenOnline = state::openGeneratedMeasurementsOnline,
             onTogglePreview = {
                 state.previewVisible = !state.previewVisible
             }

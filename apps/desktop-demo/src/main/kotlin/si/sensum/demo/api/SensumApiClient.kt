@@ -49,6 +49,11 @@ import si.sensum.shared.models.stations.StationDto
 import si.sensum.shared.models.simulator.SimulateRequestDto
 import si.sensum.shared.models.simulator.SimulatedStationDto
 import java.io.IOException
+import si.sensum.shared.models.common.DataSourceDto
+import si.sensum.shared.models.data.DataImportCommand
+import si.sensum.shared.models.data.DataImportResult
+import si.sensum.shared.models.data.DslImportCommand
+import si.sensum.shared.models.data.SwsImportCommand
 
 class SensumApiClient(
     val baseUrl: String = System.getenv("SENSUM_API_BASE_URL")
@@ -112,6 +117,23 @@ class SensumApiClient(
             measurementDto.toUi()
         }
     }
+
+    suspend fun getStations(): List<StationDto> {
+        return get(
+            path = "/api/v1/stations",
+            operation = "Get user stations"
+        )
+    }
+
+    suspend fun getChannelsByStation(
+        stationId: Long
+    ): List<ChannelDto> {
+        return get(
+            path = "/api/v1/stations/$stationId/channels",
+            operation = "Get station channels"
+        )
+    }
+
 
     suspend fun createMeasurement(measurement: MeasurementUi): MeasurementUi {
         return post<MeasurementDto>(
@@ -374,6 +396,87 @@ class SensumApiClient(
     @Suppress("unused")
     fun clearSession() {
         session.clear()
+    }
+
+
+    suspend fun importManual(command: DataImportCommand): DataImportResult {
+        return post(
+            path = "/api/v1/data/import/manual",
+            operation = "Import manual data"
+        ) {
+            setBody(
+                command.copy(source = DataSourceDto.MANUAL)
+            )
+        }
+    }
+
+    suspend fun importSimulation(command: DataImportCommand): DataImportResult {
+        return post(
+            path = "/api/v1/data/import/simulation",
+            operation = "Import simulated data"
+        ) {
+            setBody(
+                command.copy(source = DataSourceDto.SIM)
+            )
+        }
+    }
+
+    suspend fun importDsl(source: String): DataImportResult {
+        return post(
+            path = "/api/v1/data/import/dsl",
+            operation = "Import DSL"
+        ) {
+            setBody(
+                DslImportCommand(
+                    source = source
+                )
+            )
+        }
+    }
+
+    suspend fun importSwsStations(): DataImportResult {
+        return post(
+            path = "/api/v1/data/import/sws/stations",
+            operation = "Import SWS stations"
+        ) {
+            setBody(
+                SwsImportCommand()
+            )
+        }
+    }
+
+    suspend fun importSwsChannels(stationId: Long): DataImportResult {
+        return post(
+            path = "/api/v1/data/import/sws/channels",
+            operation = "Import SWS channels"
+        ) {
+            setBody(
+                SwsImportCommand(
+                    stationId = stationId
+                )
+            )
+        }
+    }
+
+    suspend fun importSwsMeasurements(
+        stationId: Long,
+        channelId: Int,
+        datetimeFrom: String,
+        datetimeTo: String
+    ): DataImportResult {
+        return post(
+            path = "/api/v1/data/import/sws/measurements",
+            operation = "Import SWS measurements"
+        ) {
+            setBody(
+                SwsImportCommand(
+                    stationId = stationId,
+                    channelId = channelId,
+                    datetimeFrom = datetimeFrom,
+                    datetimeTo = datetimeTo
+                )
+            )
+        }
     }
 
     private suspend inline fun <reified T> getRecordsPage(

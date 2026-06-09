@@ -15,7 +15,6 @@ import si.sensum.demo.components.theme.SensumSizes
 import si.sensum.demo.components.theme.SensumSpacing
 import si.sensum.demo.components.theme.SensumThemeColors
 import si.sensum.demo.resources.Res
-import si.sensum.demo.resources.all_inclusive
 import si.sensum.demo.resources.dew_point
 import si.sensum.demo.resources.distance
 import si.sensum.demo.resources.sensors
@@ -32,7 +31,9 @@ fun DataEntitySelector(
 
             FilterChip(
                 selected = isSelected,
-                onClick = { onSelected(type) },
+                onClick = {
+                    onSelected(type)
+                },
                 label = {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -73,7 +74,6 @@ fun entityIconResource(
     type: DataEntityType
 ): DrawableResource {
     return when (type) {
-        DataEntityType.ALL -> Res.drawable.all_inclusive
         DataEntityType.STATION -> Res.drawable.distance
         DataEntityType.CHANNEL -> Res.drawable.sensors
         DataEntityType.MEASUREMENT -> Res.drawable.dew_point

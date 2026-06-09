@@ -25,7 +25,6 @@ import si.sensum.demo.components.ui.SensumButtonVariant
 import si.sensum.demo.components.ui.SensumCard
 import si.sensum.demo.components.ui.SensumSelector
 import si.sensum.demo.components.ui.SensumTextField
-import si.sensum.demo.model.DemoChannels
 import si.sensum.demo.resources.Res
 import si.sensum.demo.resources.arrow_drop_down
 import si.sensum.demo.resources.arrow_drop_up
@@ -225,7 +224,7 @@ fun ChannelSelector(
             ) {
                 FormTitle(
                     icon = Res.drawable.sensors,
-                    text = "Channels",
+                    text = "Channels from database",
                     modifier = Modifier.weight(1f)
                 )
 
@@ -245,7 +244,7 @@ fun ChannelSelector(
                 ChannelCheckboxList(state)
             } else {
                 Text(
-                    text = "Specific channels are disabled. SWS refresh will use all channels for the selected station.",
+                    text = "Specific channels are disabled. The action will use all channels loaded from the database for the selected station.",
                     style = MaterialTheme.typography.bodySmall,
                     color = SensumThemeColors.muted
                 )
@@ -263,6 +262,13 @@ private fun ChannelSelectorToolbar(
         horizontalArrangement = Arrangement.spacedBy(SensumSpacing.sm),
         verticalArrangement = Arrangement.spacedBy(SensumSpacing.sm)
     ) {
+        SensumButton(
+            text = "Load",
+            onClick = state::loadUserChannelsForCurrentStation,
+            variant = SensumButtonVariant.Secondary,
+            compact = true
+        )
+
         SensumButton(
             text = "All",
             onClick = state::selectAllChannels,
@@ -282,6 +288,7 @@ private fun ChannelSelectorToolbar(
             selected = state.channelSortField == ChannelSortField.ID,
             onClick = {
                 state.channelSortField = ChannelSortField.ID
+                state.updateSqlPreview()
             }
         )
 
@@ -290,6 +297,7 @@ private fun ChannelSelectorToolbar(
             selected = state.channelSortField == ChannelSortField.NAME,
             onClick = {
                 state.channelSortField = ChannelSortField.NAME
+                state.updateSqlPreview()
             }
         )
 
@@ -300,6 +308,8 @@ private fun ChannelSelectorToolbar(
                     ChannelSortDirection.ASC -> ChannelSortDirection.DESC
                     ChannelSortDirection.DESC -> ChannelSortDirection.ASC
                 }
+
+                state.updateSqlPreview()
             }
         )
     }
@@ -310,8 +320,13 @@ private fun ChannelCheckboxList(
     state: DataScreenState
 ) {
     val channels = when (state.channelSortField) {
-        ChannelSortField.ID -> DemoChannels.names.toList().sortedBy { it.first }
-        ChannelSortField.NAME -> DemoChannels.names.toList().sortedBy { it.second.lowercase() }
+        ChannelSortField.ID -> state.userChannels.sortedBy { channel ->
+            channel.channelId
+        }
+
+        ChannelSortField.NAME -> state.userChannels.sortedBy { channel ->
+            channel.name.orEmpty().lowercase()
+        }
     }.let { sorted ->
         when (state.channelSortDirection) {
             ChannelSortDirection.ASC -> sorted
@@ -319,8 +334,20 @@ private fun ChannelCheckboxList(
         }
     }
 
+    if (channels.isEmpty()) {
+        Text(
+            text = "No channels loaded. Click Load, or first import channels from SWS/DSL/SIM/MANUAL.",
+            style = MaterialTheme.typography.bodySmall,
+            color = SensumThemeColors.muted
+        )
+        return
+    }
+
     Column(verticalArrangement = Arrangement.spacedBy(SensumSpacing.xs)) {
-        channels.forEach { (id, name) ->
+        channels.forEach { channel ->
+            val id = channel.channelId
+            val name = channel.name ?: "Channel $id"
+            val unit = channel.unit.orEmpty()
             val selected = state.selectedChannels[id] == true
 
             Row(
@@ -330,8 +357,10 @@ private fun ChannelCheckboxList(
                 Checkbox(
                     checked = selected,
                     onCheckedChange = { checked ->
-                        state.selectedChannels[id] = checked
-                        state.updateSqlPreview()
+                        state.selectChannel(
+                            channel = channel,
+                            selected = checked
+                        )
                     },
                     colors = CheckboxDefaults.colors(
                         checkedColor = SensumThemeColors.accent,
@@ -341,7 +370,23 @@ private fun ChannelCheckboxList(
                 )
 
                 Text(
-                    text = "$id — $name",
+                    text = buildString {
+                        append(id)
+                        append(" — ")
+                        append(name)
+
+                        if (unit.isNotBlank()) {
+                            append(" [")
+                            append(unit)
+                            append("]")
+                        }
+                    },
+                    modifier = Modifier.clickable {
+                        state.selectChannel(
+                            channel = channel,
+                            selected = !selected
+                        )
+                    },
                     style = MaterialTheme.typography.bodySmall,
                     color = SensumThemeColors.onSurface
                 )
@@ -412,7 +457,9 @@ private fun SortChip(
 ) {
     Text(
         text = "Sort: $text",
-        modifier = Modifier.clickable { onClick() },
+        modifier = Modifier.clickable {
+            onClick()
+        },
         style = MaterialTheme.typography.labelSmall,
         color = if (selected) {
             SensumThemeColors.accent
@@ -428,7 +475,9 @@ private fun SortDirectionChip(
     onClick: () -> Unit
 ) {
     Row(
-        modifier = Modifier.clickable { onClick() },
+        modifier = Modifier.clickable {
+            onClick()
+        },
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(SensumSpacing.xs)
     ) {

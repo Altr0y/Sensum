@@ -13,16 +13,15 @@ fun ManualDataForm(
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(SensumSpacing.md)) {
         when (state.entityType) {
-            DataEntityType.ALL -> {
+            DataEntityType.STATION -> {
                 StationFields(state)
-                ChannelFields(state)
-                MeasurementFields(state)
             }
-            DataEntityType.STATION -> StationFields(state)
+
             DataEntityType.CHANNEL -> {
                 StationFields(state)
                 ChannelFields(state)
             }
+
             DataEntityType.MEASUREMENT -> {
                 StationFields(state)
                 ChannelFields(state)

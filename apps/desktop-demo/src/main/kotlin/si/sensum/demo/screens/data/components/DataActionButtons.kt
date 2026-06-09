@@ -24,7 +24,6 @@ fun DataActionButtons(
     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         SensumButton(
             text = when (sourceType) {
-                DataSourceType.ALL -> "Run"
                 DataSourceType.SWS -> "Refresh"
                 DataSourceType.DSL -> "Process DSL"
                 DataSourceType.SIM -> "Generate"

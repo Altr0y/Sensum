@@ -30,8 +30,7 @@ fun SwsDataForm(
                 SwsStationIdField(state)
             }
 
-            DataEntityType.MEASUREMENT,
-            DataEntityType.ALL -> {
+            DataEntityType.MEASUREMENT -> {
                 SwsStationIdField(state)
 
                 ChannelSelector(
