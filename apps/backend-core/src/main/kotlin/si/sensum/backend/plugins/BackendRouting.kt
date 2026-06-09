@@ -47,6 +47,7 @@ fun Application.configureBackendRouting(
     val municipalityRepository = MunicipalityRepository()
     val recordsRepository = RecordsRepository()
     val statsRepository = StatsRepository()
+    val dataImportRepository = DataImportRepository()
 
     val authService = AuthService(
         userRepository = userRepository
@@ -111,6 +112,14 @@ fun Application.configureBackendRouting(
 
     val dslService = DslService()
 
+
+    val dataImportService = DataImportService(
+        importRepository = dataImportRepository,
+        gmClient = gmClient,
+        swsUsername = backendConfig.swsUsername,
+        swsPassword = backendConfig.swsPassword
+    )
+
     routing {
         configureHealthRoutes()
 
@@ -165,6 +174,10 @@ fun Application.configureBackendRouting(
 
         configureStatsRoutes(
             statsService = statsService
+        )
+
+        configureDataImportRoutes(
+            service = dataImportService
         )
     }
 }
