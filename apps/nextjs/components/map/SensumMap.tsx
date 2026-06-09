@@ -386,7 +386,7 @@ export function SensumMap({ token }: { token: string }) {
                     <ResizeMapOnSidebarChange sidebarOpen={sidebarOpen} />
                     <MapClickHandler
                         addMode={addMode}
-                        simMode={sim.active}
+                        simMode={sim.active && sim.step === "draw"}
                         onMapClick={handleMapClick}
                         onSimClick={sim.addPoint}
                     />
@@ -517,7 +517,7 @@ export function SensumMap({ token }: { token: string }) {
                         addStationError={addStationError}
                         onSaveStation={handleSaveStation}
                         onCancelAddStation={handleCancelAddStation}
-                        onToggleSim={() => { sim.start(); setSidebarOpen(true) }}
+                        onToggleSim={() => { setAddMode(false); setPendingStation(null); setAddStationError(null); sim.start(); setSidebarOpen(true) }}
                     />
                 )
             )}

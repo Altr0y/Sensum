@@ -67,7 +67,7 @@ export function StationSidebar({
                                 type="button"
                                 onClick={onToggleSim}
                                 title="Simulate measurements"
-                                className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-background text-foreground shadow-sm hover:bg-muted hover:border-[#E8A838] hover:text-[#E8A838] transition-colors"
+                                className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-background text-foreground shadow-sm hover:bg-muted hover:border-accent hover:text-accent transition-colors"
                             >
                                 <Lasso size={16} />
                             </button>
@@ -80,7 +80,7 @@ export function StationSidebar({
                                     "flex h-9 w-9 items-center justify-center rounded-lg border text-sm shadow-sm transition-colors",
                                     addMode
                                         ? "border-foreground bg-foreground text-background"
-                                        : "border-border bg-background text-foreground hover:bg-muted dark:bg-background dark:hover:bg-muted",
+                                        : "border-border bg-background text-foreground hover:bg-muted hover:border-accent hover:text-accent transition-colors",
                                 ].join(" ")}
                             >
                                 📍
@@ -90,7 +90,7 @@ export function StationSidebar({
                                 <button
                                     type="button"
                                     onClick={() => setDataMenuOpen((current) => !current)}
-                                    className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-background text-lg text-foreground shadow-sm hover:bg-muted dark:bg-background dark:text-foreground dark:hover:bg-muted"
+                                    className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-background text-lg text-foreground shadow-sm hover:bg-muted hover:border-accent hover:text-accent transition-colors"
                                     title="Settings"
                                 >
                                     ⚙
@@ -136,7 +136,7 @@ export function StationSidebar({
                             <button
                                 type="button"
                                 onClick={onHideSidebar}
-                                className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-medium text-foreground shadow-sm hover:bg-muted dark:bg-background dark:text-foreground dark:hover:bg-muted"
+                                className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-medium text-foreground shadow-sm hover:bg-muted hover:border-accent hover:text-accent transition-colors"
                             >
                                 Hide
                             </button>

@@ -5,7 +5,7 @@
   "tags": ["sensum"],
   "timezone": "browser",
   "schemaVersion": 38,
-  "version": 5,
+  "version": 6,
   "refresh": "30s",
   "time": { "from": "now-7d", "to": "now" },
   "panels": [
@@ -16,6 +16,15 @@
       "gridPos": { "h": 14, "w": 24, "x": 0, "y": 0 },
       "datasource": { "type": "marcusolsson-json-datasource", "uid": "sensum-stats-api" },
       "description": "Združen prikaz vrednosti vseh kanalov v izbranem časovnem obsegu.",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 8,
+            "spanNulls": false
+          }
+        }
+      },
       "targets": [
         {
           "datasource": { "type": "marcusolsson-json-datasource", "uid": "sensum-stats-api" },
@@ -34,7 +43,7 @@
       "id": 2,
       "type": "stat",
       "title": "Povprečna vrednost",
-      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 14 },
+      "gridPos": { "h": 4, "w": 8, "x": 0, "y": 14 },
       "datasource": { "type": "marcusolsson-json-datasource", "uid": "sensum-stats-api" },
       "options": {
         "reduceOptions": { "calcs": ["lastNotNull"] },
@@ -70,7 +79,7 @@
       "id": 3,
       "type": "stat",
       "title": "Min vrednost",
-      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 14 },
+      "gridPos": { "h": 4, "w": 8, "x": 8, "y": 14 },
       "datasource": { "type": "marcusolsson-json-datasource", "uid": "sensum-stats-api" },
       "options": {
         "reduceOptions": { "calcs": ["lastNotNull"] },
@@ -106,7 +115,7 @@
       "id": 4,
       "type": "stat",
       "title": "Max vrednost",
-      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 14 },
+      "gridPos": { "h": 4, "w": 8, "x": 16, "y": 14 },
       "datasource": { "type": "marcusolsson-json-datasource", "uid": "sensum-stats-api" },
       "options": {
         "reduceOptions": { "calcs": ["lastNotNull"] },
@@ -133,44 +142,6 @@
           "queryParams": "from=${__from:date:iso}&to=${__to:date:iso}",
           "fields": [
             { "jsonPath": "$.maximum", "name": "Max", "type": "number" }
-          ],
-          "refId": "A"
-        }
-      ]
-    },
-    {
-      "id": 5,
-      "type": "stat",
-      "title": "Meritve v alarmu",
-      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 14 },
-      "datasource": { "type": "marcusolsson-json-datasource", "uid": "sensum-stats-api" },
-      "options": {
-        "reduceOptions": { "calcs": ["lastNotNull"] },
-        "orientation": "auto",
-        "textMode": "auto",
-        "colorMode": "background",
-        "graphMode": "none"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "thresholds" },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              { "color": "green", "value": null },
-              { "color": "red", "value": 1 }
-            ]
-          }
-        }
-      },
-      "targets": [
-        {
-          "datasource": { "type": "marcusolsson-json-datasource", "uid": "sensum-stats-api" },
-          "urlPath": "/measurements/range",
-          "method": "GET",
-          "queryParams": "from=${__from:date:iso}&to=${__to:date:iso}",
-          "fields": [
-            { "jsonPath": "$.alarmCount", "name": "Alarmi", "type": "number" }
           ],
           "refId": "A"
         }

@@ -11,7 +11,7 @@ export function LogoutButton() {
             method: "POST",
         })
 
-        router.push("/login")
+        router.push("/home")
         router.refresh()
     }
 
