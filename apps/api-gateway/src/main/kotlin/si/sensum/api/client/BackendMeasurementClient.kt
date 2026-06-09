@@ -6,6 +6,7 @@ import si.sensum.shared.models.measurements.CreateMeasurementsBatchResult
 import si.sensum.shared.models.measurements.MeasurementDto
 import si.sensum.shared.models.measurements.RefreshMeasurementsCommand
 import si.sensum.shared.models.measurements.RefreshMeasurementsResult
+import java.net.URLEncoder
 
 internal class BackendMeasurementClient(
     private val backend: ServiceHttpClient
@@ -55,7 +56,10 @@ internal class BackendMeasurementClient(
         datetimeTo: String
     ): List<MeasurementDto> {
         return backend.get(
-            "/api/v1/measurements/range?channelId=$channelId&from=$datetimeFrom&to=$datetimeTo"
+            "/api/v1/measurements/range" +
+                    "?channelId=$channelId" +
+                    "&from=${enc(datetimeFrom)}" +
+                    "&to=${enc(datetimeTo)}"
         )
     }
 
@@ -64,7 +68,9 @@ internal class BackendMeasurementClient(
         datetimeTo: String
     ): Map<String, Boolean> {
         return backend.post(
-            path = "/api/v1/measurements/regenerate?from=$datetimeFrom&to=$datetimeTo",
+            path = "/api/v1/measurements/regenerate" +
+                    "?from=${enc(datetimeFrom)}" +
+                    "&to=${enc(datetimeTo)}",
             body = emptyMap<String, String>()
         )
     }
@@ -74,7 +80,13 @@ internal class BackendMeasurementClient(
         datetimeTo: String
     ): Map<String, Int> {
         return backend.deleteWithResponse(
-            "/api/v1/measurements/range?from=$datetimeFrom&to=$datetimeTo"
+            "/api/v1/measurements/range" +
+                    "?from=${enc(datetimeFrom)}" +
+                    "&to=${enc(datetimeTo)}"
         )
+    }
+
+    private fun enc(value: String): String {
+        return URLEncoder.encode(value, Charsets.UTF_8)
     }
 }

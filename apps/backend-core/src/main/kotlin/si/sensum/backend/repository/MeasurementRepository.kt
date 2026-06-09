@@ -22,6 +22,7 @@ import si.sensum.backend.domain.measurement.MeasurementEntity
 import si.sensum.backend.mapper.toDataSourceDto
 import si.sensum.backend.mapper.toDbValue
 import si.sensum.shared.models.common.DataSourceDto
+import si.sensum.shared.models.datetime.ApiDateTime
 import si.sensum.shared.models.measurements.MeasurementDto
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
@@ -197,13 +198,13 @@ class MeasurementRepository {
     }
 
     private fun MeasurementDto.toDbDateTime(): LocalDateTime {
-        return dateTime
-            .toLocalDateTime()
+        return ApiDateTime
+            .toAppLocal(dateTime)
             .toKotlinLocalDateTime()
     }
 
     private fun LocalDateTime.toDtoDateTime(): OffsetDateTime {
-        return toJavaLocalDateTime().atOffset(ZoneOffset.UTC)
+        return ApiDateTime.fromAppLocal(toJavaLocalDateTime())
     }
 
     fun existsInRange(

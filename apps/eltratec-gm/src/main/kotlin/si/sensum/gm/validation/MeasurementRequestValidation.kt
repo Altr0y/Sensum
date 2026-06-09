@@ -4,14 +4,14 @@ import io.ktor.server.application.ApplicationCall
 import io.ktor.server.request.receive
 import si.sensum.gm.errors.InvalidRequiredFieldException
 import si.sensum.gm.errors.MissingRequiredFieldException
+import si.sensum.shared.models.datetime.ApiDateTime
 import si.sensum.shared.models.measurements.MeasurementRangeQuery
 import si.sensum.shared.models.measurements.RefreshMeasurementsCommand
-import si.sensum.shared.models.datetime.ApiDateTime
 
 internal fun ApplicationCall.receiveMeasurementRangeQuery(): MeasurementRangeQuery {
     return MeasurementRangeQuery(
-        datetimeFrom = requireNormalizedQueryParameter("datetimeFrom"),
-        datetimeTo = requireNormalizedQueryParameter("datetimeTo")
+        datetimeFrom = requireNormalizedQueryParameter("from"),
+        datetimeTo = requireNormalizedQueryParameter("to")
     )
 }
 

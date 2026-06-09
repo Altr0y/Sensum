@@ -33,11 +33,11 @@ class MeasurementRefreshService(
         }
 
         val normalizedRequest = request.copy(
-            datetimeFrom = ApiDateTime.requireNormalizedLocal(
+            datetimeFrom = ApiDateTime.requireNormalized(
                 fieldName = "datetimeFrom",
                 value = request.datetimeFrom
             ),
-            datetimeTo = ApiDateTime.requireNormalizedLocal(
+            datetimeTo = ApiDateTime.requireNormalized(
                 fieldName = "datetimeTo",
                 value = request.datetimeTo
             )

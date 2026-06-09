@@ -10,7 +10,6 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.put
 import io.ktor.server.routing.route
-import kotlinx.datetime.LocalDateTime
 import si.sensum.backend.service.MeasurementRefreshService
 import si.sensum.backend.service.MeasurementService
 import si.sensum.shared.ktor.response.respondOk
@@ -36,7 +35,7 @@ fun Route.configureMeasurementRoutes(
             val channelId = call.request.queryParameters["channelId"]?.toIntOrNull()
                 ?: throw IllegalArgumentException("Missing or invalid query parameter: channelId")
 
-            val (from, to) = call.parseDateRange()
+            val (from, to) = call.requireDateRangeQuery()
 
             call.respondOk {
                 measurementService.getMeasurements(
@@ -49,7 +48,6 @@ fun Route.configureMeasurementRoutes(
 
         post {
             val request = call.receive<MeasurementDto>()
-
             val created = measurementService.createMeasurement(request)
 
             call.respond(
@@ -67,9 +65,7 @@ fun Route.configureMeasurementRoutes(
 
             call.respond(
                 HttpStatusCode.Created,
-                CreateMeasurementsBatchResult(
-                    insertedCount = insertedCount
-                )
+                CreateMeasurementsBatchResult(insertedCount = insertedCount)
             )
         }
 
@@ -86,11 +82,11 @@ fun Route.configureMeasurementRoutes(
 
             val normalizedRequest = try {
                 request.copy(
-                    datetimeFrom = ApiDateTime.requireNormalizedLocal(
+                    datetimeFrom = ApiDateTime.requireNormalized(
                         fieldName = "datetimeFrom",
                         value = request.datetimeFrom
                     ),
-                    datetimeTo = ApiDateTime.requireNormalizedLocal(
+                    datetimeTo = ApiDateTime.requireNormalized(
                         fieldName = "datetimeTo",
                         value = request.datetimeTo
                     )
@@ -109,7 +105,7 @@ fun Route.configureMeasurementRoutes(
         }
 
         post("/regenerate") {
-            val (from, to) = call.parseDateRange()
+            val (from, to) = call.requireDateRangeQuery()
 
             measurementService.regenerateMeasurements(
                 from = from,
@@ -125,18 +121,16 @@ fun Route.configureMeasurementRoutes(
             val id = call.requireMeasurementId()
             val request = call.receive<MeasurementDto>()
 
-            val updated = measurementService.updateMeasurement(
-                measurementId = id,
-                request = request
-            )
-
             call.respondOk {
-                updated
+                measurementService.updateMeasurement(
+                    measurementId = id,
+                    request = request
+                )
             }
         }
 
         delete("/range") {
-            val (from, to) = call.parseDateRange()
+            val (from, to) = call.requireDateRangeQuery()
 
             measurementService.deleteMeasurementsByRange(
                 from = from,
@@ -173,28 +167,4 @@ fun Route.configureMeasurementRoutes(
 private fun ApplicationCall.requireMeasurementId(): Long {
     return parameters["id"]?.toLongOrNull()
         ?: throw IllegalArgumentException("Invalid measurement id")
-}
-
-private fun ApplicationCall.parseDateRange(): Pair<LocalDateTime, LocalDateTime> {
-    val fromRaw = request.queryParameters["from"]
-        ?: throw IllegalArgumentException("Missing required query parameter: from")
-
-    val toRaw = request.queryParameters["to"]
-        ?: throw IllegalArgumentException("Missing required query parameter: to")
-
-    val from = LocalDateTime.parse(
-        ApiDateTime.requireNormalizedLocal(
-            fieldName = "from",
-            value = fromRaw
-        )
-    )
-
-    val to = LocalDateTime.parse(
-        ApiDateTime.requireNormalizedLocal(
-            fieldName = "to",
-            value = toRaw
-        )
-    )
-
-    return from to to
 }

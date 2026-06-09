@@ -1,11 +1,8 @@
 package si.sensum.demo.screens.data
 
+import si.sensum.demo.util.DateTimeFormat.toApiString
 import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 
-internal val ApiLocalDateTimeFormatter: DateTimeFormatter =
-    DateTimeFormatter.ISO_LOCAL_DATE_TIME
-
-internal fun LocalDateTime.toApiString(): String {
-    return format(ApiLocalDateTimeFormatter)
+internal fun LocalDateTime.toDataApiString(): String {
+    return toApiString()
 }
