@@ -19,5 +19,12 @@ internal fun Route.simulatorController(
                 simulatorService.generate(request)
             }
         }
+        post("/generate-and-save") {
+            val request = call.receive<SimulateRequestDto>()
+
+            call.respondOk {
+                simulatorService.generateAndSave(request)
+            }
+        }
     }
 }

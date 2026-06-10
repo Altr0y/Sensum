@@ -3,7 +3,7 @@
 import { Minus, Plus } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import type { PointerEvent } from "react"
-import type { PanelPosition } from "./types"
+import type { PanelPosition } from "../shared/types"
 
 const LAYER_COLORS = [
     { color: "#0284c7", fill: "#0284c7", line: true, label: "Rivers" },

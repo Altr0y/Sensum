@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic"
 
 const SensumMap = dynamic(
-    () => import("@/components/map/SensumMap").then((mod) => mod.SensumMap),
+    () => import("@/components/map/core/SensumMap").then((mod) => mod.SensumMap),
     {
         ssr: false,
         loading: () => (

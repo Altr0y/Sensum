@@ -15,4 +15,13 @@ internal class BackendSimulatorClient(
             body = request
         )
     }
+
+    suspend fun generateAndSave(
+        request: SimulateRequestDto
+    ): List<SimulatedStationDto> {
+        return backend.post(
+            path = "/api/v1/simulator/generate-and-save",
+            body = request
+        )
+    }
 }

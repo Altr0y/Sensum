@@ -1,6 +1,6 @@
 "use client"
 import { Loader2 } from "lucide-react"
-import type { StationDto, ChannelDto } from "../types"
+import type { StationDto, ChannelDto } from "../shared/types"
 import type { SimConfig, ChannelKind } from "./types"
 import { ALL_CHANNEL_KINDS, CHANNEL_KIND_LABELS } from "./types"
 

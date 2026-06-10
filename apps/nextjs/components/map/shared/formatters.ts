@@ -1,6 +1,10 @@
 export function formatApiLocalDateTime(date: Date) {
     const pad = (value: number) => value.toString().padStart(2, "0")
-
+    const offset = -date.getTimezoneOffset()
+    const sign = offset >= 0 ? "+" : "-"
+    const absOffset = Math.abs(offset)
+    const offsetHours = pad(Math.floor(absOffset / 60))
+    const offsetMinutes = pad(absOffset % 60)
     return [
         date.getFullYear(),
         "-",
@@ -13,6 +17,10 @@ export function formatApiLocalDateTime(date: Date) {
         pad(date.getMinutes()),
         ":",
         pad(date.getSeconds()),
+        sign,
+        offsetHours,
+        ":",
+        offsetMinutes,
     ].join("")
 }
 

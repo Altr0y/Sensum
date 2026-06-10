@@ -3,7 +3,7 @@
 import { ChevronDown, ChevronRight, Minus, Plus } from "lucide-react"
 import { useRef, useState } from "react"
 import type { PointerEvent } from "react"
-import type { PanelPosition } from "./types"
+import type { PanelPosition } from "../shared/types"
 import { getLayerLabel, stationSourceBadges, stationSourceLabels, stationSources } from "./layerConfig"
 
 type Props = {

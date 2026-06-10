@@ -5,6 +5,7 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.route
 import si.sensum.backend.service.StatsService
 import si.sensum.shared.ktor.response.respondOk
+import si.sensum.shared.ktor.validation.requireLongPathParameter
 
 fun Route.configureStatsRoutes(
     statsService: StatsService
@@ -16,13 +17,27 @@ fun Route.configureStatsRoutes(
             }
         }
 
+        get("/stations") {
+            call.respondOk {
+                statsService.getStations()
+            }
+        }
+
+        get("/stations/{stationId}/timerange") {
+            val stationId = call.requireLongPathParameter("stationId")
+            call.respondOk {
+                statsService.stationTimeRange(stationId)
+            }
+        }
+
         get("/measurements/range") {
             val (from, to) = call.requireDateRangeQuery()
-
+            val stationId = call.parameters["stationId"]?.toLongOrNull()
             call.respondOk {
                 statsService.measurementsInRange(
                     from = from,
-                    to = to
+                    to = to,
+                    stationId = stationId
                 )
             }
         }

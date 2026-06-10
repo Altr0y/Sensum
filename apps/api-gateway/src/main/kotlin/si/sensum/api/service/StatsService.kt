@@ -9,6 +9,14 @@ internal class StatsService(
 ) {
     suspend fun getOverview(): OverviewStatsDto = statsClient.getOverview()
 
-    suspend fun getMeasurementsInRange(from: String, to: String): MeasurementRangeStatsDto =
-        statsClient.getMeasurementsInRange(from = from, to = to)
+    suspend fun getStations() = statsClient.getStations()
+
+    suspend fun getStationTimeRange(stationId: Long) = statsClient.getStationTimeRange(stationId)
+
+    suspend fun getMeasurementsInRange(
+        from: String,
+        to: String,
+        stationId: Long? = null
+    ): MeasurementRangeStatsDto =
+        statsClient.getMeasurementsInRange(from = from, to = to, stationId = stationId)
 }

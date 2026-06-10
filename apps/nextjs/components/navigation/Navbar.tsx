@@ -4,6 +4,7 @@ import {cookies} from "next/headers"
 
 import {NAV_ITEMS} from "@/lib/constants"
 import {NavItem} from "./NavItem"
+import { MonitoringNavItem } from "./MonitoringNavItem"
 import {ThemeToggle} from "@/components/theme/ThemeToggle"
 import {LogoutButton} from "./LogoutButton"
 
@@ -12,8 +13,7 @@ export async function Navbar() {
     const isLoggedIn = Boolean(cookieStore.get("sensum_token")?.value)
 
     return (
-        <header className="h-14 bg-card border-b border-border flex items-center px-6 gap-7 sticky top-0 z-50">
-            <div className="flex items-center gap-2">
+        <header className="h-14 bg-card border-b border-border flex items-center px-6 gap-7 sticky top-0 z-[1200]">            <div className="flex items-center gap-2">
                 <Image
                     src="/eltratec_logo.png"
                     alt="Sensum"
@@ -34,14 +34,18 @@ export async function Navbar() {
 
             {isLoggedIn && (
                 <nav className="flex items-center gap-1">
-                    {NAV_ITEMS.map((item) => (
-                        <NavItem
-                            key={item.href}
-                            href={item.href}
-                            label={item.label}
-                            icon={item.icon}
-                        />
-                    ))}
+                    {NAV_ITEMS.map((item) =>
+                        item.href === "/monitoring" ? (
+                            <MonitoringNavItem key={item.href} />
+                        ) : (
+                            <NavItem
+                                key={item.href}
+                                href={item.href}
+                                label={item.label}
+                                icon={item.icon}
+                            />
+                        )
+                    )}
                 </nav>
             )}
 

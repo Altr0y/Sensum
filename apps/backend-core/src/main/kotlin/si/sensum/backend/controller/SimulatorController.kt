@@ -18,5 +18,11 @@ fun Route.configureSimulatorRoutes(
             val result = simulatorService.simulate(dto)
             call.respond(HttpStatusCode.OK, result)
         }
+        post("/generate-and-save") {
+            val dto = call.receive<SimulateRequestDto>()
+            val customerId = 1 // TODO: iz JWT tokena
+            val result = simulatorService.simulateAndSave(dto, customerId)
+            call.respond(HttpStatusCode.OK, result)
+        }
     }
 }

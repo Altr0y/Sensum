@@ -3,6 +3,7 @@ package si.sensum.backend.repository
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
@@ -12,6 +13,9 @@ import si.sensum.backend.database.UserStationTable
 import si.sensum.backend.domain.station.StationEntity
 import si.sensum.backend.mapper.toDataSourceDto
 import si.sensum.shared.models.common.DataSourceDto
+import org.jetbrains.exposed.v1.core.inList
+import si.sensum.backend.database.ChannelTable
+import si.sensum.backend.database.MeasurementTable
 
 class StationRepository {
 
@@ -114,6 +118,27 @@ class StationRepository {
         } get StationTable.id
 
         findById(id)!!
+    }
+
+    fun delete(stationId: Long): Boolean = DatabaseTransaction.run {
+        // najprej zbriši meritve za vse kanale te postaje
+        val channelIds = ChannelTable
+            .selectAll()
+            .where { ChannelTable.stationId eq stationId }
+            .map { it[ChannelTable.id] }
+
+        if (channelIds.isNotEmpty()) {
+            MeasurementTable.deleteWhere {
+                MeasurementTable.channelId inList channelIds
+            }
+            ChannelTable.deleteWhere {
+                ChannelTable.stationId eq stationId
+            }
+        }
+
+        StationTable.deleteWhere {
+            StationTable.id eq stationId
+        } > 0
     }
 
     private fun toStation(row: ResultRow): StationEntity {

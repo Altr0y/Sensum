@@ -99,7 +99,10 @@ fun Application.configureBackendRouting(
         municipalitiesPath = "geojson/Municipalities.geojson"
     )
     val simulatorService = SimulatorService(
-        spatialSimulatorService = spatialSimulatorService
+        spatialSimulatorService = spatialSimulatorService,
+        stationRepository = stationRepository,
+        channelRepository = channelRepository,
+        measurementRepository = measurementRepository
     )
 
     val recordsService = RecordsService(

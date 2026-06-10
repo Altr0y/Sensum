@@ -1,4 +1,4 @@
-import type { StationDto } from "../types"
+import type { StationDto } from "../shared/types"
 import type { SimConfig } from "./types"
 
 function pointInPolygon(

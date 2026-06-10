@@ -4,6 +4,7 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
+import io.ktor.server.routing.delete
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
@@ -41,6 +42,16 @@ fun Route.configureStationRoutes(
                 HttpStatusCode.OK,
                 station
             )
+        }
+
+        delete("/{stationId}") {
+            val stationId = call.requireLongPathParameter("stationId")
+            val deleted = stationService.deleteStation(stationId)
+            if (deleted) {
+                call.respond(HttpStatusCode.NoContent)
+            } else {
+                call.respond(HttpStatusCode.NotFound)
+            }
         }
     }
 

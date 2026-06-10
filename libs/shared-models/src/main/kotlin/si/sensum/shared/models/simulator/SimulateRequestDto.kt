@@ -14,5 +14,6 @@ data class SimulateRequestDto(
     val channelIds: List<Int> = emptyList(),
     val from: String? = null,      // ISO datetime npr. "2026-01-01T00:00:00"
     val to: String? = null,
-    val intervalMinutes: Long = 60L
+    val intervalMinutes: Long = 60L,
+    val polygon: List<List<Double>>? = null
 )

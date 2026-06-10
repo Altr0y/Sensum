@@ -61,5 +61,13 @@ internal fun Route.stationController(
                 )
             }
         }
+        delete("/{stationId}") {
+            val principal = call.requireAdminUser() ?: return@delete
+            val stationId = call.requireLongPathParameter("stationId")
+            call.respondOk {
+                stationService.deleteStation(principal, stationId)
+            }
+        }
+
     }
 }

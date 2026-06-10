@@ -99,6 +99,13 @@ internal class StationService(
         return stations.createStation(command)
     }
 
+    suspend fun deleteStation(principal: ApiPrincipal, stationId: Long) = ServiceLogger.suspendCall(
+        service = "station",
+        operation = "deleteStation"
+    ) {
+        stations.deleteStation(stationId)
+    }
+
     private fun StationDto.toGeoJsonFeature(): StationGeoJsonFeatureDto {
         return StationGeoJsonFeatureDto(
             properties = StationGeoJsonPropertiesDto(

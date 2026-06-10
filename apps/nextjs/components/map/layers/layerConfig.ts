@@ -1,5 +1,5 @@
 import type { Feature, GeoJsonProperties, Geometry } from "geojson"
-import type { SensumGeoJson } from "./types"
+import type { SensumGeoJson } from "../shared/types"
 
 export const layerLabels: Record<string, string> = {
     stations: "Stations",

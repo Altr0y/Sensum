@@ -22,10 +22,9 @@ export default function RootLayout({
 }) {
     return (
         <html lang="en" suppressHydrationWarning>
-        <body className={`${jetbrainsMono.variable} font-mono min-h-screen bg-background text-foreground`}>
-        <ThemeProvider>
+        <body className={`${jetbrainsMono.variable} font-mono min-h-screen bg-background text-foreground overflow-hidden`}>        <ThemeProvider>
             <Navbar />
-            <main className="p-6">
+            <main className="p-6 overflow-hidden">
                 {children}
             </main>
         </ThemeProvider>

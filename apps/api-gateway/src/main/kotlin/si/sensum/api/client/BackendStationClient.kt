@@ -44,4 +44,8 @@ internal class BackendStationClient(
     suspend fun createStation(command: CreateStationCommand): StationDto {
         return backend.post("/api/v1/stations", command)
     }
+
+    suspend fun deleteStation(stationId: Long) {
+        backend.delete("/api/v1/stations/$stationId")
+    }
 }
