@@ -11,6 +11,7 @@ import si.sensum.backend.service.*
 import si.sensum.shared.auth.jwt.JwtConfig
 import si.sensum.shared.auth.jwt.JwtTokenService
 import si.sensum.shared.http.ServiceHttpClient
+import si.sensum.simulator.SpatialSimulatorService
 
 fun Application.configureBackendRouting(
     backendConfig: BackendConfig
@@ -41,6 +42,12 @@ fun Application.configureBackendRouting(
     val stationRepository = StationRepository()
     val channelRepository = ChannelRepository()
     val measurementRepository = MeasurementRepository()
+    val countryRepository = CountryRepository()
+    val regionRepository = RegionRepository()
+    val municipalityRepository = MunicipalityRepository()
+    val recordsRepository = RecordsRepository()
+    val statsRepository = StatsRepository()
+    val dataImportRepository = DataImportRepository()
 
     val authService = AuthService(
         userRepository = userRepository
@@ -62,6 +69,18 @@ fun Application.configureBackendRouting(
         channelRepository = channelRepository
     )
 
+    val countryService = CountryService(
+        countryRepository = countryRepository
+    )
+
+    val regionService = RegionService(
+        regionRepository = regionRepository
+    )
+
+    val municipalityService = MunicipalityService(
+        municipalityRepository = municipalityRepository
+    )
+
     val measurementService = MeasurementService(
         repository = measurementRepository
     )
@@ -69,6 +88,37 @@ fun Application.configureBackendRouting(
     val measurementRefreshService = MeasurementRefreshService(
         gmClient = gmClient,
         measurementRepository = measurementRepository,
+        swsUsername = backendConfig.swsUsername,
+        swsPassword = backendConfig.swsPassword
+    )
+
+    val spatialSimulatorService = SpatialSimulatorService(
+        floodZonesDir = "geojson",
+        riversPath = "geojson/Rivers.geojson",
+        regionsPath = "geojson/Regions.geojson",
+        municipalitiesPath = "geojson/Municipalities.geojson"
+    )
+    val simulatorService = SimulatorService(
+        spatialSimulatorService = spatialSimulatorService,
+        stationRepository = stationRepository,
+        channelRepository = channelRepository,
+        measurementRepository = measurementRepository
+    )
+
+    val recordsService = RecordsService(
+        repository = recordsRepository
+    )
+
+    val statsService = StatsService(
+        statsRepository = statsRepository
+    )
+
+    val dslService = DslService()
+
+
+    val dataImportService = DataImportService(
+        importRepository = dataImportRepository,
+        gmClient = gmClient,
         swsUsername = backendConfig.swsUsername,
         swsPassword = backendConfig.swsPassword
     )
@@ -99,6 +149,38 @@ fun Application.configureBackendRouting(
         configureMeasurementRoutes(
             measurementService = measurementService,
             refreshService = measurementRefreshService
+        )
+
+        configureSimulatorRoutes(
+            simulatorService = simulatorService
+        )
+
+        configureCountryRoutes(
+            countryService = countryService
+        )
+
+        configureRegionRoutes(
+            regionService = regionService
+        )
+
+        configureMunicipalityRoutes(
+            municipalityService = municipalityService
+        )
+
+        configureDslRoutes(
+            dslService = dslService
+        )
+
+        configureRecordsRoutes(
+            recordsService = recordsService
+        )
+
+        configureStatsRoutes(
+            statsService = statsService
+        )
+
+        configureDataImportRoutes(
+            service = dataImportService
         )
     }
 }

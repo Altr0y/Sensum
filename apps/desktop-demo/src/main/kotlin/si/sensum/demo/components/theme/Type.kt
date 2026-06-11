@@ -33,14 +33,20 @@ internal fun jetBrainsMonoFamily(): FontFamily {
 internal fun sensumTypography(): Typography {
     val font = jetBrainsMonoFamily()
     return Typography(
-        bodySmall      = TextStyle(fontFamily = font, fontWeight = FontWeight.Normal,   fontSize = 12.sp),
-        bodyMedium     = TextStyle(fontFamily = font, fontWeight = FontWeight.Normal,   fontSize = 14.sp),
-        bodyLarge      = TextStyle(fontFamily = font, fontWeight = FontWeight.Normal,   fontSize = 16.sp),
-        labelSmall     = TextStyle(fontFamily = font, fontWeight = FontWeight.Medium,   fontSize = 11.sp),
-        labelMedium    = TextStyle(fontFamily = font, fontWeight = FontWeight.Medium,   fontSize = 12.sp),
-        titleSmall     = TextStyle(fontFamily = font, fontWeight = FontWeight.SemiBold, fontSize = 14.sp),
-        titleMedium    = TextStyle(fontFamily = font, fontWeight = FontWeight.SemiBold, fontSize = 16.sp),
-        titleLarge     = TextStyle(fontFamily = font, fontWeight = FontWeight.Bold,     fontSize = 20.sp),
-        headlineMedium = TextStyle(fontFamily = font, fontWeight = FontWeight.Bold,     fontSize = 24.sp),
+        displayLarge   = TextStyle(fontFamily = font, fontWeight = FontWeight.ExtraBold, fontSize = 57.sp),
+        displayMedium  = TextStyle(fontFamily = font, fontWeight = FontWeight.ExtraBold, fontSize = 45.sp),
+        displaySmall   = TextStyle(fontFamily = font, fontWeight = FontWeight.Bold,      fontSize = 36.sp),
+        headlineLarge  = TextStyle(fontFamily = font, fontWeight = FontWeight.Bold,      fontSize = 32.sp),
+        headlineMedium = TextStyle(fontFamily = font, fontWeight = FontWeight.Bold,      fontSize = 24.sp),
+        headlineSmall  = TextStyle(fontFamily = font, fontWeight = FontWeight.Bold,      fontSize = 20.sp),
+        titleLarge     = TextStyle(fontFamily = font, fontWeight = FontWeight.Bold,      fontSize = 20.sp),
+        titleMedium    = TextStyle(fontFamily = font, fontWeight = FontWeight.SemiBold,  fontSize = 16.sp),
+        titleSmall     = TextStyle(fontFamily = font, fontWeight = FontWeight.SemiBold,  fontSize = 14.sp),
+        bodyLarge      = TextStyle(fontFamily = font, fontWeight = FontWeight.Normal,    fontSize = 16.sp),
+        bodyMedium     = TextStyle(fontFamily = font, fontWeight = FontWeight.Normal,    fontSize = 14.sp),
+        bodySmall      = TextStyle(fontFamily = font, fontWeight = FontWeight.Normal,    fontSize = 12.sp),
+        labelLarge     = TextStyle(fontFamily = font, fontWeight = FontWeight.Medium,    fontSize = 14.sp),
+        labelMedium    = TextStyle(fontFamily = font, fontWeight = FontWeight.Medium,    fontSize = 12.sp),
+        labelSmall     = TextStyle(fontFamily = font, fontWeight = FontWeight.Medium,    fontSize = 11.sp),
     )
 }

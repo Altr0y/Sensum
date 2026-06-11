@@ -18,7 +18,11 @@ private fun Route.publicControllers(
     dependencies: ApiDependencies
 ) {
     publicAuthController(
-        authService = dependencies.authService
+        authService = dependencies.authService,
+        jwtTokenService = dependencies.jwtTokenService
+    )
+    statsController(
+        statsService = dependencies.statsService
     )
 }
 
@@ -47,5 +51,21 @@ private fun Route.protectedControllers(
 
     channelController(
         channelService = dependencies.channelService
+    )
+
+    recordsController(
+        recordsService = dependencies.recordsService
+    )
+
+    dslController(
+        dslService = dependencies.dslService
+    )
+
+    simulatorController(
+        simulatorService = dependencies.simulatorService
+    )
+
+    dataImportController(
+        service = dependencies.dataImportService
     )
 }

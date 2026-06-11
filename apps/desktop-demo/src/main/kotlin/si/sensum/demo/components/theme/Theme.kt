@@ -1,7 +1,9 @@
 package si.sensum.demo.components.theme
 
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Shapes
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.staticCompositionLocalOf
@@ -14,6 +16,14 @@ val LocalThemeColors = staticCompositionLocalOf { SensumColors.Dark }
 val SensumThemeColors: SensumColors.Palette
     @Composable
     get() = LocalThemeColors.current
+
+private val SensumShapes = Shapes(
+    extraSmall = RoundedCornerShape(SensumRadius.xs),
+    small = RoundedCornerShape(SensumRadius.sm),
+    medium = RoundedCornerShape(SensumRadius.md),
+    large = RoundedCornerShape(SensumRadius.lg),
+    extraLarge = RoundedCornerShape(SensumRadius.xl)
+)
 
 @Composable
 fun SensumTheme(
@@ -31,6 +41,7 @@ fun SensumTheme(
         MaterialTheme(
             colorScheme = colorScheme,
             typography = sensumTypography(),
+            shapes = SensumShapes,
             content = content
         )
     }
@@ -38,8 +49,4 @@ fun SensumTheme(
 
 @Composable
 fun letsPlotTheme() =
-    if (LocalIsDarkTheme.current) {
-        flavorDarcula()
-    } else {
-        flavorStandard()
-    }
+    if (LocalIsDarkTheme.current) flavorDarcula() else flavorStandard()

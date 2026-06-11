@@ -1,30 +1,48 @@
 package si.sensum.demo.api
 
-import si.sensum.demo.model.DemoChannels
 import si.sensum.demo.model.MeasurementUi
+import si.sensum.shared.models.channels.ChannelDto
+import si.sensum.shared.models.datetime.ApiDateTime
 import si.sensum.shared.models.measurements.MeasurementDto
-import java.time.ZoneOffset
+import si.sensum.shared.models.stations.StationDto
 
 fun MeasurementUi.toDto(): MeasurementDto {
     return MeasurementDto(
         id = id?.toLong(),
         stationId = stationId.toLong(),
         channelId = channelId,
-        dateTime = dateTime.atOffset(ZoneOffset.UTC),
+        dateTime = ApiDateTime.fromAppLocal(dateTime),
         value = value,
-        status = status
+        status = status,
+        source = source
     )
 }
 
-fun MeasurementDto.toUi(): MeasurementUi {
+fun MeasurementDto.toUi(
+    stations: List<StationDto> = emptyList(),
+    channels: List<ChannelDto> = emptyList()
+): MeasurementUi {
+    val station = stations.firstOrNull { item ->
+        item.stationId == stationId
+    }
+
+    val channel = channels.firstOrNull { item ->
+        item.channelId == channelId
+    }
+
     return MeasurementUi(
         id = id?.toInt(),
         stationId = stationId.toInt(),
-        stationName = DemoChannels.DEFAULT_STATION_NAME,
+        stationName = station?.name ?: "Station $stationId",
         channelId = channelId,
-        channelName = DemoChannels.nameOf(channelId),
-        dateTime = dateTime.toLocalDateTime(),
+        channelName = channel?.name ?: "Channel $channelId",
+        dateTime = ApiDateTime.toAppLocal(dateTime),
         value = value,
-        status = status
+        status = status,
+        source = source
     )
+}
+
+fun MeasurementDto.toMeasurementUi(): MeasurementUi {
+    return toUi()
 }

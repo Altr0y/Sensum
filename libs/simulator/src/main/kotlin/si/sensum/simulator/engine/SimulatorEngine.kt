@@ -54,6 +54,7 @@ class SimulatorEngine(val stationConfig: StationConfig) {
             GeneratorType.CONSTANT -> {
                 (generators[channel.channelId] as ConstantGenerator).generate()
             }
+
             GeneratorType.RANDOM_WALK -> {
                 (generators[channel.channelId] as RandomWalkGenerator).generate(hour, dayOfWeek, month)
             }

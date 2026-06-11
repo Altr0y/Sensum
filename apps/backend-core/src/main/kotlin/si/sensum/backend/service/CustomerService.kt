@@ -11,20 +11,28 @@ class CustomerService(
 ) {
     fun createCustomer(
         request: CreateCustomerCommand
-    ): CustomerDto {
+    ): CustomerDto = ServiceLogger.call(
+        service = "customer",
+        operation = "createCustomer",
+        details = "name=${request.name.trim()}"
+    ) {
         require(request.name.isNotBlank()) {
             "Customer name must not be blank"
         }
 
-        return customerRepository
-            .create(name = request.name)
+        customerRepository
+            .create(name = request.name.trim())
             .toDto()
     }
 
     fun getCustomer(
         customerId: Int
-    ): CustomerDto {
-        return customerRepository
+    ): CustomerDto = ServiceLogger.call(
+        service = "customer",
+        operation = "getCustomer",
+        details = "customerId=$customerId"
+    ) {
+        customerRepository
             .findById(customerId)
             ?.toDto()
             ?: error("Customer not found")
@@ -33,15 +41,19 @@ class CustomerService(
     fun updateCustomer(
         customerId: Int,
         request: UpdateCustomerCommand
-    ): CustomerDto {
+    ): CustomerDto = ServiceLogger.call(
+        service = "customer",
+        operation = "updateCustomer",
+        details = "customerId=$customerId"
+    ) {
         require(request.name.isNotBlank()) {
             "Customer name must not be blank"
         }
 
-        return customerRepository
+        customerRepository
             .update(
                 customerId = customerId,
-                name = request.name
+                name = request.name.trim()
             )
             ?.toDto()
             ?: error("Customer not found")

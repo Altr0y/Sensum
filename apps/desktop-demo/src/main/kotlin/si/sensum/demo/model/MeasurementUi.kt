@@ -1,5 +1,6 @@
 package si.sensum.demo.model
 
+import si.sensum.shared.models.common.DataSourceDto
 import java.time.LocalDateTime
 
 data class MeasurementUi(
@@ -10,5 +11,6 @@ data class MeasurementUi(
     val channelName: String,
     val dateTime: LocalDateTime,
     val value: Double,
-    val status: Int
+    val status: Int,
+    val source: DataSourceDto = DataSourceDto.UNKNOWN
 )

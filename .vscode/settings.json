@@ -1,0 +1,27 @@
+{
+  "files.exclude": {
+    ".gradle": true,
+    ".idea": true,
+    ".kotlin": true,
+    "build": true,
+    "docs": true,
+    "exported-module-files": true,
+    "gradle": true,
+    "libs": true,
+    "postman": true,
+    "test-data": true,
+
+    "apps/api-gateway": true,
+    "apps/backend-core": true,
+    "apps/desktop-demo": true,
+    "apps/eltratec-gm": true,
+
+    "docker-compose.eltratec.yml": true,
+    "docker-compose.feri.yml": true,
+    "export-all-module-files.ps1": true,
+    "gradlew": true,
+    "gradlew.bat": true,
+    "settings.gradle.kts": true,
+    "build.gradle.kts": true
+  }
+}

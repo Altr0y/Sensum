@@ -19,6 +19,10 @@ import si.sensum.backend.database.ChannelTable
 import si.sensum.backend.database.DatabaseTransaction
 import si.sensum.backend.database.MeasurementTable
 import si.sensum.backend.domain.measurement.MeasurementEntity
+import si.sensum.backend.mapper.toDataSourceDto
+import si.sensum.backend.mapper.toDbValue
+import si.sensum.shared.models.common.DataSourceDto
+import si.sensum.shared.models.datetime.ApiDateTime
 import si.sensum.shared.models.measurements.MeasurementDto
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
@@ -51,29 +55,20 @@ class MeasurementRepository {
             .map(::toDto)
     }
 
-    fun existsInRange(
-        from: LocalDateTime,
-        to: LocalDateTime
-    ): Boolean = DatabaseTransaction.run {
-        MeasurementTable
-            .selectAll()
-            .where {
-                (MeasurementTable.dateTime greaterEq from) and
-                        (MeasurementTable.dateTime lessEq to)
-            }
-            .limit(1)
-            .count() > 0
-    }
-
     fun create(dto: MeasurementDto): MeasurementDto = DatabaseTransaction.run {
-        val inserted = MeasurementTable.insert {
+        val id = MeasurementTable.insert {
             it[channelId] = dto.channelId
             it[dateTime] = dto.toDbDateTime()
             it[value] = dto.value.toFloat()
             it[status] = dto.status != 0
-        }
+            it[dataSource] = dto.source.toDbValue()
+        } get MeasurementTable.id
 
-        dto.copy(id = inserted[MeasurementTable.id])
+        MeasurementTable
+            .selectAll()
+            .where { MeasurementTable.id eq id }
+            .map(::toDto)
+            .single()
     }
 
     fun createBatch(measurements: List<MeasurementDto>): Int = DatabaseTransaction.run {
@@ -84,11 +79,12 @@ class MeasurementRepository {
         MeasurementTable.batchInsert(
             data = measurements,
             shouldReturnGeneratedValues = false
-        ) { dto ->
-            this[MeasurementTable.channelId] = dto.channelId
-            this[MeasurementTable.dateTime] = dto.toDbDateTime()
-            this[MeasurementTable.value] = dto.value.toFloat()
-            this[MeasurementTable.status] = dto.status != 0
+        ) { measurement ->
+            this[MeasurementTable.channelId] = measurement.channelId
+            this[MeasurementTable.dateTime] = measurement.toDbDateTime()
+            this[MeasurementTable.value] = measurement.value.toFloat()
+            this[MeasurementTable.status] = measurement.status != 0
+            this[MeasurementTable.dataSource] = measurement.source.toDbValue()
         }
 
         measurements.size
@@ -107,6 +103,7 @@ class MeasurementRepository {
             this[MeasurementTable.dateTime] = measurement.dateTime
             this[MeasurementTable.value] = measurement.value
             this[MeasurementTable.status] = measurement.status
+            this[MeasurementTable.dataSource] = measurement.source.toDbValue()
         }
 
         measurements.size
@@ -121,6 +118,7 @@ class MeasurementRepository {
             it[dateTime] = dto.toDbDateTime()
             it[value] = dto.value.toFloat()
             it[status] = dto.status != 0
+            it[dataSource] = dto.source.toDbValue()
         }
 
         if (updatedCount == 0) {
@@ -156,31 +154,24 @@ class MeasurementRepository {
         }
     }
 
-    fun replaceAllFromDtos(measurements: List<MeasurementDto>): Pair<Int, Int> =
-        DatabaseTransaction.run {
-            val deleted = MeasurementTable.deleteAll()
+    fun replaceAllFromDtos(
+        measurements: List<MeasurementDto>,
+        source: DataSourceDto
+    ): Pair<Int, Int> = DatabaseTransaction.run {
+        val deleted = MeasurementTable.deleteAll()
 
-            measurements.forEach { dto ->
-                MeasurementTable.insert {
-                    it[channelId] = dto.channelId
-                    it[dateTime] = dto.toDbDateTime()
-                    it[value] = dto.value.toFloat()
-                    it[status] = dto.status != 0
-                }
-            }
-
-            deleted to measurements.size
+        MeasurementTable.batchInsert(
+            data = measurements,
+            shouldReturnGeneratedValues = false
+        ) { dto ->
+            this[MeasurementTable.channelId] = dto.channelId
+            this[MeasurementTable.dateTime] = dto.toDbDateTime()
+            this[MeasurementTable.value] = dto.value.toFloat()
+            this[MeasurementTable.status] = dto.status != 0
+            this[MeasurementTable.dataSource] = source.toDbValue()
         }
 
-
-
-    private fun findStationIdForChannel(channelId: Int): Long {
-        return ChannelTable
-            .selectAll()
-            .where { ChannelTable.id eq channelId }
-            .map { row -> row[ChannelTable.stationId] }
-            .singleOrNull()
-            ?: 0L
+        deleted to measurements.size
     }
 
     private fun toDto(row: ResultRow): MeasurementDto {
@@ -192,19 +183,43 @@ class MeasurementRepository {
             channelId = channelId,
             dateTime = row[MeasurementTable.dateTime].toDtoDateTime(),
             value = row[MeasurementTable.value].toDouble(),
-            status = if (row[MeasurementTable.status]) 1 else 0
+            status = if (row[MeasurementTable.status]) 1 else 0,
+            source = row[MeasurementTable.dataSource].toDataSourceDto()
         )
     }
 
+    private fun findStationIdForChannel(channelId: Int): Long {
+        return ChannelTable
+            .selectAll()
+            .where { ChannelTable.id eq channelId }
+            .map { row -> row[ChannelTable.stationId] }
+            .singleOrNull()
+            ?: 0L
+    }
+
     private fun MeasurementDto.toDbDateTime(): LocalDateTime {
-        return dateTime
-            .toLocalDateTime()
+        return ApiDateTime
+            .toAppLocal(dateTime)
             .toKotlinLocalDateTime()
     }
 
     private fun LocalDateTime.toDtoDateTime(): OffsetDateTime {
-        return this
-            .toJavaLocalDateTime()
-            .atOffset(ZoneOffset.UTC)
+        return ApiDateTime.fromAppLocal(toJavaLocalDateTime())
+    }
+
+    fun existsInRange(
+        channelId: Int,
+        from: LocalDateTime,
+        to: LocalDateTime
+    ): Boolean = DatabaseTransaction.run {
+        MeasurementTable
+            .selectAll()
+            .where {
+                (MeasurementTable.channelId eq channelId) and
+                        (MeasurementTable.dateTime greaterEq from) and
+                        (MeasurementTable.dateTime lessEq to)
+            }
+            .limit(1)
+            .any()
     }
 }

@@ -1,0 +1,16 @@
+apiVersion: 1
+
+datasources:
+  - name: Sensum API
+    type: marcusolsson-json-datasource
+    uid: sensum-stats-api
+    access: proxy
+    url: ${SENSUM_STATS_API_URL}
+    isDefault: true
+    editable: false
+    jsonData:
+      # Grafana's datasource proxy injects this header on every request to the
+      # api-gateway, carrying the long-lived JWT minted for the auth-jwt scheme.
+      httpHeaderName1: "Authorization"
+    secureJsonData:
+      httpHeaderValue1: "Bearer ${GRAFANA_API_TOKEN}"

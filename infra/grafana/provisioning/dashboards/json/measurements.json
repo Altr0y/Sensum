@@ -1,0 +1,555 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {
+        "type": "marcusolsson-json-datasource",
+        "uid": "sensum-stats-api"
+      },
+      "description": "Združen prikaz vrednosti vseh kanalov v izbranem časovnem obsegu.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 8,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "showValues": false,
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 14,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.4.2",
+      "targets": [
+        {
+          "cacheDurationSeconds": 300,
+          "datasource": {
+            "type": "marcusolsson-json-datasource",
+            "uid": "sensum-stats-api"
+          },
+          "fields": [
+            {
+              "jsonPath": "$.series[*].points[*].dateTime",
+              "name": "Time",
+              "type": "time"
+            },
+            {
+              "jsonPath": "$.series[*].points[*].value",
+              "name": "Vrednost",
+              "type": "number"
+            }
+          ],
+          "method": "GET",
+          "params": [
+            [
+              "from",
+              "${__from:date:iso}"
+            ],
+            [
+              "to",
+              "${__to:date:iso}"
+            ],
+            [
+              "stationId",
+              "${stationId}"
+            ]
+          ],
+          "queryParams": "from=${__from:date:iso}&to=${__to:date:iso}",
+          "refId": "A",
+          "urlPath": "/measurements/range"
+        }
+      ],
+      "title": "Meritve skozi čas",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "marcusolsson-json-datasource",
+        "uid": "sensum-stats-api"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 2,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 0,
+        "y": 14
+      },
+      "id": 2,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.4.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "marcusolsson-json-datasource",
+            "uid": "sensum-stats-api"
+          },
+          "fields": [
+            {
+              "jsonPath": "$.average",
+              "name": "Povprečje",
+              "type": "number"
+            }
+          ],
+          "method": "GET",
+          "queryParams": "from=${__from:date:iso}&to=${__to:date:iso}",
+          "refId": "A",
+          "urlPath": "/measurements/range"
+        }
+      ],
+      "title": "Povprečna vrednost",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "marcusolsson-json-datasource",
+        "uid": "sensum-stats-api"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 2,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 8,
+        "y": 14
+      },
+      "id": 3,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.4.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "marcusolsson-json-datasource",
+            "uid": "sensum-stats-api"
+          },
+          "fields": [
+            {
+              "jsonPath": "$.minimum",
+              "name": "Min",
+              "type": "number"
+            }
+          ],
+          "method": "GET",
+          "queryParams": "from=${__from:date:iso}&to=${__to:date:iso}",
+          "refId": "A",
+          "urlPath": "/measurements/range"
+        }
+      ],
+      "title": "Min vrednost",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "marcusolsson-json-datasource",
+        "uid": "sensum-stats-api"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 2,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "orange",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 16,
+        "y": 14
+      },
+      "id": 4,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.4.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "marcusolsson-json-datasource",
+            "uid": "sensum-stats-api"
+          },
+          "fields": [
+            {
+              "jsonPath": "$.maximum",
+              "name": "Max",
+              "type": "number"
+            }
+          ],
+          "method": "GET",
+          "queryParams": "from=${__from:date:iso}&to=${__to:date:iso}",
+          "refId": "A",
+          "urlPath": "/measurements/range"
+        }
+      ],
+      "title": "Max vrednost",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "marcusolsson-json-datasource",
+        "uid": "sensum-stats-api"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": true,
+            "footer": {
+              "reducers": []
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Status"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "options": {
+                      "false": {
+                        "color": "red",
+                        "text": "ALARM"
+                      },
+                      "true": {
+                        "color": "green",
+                        "text": "OK"
+                      }
+                    },
+                    "type": "value"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 24,
+        "x": 0,
+        "y": 18
+      },
+      "id": 6,
+      "options": {
+        "cellHeight": "sm",
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "Time"
+          }
+        ]
+      },
+      "pluginVersion": "12.4.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "marcusolsson-json-datasource",
+            "uid": "sensum-stats-api"
+          },
+          "fields": [
+            {
+              "jsonPath": "$.table[*].dateTime",
+              "name": "Time",
+              "type": "time"
+            },
+            {
+              "jsonPath": "$.table[*].station",
+              "name": "Postaja",
+              "type": "string"
+            },
+            {
+              "jsonPath": "$.table[*].serialNumber",
+              "name": "Serijska št.",
+              "type": "string"
+            },
+            {
+              "jsonPath": "$.table[*].channel",
+              "name": "Kanal",
+              "type": "string"
+            },
+            {
+              "jsonPath": "$.table[*].unit",
+              "name": "Enota",
+              "type": "string"
+            },
+            {
+              "jsonPath": "$.table[*].value",
+              "name": "Vrednost",
+              "type": "number"
+            },
+            {
+              "jsonPath": "$.table[*].status",
+              "name": "Status",
+              "type": "boolean"
+            },
+            {
+              "jsonPath": "$.table[*].source",
+              "name": "Vir",
+              "type": "string"
+            }
+          ],
+          "method": "GET",
+          "queryParams": "from=${__from:date:iso}&to=${__to:date:iso}",
+          "refId": "A",
+          "urlPath": "/measurements/range"
+        }
+      ],
+      "title": "Meritve",
+      "type": "table"
+    }
+  ],
+  "preload": false,
+  "refresh": "30s",
+  "schemaVersion": 42,
+  "tags": [
+    "sensum"
+  ],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "text": "5",
+          "value": "5"
+        },
+        "datasource": {
+          "type": "marcusolsson-json-datasource",
+          "uid": "sensum-stats-api"
+        },
+        "definition": "",
+        "label": "Station",
+        "name": "stationId",
+        "options": [],
+        "query": {
+          "cacheDurationSeconds": 300,
+          "fields": [
+            {
+              "jsonPath": "$[*].id",
+              "type": "number"
+            },
+            {
+              "jsonPath": "$[*].name",
+              "language": "jsonpath",
+              "name": "",
+              "type": "string"
+            }
+          ],
+          "method": "GET",
+          "queryParams": "",
+          "urlPath": "/stations"
+        },
+        "refresh": 1,
+        "regex": "",
+        "regexApplyTo": "value",
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-7d",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Meritve",
+  "uid": "sensum-measurements",
+  "version": 2,
+  "weekStart": ""
+}

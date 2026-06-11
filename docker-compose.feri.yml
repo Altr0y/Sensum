@@ -78,6 +78,8 @@ services:
 
       SWS_USERNAME: ${SWS_USERNAME:-sensum}
       SWS_PASSWORD: ${SWS_PASSWORD:-sensum}
+
+      SENSUM_GEO_RESOURCES_DIR: /app/resources/geo/geojson
     depends_on:
       postgres:
         condition: service_healthy
@@ -88,6 +90,8 @@ services:
       interval: 15s
       timeout: 5s
       retries: 3
+    volumes:
+      - ./resources/geo/geojson:/app/resources/geo/geojson:ro
 
   # ===========================
   # API GATEWAY
@@ -107,48 +111,102 @@ services:
 
       BACKEND_CORE_BASE_URL: ${BACKEND_CORE_BASE_URL:-http://backend-core:8082}
 
-      JWT_SECRET: ${JWT_SECRET:-local-development-jwt-secret-change-this-32-chars}
+      JWT_PRIVATE_KEY: ${JWT_PRIVATE_KEY:-}
       JWT_ISSUER: ${JWT_ISSUER:-sensum-api-gateway}
       JWT_AUDIENCE: ${JWT_AUDIENCE:-sensum-clients}
       JWT_REALM: ${JWT_REALM:-sensum-api}
       JWT_TTL_SECONDS: ${JWT_TTL_SECONDS:-3600}
+      JWKS_FILE_PATH: /app/jwks/jwks.json
+    volumes:
+      - jwks_data:/app/jwks
     depends_on:
       backend-core:
         condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   # ===========================
   # GRAFANA OSS
-  # port: 3000
+  # internal port: 3000
+  # public access goes through reverse-proxy on /grafana/
   # ===========================
   grafana:
     image: grafana/grafana:latest
-    ports:
-      - "${GRAFANA_PORT:-3000}:3000"
+    expose:
+      - "3000"
     environment:
-      GF_SECURITY_ALLOW_EMBEDDING: ${GF_SECURITY_ALLOW_EMBEDDING:-true}
-      GF_AUTH_ANONYMOUS_ENABLED: ${GF_AUTH_ANONYMOUS_ENABLED:-true}
-      GF_AUTH_ANONYMOUS_ORG_ROLE: ${GF_AUTH_ANONYMOUS_ORG_ROLE:-Viewer}
+      GF_SECURITY_ALLOW_EMBEDDING: "true"
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: "Viewer"
+      GF_AUTH_JWT_ENABLED: "true"
+      GF_AUTH_JWT_HEADER_NAME: "X-JWT-Assertion"
+      GF_AUTH_JWT_URL_LOGIN: "true"
+      GF_AUTH_JWT_JWK_SET_FILE: "/etc/grafana/jwks/jwks.json"
+      GF_AUTH_JWT_USERNAME_CLAIM: "sub"
+      GF_AUTH_JWT_EMAIL_CLAIM: "sub"
+      GF_AUTH_JWT_AUTO_SIGN_UP: "true"
+      GF_AUTH_JWT_ROLE_ATTRIBUTE_PATH: "contains(role, 'ADMIN') && 'Admin' || 'Viewer'"
+      GF_SERVER_ROOT_URL: "${GF_SERVER_ROOT_URL:-http://localhost:3001/grafana/}"
+      GF_SERVER_SERVE_FROM_SUB_PATH: "true"
+      # The JSON API datasource lets Grafana read data through the API
+      # gateway's /api/v1/stats endpoints (plain JSON + JSONPath) instead of talking to Postgres directly.
+      GF_INSTALL_PLUGINS: "marcusolsson-json-datasource"
+      SENSUM_STATS_API_URL: "http://api-gateway:8080/api/v1/stats"
+      GRAFANA_API_TOKEN: ${GRAFANA_API_TOKEN:-}
     volumes:
       - grafana_feri_data:/var/lib/grafana
+      - ./infra/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./infra/nginx/${NGINX_CONF:-nginx.local.conf}:/etc/nginx/nginx.conf:ro
+      - jwks_data:/etc/grafana/jwks:ro
     depends_on:
+      api-gateway:
+        condition: service_healthy
+
+  # ===========================
+  # REVERSE PROXY
+  # public port: 3001
+  # ===========================
+  reverse-proxy:
+    image: nginx:1.27-alpine
+    ports:
+      - "${FRONTEND_PORT:-3001}:80"
+    volumes:
+      - ./infra/nginx/${NGINX_CONF:-nginx.local.conf}:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - frontend
       - api-gateway
+      - grafana
 
   # ===========================
   # NEXT.JS FRONTEND
-  # port: 3001
+  # internal port: 3000
+  # public access goes through reverse-proxy on 3001
   # ===========================
   frontend:
-    build:
-      context: .
-      dockerfile: apps/nextjs/Dockerfile
-    ports:
-      - "${FRONTEND_PORT:-3001}:3000"
+    image: node:22-alpine
+    working_dir: /app
+    command: sh -c "npm install && npx next dev -p 3000 -H 0.0.0.0"
+    volumes:
+      - ./apps/nextjs:/app
+      - nextjs_node_modules:/app/node_modules
+    expose:
+      - "3000"
     environment:
-      NEXT_PUBLIC_BACKEND_CORE_URL: ${NEXT_PUBLIC_BACKEND_CORE_URL:-http://localhost:8082}
-      NEXT_PUBLIC_GRAFANA_URL: ${NEXT_PUBLIC_GRAFANA_URL:-http://localhost:3000}
+      NODE_ENV: development
+      NEXT_PUBLIC_API_BASE_URL: ""
+      NEXT_PUBLIC_GRAFANA_URL: /grafana/
+      API_INTERNAL_BASE_URL: "http://api-gateway:8080"
+      BACKEND_CORE_INTERNAL_URL: "http://backend-core:8082"
+      WATCHPACK_POLLING: "true"
+      CHOKIDAR_USEPOLLING: "true"
     depends_on:
       - api-gateway
 
 volumes:
   postgres_data:
   grafana_feri_data:
+  nextjs_node_modules:
+  jwks_data:

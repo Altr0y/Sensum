@@ -5,23 +5,31 @@ import kotlinx.datetime.number
 import kotlinx.datetime.toKotlinLocalDateTime
 import si.sensum.backend.domain.measurement.MeasurementEntity
 import si.sensum.backend.repository.MeasurementRepository
+import si.sensum.shared.models.common.DataSourceDto
 import si.sensum.shared.models.measurements.MeasurementDto
-import si.sensum.simulator.SimulatorService
+import si.sensum.simulator.SimulatorService as MeasurementSimulatorService
 
 class MeasurementService(
     private val repository: MeasurementRepository,
-    private val simulator: SimulatorService = SimulatorService()
+    private val simulator: MeasurementSimulatorService = MeasurementSimulatorService()
 ) {
-    fun getAllMeasurements(): List<MeasurementDto> {
-        return repository.findAll()
+    fun getAllMeasurements(): List<MeasurementDto> = ServiceLogger.call(
+        service = "measurement",
+        operation = "getAllMeasurements"
+    ) {
+        repository.findAll()
     }
 
     fun getMeasurements(
         channelId: Int,
         from: LocalDateTime,
         to: LocalDateTime
-    ): List<MeasurementDto> {
-        return if (simulator.isRealDataAvailable(from.toJava(), to.toJava())) {
+    ): List<MeasurementDto> = ServiceLogger.call(
+        service = "measurement",
+        operation = "getMeasurements",
+        details = "channelId=$channelId from=$from to=$to"
+    ) {
+        if (simulator.isRealDataAvailable(from.toJava(), to.toJava())) {
             repository.findByChannelAndRange(channelId, from, to)
         } else {
             getOrGenerateMeasurements(channelId, from, to)
@@ -30,32 +38,69 @@ class MeasurementService(
 
     fun createMeasurement(
         request: MeasurementDto
-    ): MeasurementDto {
-        return repository.create(request)
+    ): MeasurementDto = ServiceLogger.call(
+        service = "measurement",
+        operation = "createMeasurement",
+        details = "channelId=${request.channelId}"
+    ) {
+        repository.create(
+            request.copy(
+                source = normalizeSource(
+                    source = request.source,
+                    fallback = DataSourceDto.MANUAL
+                )
+            )
+        )
     }
 
     fun createMeasurementsBatch(
         measurements: List<MeasurementDto>
-    ): Int {
+    ): Int = ServiceLogger.call(
+        service = "measurement",
+        operation = "createMeasurementsBatch",
+        details = "count=${measurements.size}"
+    ) {
         require(measurements.isNotEmpty()) {
             "Measurement batch must not be empty"
         }
 
-        return repository.createBatch(measurements)
+        repository.createBatch(
+            measurements.map { measurement ->
+                measurement.copy(
+                    source = normalizeSource(
+                        source = measurement.source,
+                        fallback = DataSourceDto.MANUAL
+                    )
+                )
+            }
+        )
     }
 
     fun updateMeasurement(
         measurementId: Long,
         request: MeasurementDto
-    ): MeasurementDto {
-        return repository.update(
+    ): MeasurementDto = ServiceLogger.call(
+        service = "measurement",
+        operation = "updateMeasurement",
+        details = "measurementId=$measurementId"
+    ) {
+        repository.update(
             id = measurementId,
-            dto = request
+            dto = request.copy(
+                source = normalizeSource(
+                    source = request.source,
+                    fallback = DataSourceDto.MANUAL
+                )
+            )
         ) ?: error("Measurement not found")
     }
 
     fun deleteMeasurement(
         measurementId: Long
+    ) = ServiceLogger.call(
+        service = "measurement",
+        operation = "deleteMeasurement",
+        details = "measurementId=$measurementId"
     ) {
         val deleted = repository.delete(measurementId)
 
@@ -64,13 +109,20 @@ class MeasurementService(
         }
     }
 
-    fun deleteAllMeasurements(): Int {
-        return repository.deleteAll()
+    fun deleteAllMeasurements(): Int = ServiceLogger.call(
+        service = "measurement",
+        operation = "deleteAllMeasurements"
+    ) {
+        repository.deleteAll()
     }
 
     fun deleteMeasurementsByRange(
         from: LocalDateTime,
         to: LocalDateTime
+    ) = ServiceLogger.call(
+        service = "measurement",
+        operation = "deleteMeasurementsByRange",
+        details = "from=$from to=$to"
     ) {
         repository.deleteByRange(from, to)
     }
@@ -78,6 +130,10 @@ class MeasurementService(
     fun regenerateMeasurements(
         from: LocalDateTime,
         to: LocalDateTime
+    ) = ServiceLogger.call(
+        service = "measurement",
+        operation = "regenerateMeasurements",
+        details = "from=$from to=$to"
     ) {
         repository.deleteByRange(from, to)
 
@@ -92,6 +148,10 @@ class MeasurementService(
     fun clearSimulated(
         from: LocalDateTime,
         to: LocalDateTime
+    ) = ServiceLogger.call(
+        service = "measurement",
+        operation = "clearSimulated",
+        details = "from=$from to=$to"
     ) {
         repository.deleteByRange(from, to)
     }
@@ -101,7 +161,7 @@ class MeasurementService(
         from: LocalDateTime,
         to: LocalDateTime
     ): List<MeasurementDto> {
-        if (!repository.existsInRange(from, to)) {
+        if (!repository.existsInRange(channelId, from, to)) {
             val generated = simulateAndInsert(
                 from = from,
                 to = to
@@ -125,7 +185,8 @@ class MeasurementService(
                     channelId = measurement.channelId,
                     dateTime = measurement.dateTime.toKotlinLocalDateTime(),
                     value = measurement.value.toFloat(),
-                    status = false
+                    status = false,
+                    source = DataSourceDto.SIM
                 )
             }
     }
@@ -139,5 +200,16 @@ class MeasurementService(
             minute,
             second
         )
+    }
+
+    private fun normalizeSource(
+        source: DataSourceDto,
+        fallback: DataSourceDto
+    ): DataSourceDto {
+        return if (source == DataSourceDto.UNKNOWN) {
+            fallback
+        } else {
+            source
+        }
     }
 }

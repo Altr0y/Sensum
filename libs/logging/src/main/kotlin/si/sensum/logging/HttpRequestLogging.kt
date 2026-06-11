@@ -19,7 +19,7 @@ fun Application.installHttpRequestLogging(
         val requestId = call.callId ?: UUID.randomUUID().toString()
         val path = call.request.path().normalizedPath()
 
-        MDC.put("requestId", requestId)
+        MDC.put("requestId", requestId.shortRequestId())
 
         val start = System.currentTimeMillis()
 

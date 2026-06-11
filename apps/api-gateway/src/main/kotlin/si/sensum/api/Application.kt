@@ -21,6 +21,8 @@ fun Application.module() {
     val config = loadApiGatewayConfig()
     val dependencies = createApiDependencies(config)
 
+    writeJwksFile(dependencies.jwtTokenService.jwksJson())
+
     installApiPlugins()
     installApiJwtAuthentication(
         config = config,
@@ -28,6 +30,14 @@ fun Application.module() {
     )
 
     configureRoutes(dependencies)
+}
+
+private fun writeJwksFile(json: String?) {
+    val path = System.getenv("JWKS_FILE_PATH")?.takeIf { it.isNotBlank() } ?: return
+    if (json == null) return
+    val file = java.io.File(path)
+    file.parentFile?.mkdirs()
+    file.writeText(json)
 }
 
 private fun Application.configureRoutes(
@@ -41,3 +51,4 @@ private fun Application.configureRoutes(
         }
     }
 }
+

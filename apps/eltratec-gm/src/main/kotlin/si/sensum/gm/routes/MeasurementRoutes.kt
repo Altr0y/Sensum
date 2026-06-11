@@ -16,6 +16,9 @@ internal fun Route.measurementRoutes(
     measurementService: MeasurementService
 ) {
     route("/measurements") {
+        // SWS: GetAllMeasurements
+        // REST query: ?from=2026-01-01T00:00:00&to=2026-01-02T00:00:00
+        // SWS fields: datetimeFrom, datetimeTo
         get {
             call.gmRouteCall(authService) { session ->
                 val query = call.receiveMeasurementRangeQuery()
@@ -27,6 +30,7 @@ internal fun Route.measurementRoutes(
             }
         }
 
+        // SWS: GetAllMeasurements_Detailed
         get("/detailed") {
             call.gmRouteCall(authService) { session ->
                 val query = call.receiveMeasurementRangeQuery()
@@ -38,6 +42,15 @@ internal fun Route.measurementRoutes(
             }
         }
 
+        // SWS: GetMeasurementsByStationChannelPairs
+        // Body:
+        // {
+        //   "stationChannelPairs": [
+        //     { "stationId": 2241, "channelId": 101 }
+        //   ],
+        //   "datetimeFrom": "2026-01-01T00:00:00",
+        //   "datetimeTo": "2026-01-02T00:00:00"
+        // }
         post("/by-station-channel-pairs") {
             call.gmRouteCall(authService) { session ->
                 val request = call.receiveStationChannelPairsMeasurementRequest()
@@ -51,6 +64,10 @@ internal fun Route.measurementRoutes(
     }
 
     route("/stations/{stationId}/measurements") {
+        // SWS: GetStationMeasurements
+        // REST path: stationId
+        // REST query: from, to
+        // SWS fields: StationID, datetimeFrom, datetimeTo
         get {
             call.gmRouteCall(authService) { session ->
                 val stationId = call.requireLongPathParameter("stationId")
@@ -64,6 +81,7 @@ internal fun Route.measurementRoutes(
             }
         }
 
+        // SWS: GetStationMeasurements_Detailed
         get("/detailed") {
             call.gmRouteCall(authService) { session ->
                 val stationId = call.requireLongPathParameter("stationId")
@@ -79,6 +97,10 @@ internal fun Route.measurementRoutes(
     }
 
     route("/stations/{stationId}/channels/{channelId}/measurements") {
+        // SWS: GetChannelMeasurements
+        // REST path: stationId, channelId
+        // REST query: from, to
+        // SWS fields: StationID, ChannelID, datetimeFrom, datetimeTo
         get {
             call.gmRouteCall(authService) { session ->
                 val stationId = call.requireLongPathParameter("stationId")
@@ -94,6 +116,7 @@ internal fun Route.measurementRoutes(
             }
         }
 
+        // SWS: GetChannelMeasurements_Detailed
         get("/detailed") {
             call.gmRouteCall(authService) { session ->
                 val stationId = call.requireLongPathParameter("stationId")

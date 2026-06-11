@@ -7,16 +7,23 @@ import si.sensum.shared.models.channels.ChannelDto
 class ChannelService(
     private val channelRepository: ChannelRepository
 ) {
-    fun getAllChannels(): List<ChannelDto> {
-        return channelRepository
+    fun getAllChannels(): List<ChannelDto> = ServiceLogger.call(
+        service = "channel",
+        operation = "getAllChannels"
+    ) {
+        channelRepository
             .findAll()
             .map { it.toDto() }
     }
 
     fun getChannel(
         channelId: Int
-    ): ChannelDto {
-        return channelRepository
+    ): ChannelDto = ServiceLogger.call(
+        service = "channel",
+        operation = "getChannel",
+        details = "channelId=$channelId"
+    ) {
+        channelRepository
             .findById(channelId)
             ?.toDto()
             ?: error("Channel not found")
@@ -24,8 +31,12 @@ class ChannelService(
 
     fun getChannelsByStation(
         stationId: Long
-    ): List<ChannelDto> {
-        return channelRepository
+    ): List<ChannelDto> = ServiceLogger.call(
+        service = "channel",
+        operation = "getChannelsByStation",
+        details = "stationId=$stationId"
+    ) {
+        channelRepository
             .findByStationId(stationId)
             .map { it.toDto() }
     }

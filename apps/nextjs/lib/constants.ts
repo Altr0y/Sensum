@@ -21,7 +21,6 @@ export const API_URLS = {
 } as const
 
 export const NAV_ITEMS = [
-    {href: "/monitoring", label: "Monitoring", icon: "monitor"},
     {href: "/map", label: "Map", icon: "map"},
-    {href: "/digital-twin", label: "Digital Twin", icon: "activity"},
+    {href: "/monitoring", label: "Monitoring", icon: "monitor"},
 ] as const

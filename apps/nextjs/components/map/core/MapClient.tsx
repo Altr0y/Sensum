@@ -1,0 +1,19 @@
+"use client"
+
+import dynamic from "next/dynamic"
+
+const SensumMap = dynamic(
+    () => import("@/components/map/core/SensumMap").then((mod) => mod.SensumMap),
+    {
+        ssr: false,
+        loading: () => (
+            <div className="flex h-[calc(100vh-3.5rem)] items-center justify-center">
+                Loading map...
+            </div>
+        ),
+    }
+)
+
+export function MapClient({ token }: { token: string }) {
+    return <SensumMap token={token} />
+}

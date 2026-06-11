@@ -1,0 +1,244 @@
+{
+  "id": null,
+  "uid": "sensum-overview",
+  "title": "Overview",
+  "tags": ["sensum"],
+  "timezone": "browser",
+  "schemaVersion": 38,
+  "version": 4,
+  "refresh": "30s",
+  "time": { "from": "now-7d", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Postaje",
+      "gridPos": { "h": 4, "w": 8, "x": 0, "y": 0 },
+      "datasource": { "type": "marcusolsson-json-datasource", "uid": "sensum-stats-api" },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "blue", "value": null }]
+          }
+        }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "marcusolsson-json-datasource", "uid": "sensum-stats-api" },
+          "urlPath": "/overview",
+          "method": "GET",
+          "fields": [
+            { "jsonPath": "$.stationCount", "name": "Postaje", "type": "number" }
+          ],
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Kanali",
+      "gridPos": { "h": 4, "w": 8, "x": 8, "y": 0 },
+      "datasource": { "type": "marcusolsson-json-datasource", "uid": "sensum-stats-api" },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "green", "value": null }]
+          }
+        }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "marcusolsson-json-datasource", "uid": "sensum-stats-api" },
+          "urlPath": "/overview",
+          "method": "GET",
+          "fields": [
+            { "jsonPath": "$.channelCount", "name": "Kanali", "type": "number" }
+          ],
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Meritve",
+      "gridPos": { "h": 4, "w": 8, "x": 16, "y": 0 },
+      "datasource": { "type": "marcusolsson-json-datasource", "uid": "sensum-stats-api" },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "orange", "value": null }]
+          }
+        }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "marcusolsson-json-datasource", "uid": "sensum-stats-api" },
+          "urlPath": "/overview",
+          "method": "GET",
+          "fields": [
+            { "jsonPath": "$.measurementCount", "name": "Meritve", "type": "number" }
+          ],
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "piechart",
+      "title": "Meritve po viru",
+      "gridPos": { "h": 9, "w": 10, "x": 0, "y": 4 },
+      "datasource": { "type": "marcusolsson-json-datasource", "uid": "sensum-stats-api" },
+      "options": {
+        "pieType": "pie",
+        "legend": { "displayMode": "table", "placement": "right", "values": ["value", "percent"] }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "marcusolsson-json-datasource", "uid": "sensum-stats-api" },
+          "urlPath": "/overview",
+          "method": "GET",
+          "fields": [
+            { "jsonPath": "$.measurementsBySource[*].label", "name": "Vir", "type": "string" },
+            { "jsonPath": "$.measurementsBySource[*].count", "name": "Število", "type": "number" }
+          ],
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "piechart",
+      "title": "Kanali po enoti",
+      "gridPos": { "h": 9, "w": 10, "x": 10, "y": 4 },
+      "datasource": { "type": "marcusolsson-json-datasource", "uid": "sensum-stats-api" },
+      "options": {
+        "pieType": "donut",
+        "legend": { "displayMode": "table", "placement": "right", "values": ["value", "percent"] }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "marcusolsson-json-datasource", "uid": "sensum-stats-api" },
+          "urlPath": "/overview",
+          "method": "GET",
+          "fields": [
+            { "jsonPath": "$.channelsByUnit[*].label", "name": "Enota", "type": "string" },
+            { "jsonPath": "$.channelsByUnit[*].count", "name": "Število", "type": "number" }
+          ],
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "stat",
+      "title": "Kanali v alarmu",
+      "gridPos": { "h": 9, "w": 4, "x": 20, "y": 4 },
+      "datasource": { "type": "marcusolsson-json-datasource", "uid": "sensum-stats-api" },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "background",
+        "graphMode": "none"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 1 }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "marcusolsson-json-datasource", "uid": "sensum-stats-api" },
+          "urlPath": "/overview",
+          "method": "GET",
+          "fields": [
+            { "jsonPath": "$.activeAlarms", "name": "Alarmi", "type": "number" }
+          ],
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "type": "table",
+      "title": "Zadnje meritve",
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 13 },
+      "datasource": { "type": "marcusolsson-json-datasource", "uid": "sensum-stats-api" },
+      "options": {
+        "sortBy": [{ "displayName": "Time", "desc": true }],
+        "footer": { "show": false }
+      },
+      "fieldConfig": {
+        "defaults": { "custom": { "filterable": true } },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Status" },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  { "type": "value", "options": { "false": { "text": "ALARM", "color": "red" }, "true": { "text": "OK", "color": "green" } } }
+                ]
+              },
+              { "id": "custom.displayMode", "value": "color-background" }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "datasource": { "type": "marcusolsson-json-datasource", "uid": "sensum-stats-api" },
+          "urlPath": "/overview",
+          "method": "GET",
+          "fields": [
+            { "jsonPath": "$.recentMeasurements[*].dateTime", "name": "Time", "type": "time" },
+            { "jsonPath": "$.recentMeasurements[*].station", "name": "Postaja", "type": "string" },
+            { "jsonPath": "$.recentMeasurements[*].serialNumber", "name": "Serijska št.", "type": "string" },
+            { "jsonPath": "$.recentMeasurements[*].channel", "name": "Kanal", "type": "string" },
+            { "jsonPath": "$.recentMeasurements[*].unit", "name": "Enota", "type": "string" },
+            { "jsonPath": "$.recentMeasurements[*].value", "name": "Vrednost", "type": "number" },
+            { "jsonPath": "$.recentMeasurements[*].status", "name": "Status", "type": "boolean" },
+            { "jsonPath": "$.recentMeasurements[*].source", "name": "Vir", "type": "string" }
+          ],
+          "refId": "A"
+        }
+      ]
+    }
+  ]
+}

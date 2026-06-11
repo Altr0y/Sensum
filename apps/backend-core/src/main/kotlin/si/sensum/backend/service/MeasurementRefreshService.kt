@@ -2,6 +2,7 @@ package si.sensum.backend.service
 
 import si.sensum.backend.client.GmClient
 import si.sensum.backend.repository.MeasurementRepository
+import si.sensum.shared.models.common.DataSourceDto
 import si.sensum.shared.models.datetime.ApiDateTime
 import si.sensum.shared.models.measurements.RefreshMeasurementsCommand
 import si.sensum.shared.models.measurements.RefreshMeasurementsResult
@@ -14,25 +15,50 @@ class MeasurementRefreshService(
 ) {
     suspend fun refresh(
         request: RefreshMeasurementsCommand
-    ): RefreshMeasurementsResult {
-        require(swsUsername.isNotBlank()) { "Missing SWS_USERNAME" }
-        require(swsPassword.isNotBlank()) { "Missing SWS_PASSWORD" }
+    ): RefreshMeasurementsResult = ServiceLogger.suspendCall(
+        service = "measurement-refresh",
+        operation = "refresh",
+        details = "pairs=${request.stationChannelPairs.size} from=${request.datetimeFrom} to=${request.datetimeTo}"
+    ) {
+        require(swsUsername.isNotBlank()) {
+            "Missing SWS_USERNAME"
+        }
+
+        require(swsPassword.isNotBlank()) {
+            "Missing SWS_PASSWORD"
+        }
+
+        require(request.stationChannelPairs.isNotEmpty()) {
+            "Missing required field: stationChannelPairs"
+        }
 
         val normalizedRequest = request.copy(
-            datetimeFrom = ApiDateTime.requireNormalizedLocal("datetimeFrom", request.datetimeFrom),
-            datetimeTo = ApiDateTime.requireNormalizedLocal("datetimeTo", request.datetimeTo)
+            datetimeFrom = ApiDateTime.requireNormalized(
+                fieldName = "datetimeFrom",
+                value = request.datetimeFrom
+            ),
+            datetimeTo = ApiDateTime.requireNormalized(
+                fieldName = "datetimeTo",
+                value = request.datetimeTo
+            )
         )
 
-        val gmLogin = gmClient.login(swsUsername, swsPassword)
+        val gmLogin = gmClient.login(
+            username = swsUsername,
+            password = swsPassword
+        )
 
         val measurements = gmClient.getMeasurements(
             gmSessionToken = gmLogin.token,
             request = normalizedRequest
         )
 
-        val (deleted, inserted) = measurementRepository.replaceAllFromDtos(measurements)
+        val (deleted, inserted) = measurementRepository.replaceAllFromDtos(
+            measurements = measurements,
+            source = DataSourceDto.SWS
+        )
 
-        return RefreshMeasurementsResult(
+        RefreshMeasurementsResult(
             deletedCount = deleted,
             insertedCount = inserted
         )

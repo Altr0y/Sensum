@@ -4,5 +4,6 @@ build/
 .idea/
 *.iml
 .env
-/export-all-module-files.ps1
-/exported-module-files/
+/apps/nextjs/public/geojson/
+/test-data/
+CLAUDE.md

@@ -10,6 +10,10 @@ fun StationEntity.toDto(): StationDto {
         serialNumber = serialNumber,
         description = locationDescription,
         latitude = latitude,
-        longitude = longitude
+        longitude = longitude,
+        countryId = countryId,
+        regionId = regionId,
+        municipalityId = municipalityId,
+        source = source
     )
 }
