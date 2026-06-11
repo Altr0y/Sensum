@@ -48,7 +48,7 @@ export function LoginForm() {
                 return
             }
 
-            router.push("/monitoring")
+            router.push("/map")
             router.refresh()
         } catch {
             setError("Login request failed.")

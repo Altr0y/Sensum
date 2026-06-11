@@ -20,4 +20,17 @@ internal class SimulatorService(
 
         simulatorClient.generate(request)
     }
+
+    suspend fun generateAndSave(
+        request: SimulateRequestDto
+    ): List<SimulatedStationDto> = ServiceLogger.suspendCall(
+        service = "simulator",
+        operation = "generateAndSave",
+        details = "mode=${request.mode} count=${request.count}"
+    ) {
+        require(request.mode.isNotBlank()) {
+            "Simulator mode must not be blank"
+        }
+        simulatorClient.generateAndSave(request)
+    }
 }

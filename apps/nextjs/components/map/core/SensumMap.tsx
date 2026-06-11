@@ -1,44 +1,61 @@
 "use client"
 
-import { useEffect, useMemo, useRef, useState } from "react"
-import type { ChangeEvent } from "react"
-import { CircleMarker, GeoJSON, MapContainer, TileLayer, useMapEvents } from "react-leaflet"
-import { createStation, fetchChannels, fetchMeasurements, fetchStations, fetchStationsGeoJson, processDsl } from "./api"
-import { AlertTriangle, X } from "lucide-react"
-import { useSimulation } from "./simulation/useSimulation"
-import { PolygonDrawOverlay } from "./simulation/PolygonDrawOverlay"
-import { SimulationPanel } from "./simulation/SimulationPanel"
-import { MapLegend } from "./MapLegend"
-import { defaultVisibleLayers, defaultVisibleStationSources, getStationSource, layerLabels, layerSources, normalizeLayerData, getLayerControlSortIndex, getLayerRenderSortIndex } from "./layerConfig"
-import { bindFeatureActions, getStyle, pointToLayer } from "./mapStyles"
-import { formatApiLocalDateTime } from "./formatters"
-import { downloadTextFile } from "./utils"
-import { ResizeMapOnSidebarChange } from "./ResizeMapOnSidebarChange"
-import { LayerControlPanel } from "./LayerControlPanel"
-import { StationSidebar } from "./StationSidebar"
-import type { PendingStationPoint, SelectedStationDetails, SensumGeoJson, StationDto } from "./types"
+import {useEffect, useMemo, useRef, useState} from "react"
+import type {ChangeEvent} from "react"
+import {CircleMarker, GeoJSON, MapContainer, TileLayer, useMapEvents} from "react-leaflet"
+import {
+    createStation,
+    deleteStation,
+    fetchChannels,
+    fetchMeasurements,
+    fetchStations,
+    fetchStationsGeoJson,
+    processDsl
+} from "../shared/api"
+import {AlertTriangle, X, PanelRightOpen} from "lucide-react"
+import {useSimulation} from "../simulation/useSimulation"
+import {PolygonDrawOverlay} from "./PolygonDrawOverlay"
+import {SimulationPanel} from "../simulation/SimulationPanel"
+import {MapLegend} from "./MapLegend"
+import {
+    defaultVisibleLayers,
+    defaultVisibleStationSources,
+    getStationSource,
+    layerLabels,
+    layerSources,
+    normalizeLayerData,
+    getLayerControlSortIndex,
+    getLayerRenderSortIndex
+} from "../layers/layerConfig"
+import {bindFeatureActions, getStyle, pointToLayer} from "../layers/mapStyles"
+import {formatApiLocalDateTime} from "../shared/formatters"
+import {downloadTextFile} from "../shared/utils"
+import {ResizeMapOnSidebarChange} from "./ResizeMapOnSidebarChange"
+import {LayerControlPanel} from "../layers/LayerControlPanel"
+import {StationSidebar} from "../sidebar/StationSidebar"
+import type {PendingStationPoint, SelectedStationDetails, SensumGeoJson, StationDto} from "../shared/types"
 
 function ErrorBanner({
-    errors,
-    onDismiss,
-}: {
+                         errors,
+                         onDismiss,
+                     }: {
     errors: Record<string, string>
     onDismiss: (key: string) => void
 }) {
     const entries = Object.entries(errors)
     if (entries.length === 0) return null
     return (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[1100] flex flex-col gap-2 w-[420px] max-w-[calc(100%-2rem)]">
+        <div
+            className="absolute top-4 left-1/2 -translate-x-1/2 z-[1100] flex flex-col gap-2 w-[420px] max-w-[calc(100%-2rem)]">
             {entries.map(([key, msg]) => (
                 <div
                     key={key}
-                    className="flex items-start gap-3 rounded-lg border border-[#CF6679]/40 px-3 py-2.5 shadow-lg text-sm"
-                    style={{ backgroundColor: "#2B2B2B" }}
+                    className="flex items-start gap-3 rounded-lg border border-destructive/40 bg-card px-3 py-2.5 shadow-lg text-sm"
                 >
-                    <AlertTriangle size={15} className="text-[#CF6679] shrink-0 mt-0.5" />
+                    <AlertTriangle size={15} className="text-destructive shrink-0 mt-0.5"/>
                     <div className="flex-1 min-w-0">
-                        <span className="font-medium text-[#CF6679]">{key}: </span>
-                        <span className="text-[#BBBBBB]">{msg}</span>
+                        <span className="font-medium text-destructive">{key}: </span>
+                        <span className="text-muted-foreground">{msg}</span>
                         {msg.includes("log in") && (
                             <a href="/login" className="ml-2 underline text-[#E8A838] hover:text-[#d4962e]">
                                 Log in
@@ -47,9 +64,9 @@ function ErrorBanner({
                     </div>
                     <button
                         onClick={() => onDismiss(key)}
-                        className="shrink-0 text-[#7A7E82] hover:text-[#D4D4D4] transition-colors"
+                        className="shrink-0 text-muted-foreground hover:text-foreground transition-colors"
                     >
-                        <X size={14} />
+                        <X size={14}/>
                     </button>
                 </div>
             ))}
@@ -58,11 +75,11 @@ function ErrorBanner({
 }
 
 function MapClickHandler({
-    addMode,
-    simMode,
-    onMapClick,
-    onSimClick,
-}: {
+                             addMode,
+                             simMode,
+                             onMapClick,
+                             onSimClick,
+                         }: {
     addMode: boolean
     simMode: boolean
     onMapClick: (lat: number, lng: number) => void
@@ -80,7 +97,7 @@ function MapClickHandler({
     return null
 }
 
-export function SensumMap({ token }: { token: string }) {
+export function SensumMap({token}: { token: string }) {
     const mapShellRef = useRef<HTMLDivElement | null>(null)
 
     const [layerData, setLayerData] = useState<Record<string, SensumGeoJson>>({})
@@ -129,7 +146,7 @@ export function SensumMap({ token }: { token: string }) {
                         [layer]: normalizeLayerData(json, layer),
                     }))
                     setErrors((current) => {
-                        const next = { ...current }
+                        const next = {...current}
                         delete next[layer]
                         return next
                     })
@@ -166,7 +183,7 @@ export function SensumMap({ token }: { token: string }) {
                     stations: normalizeLayerData(stationsGeoJson, "stations"),
                 }))
                 setErrors((current) => {
-                    const next = { ...current }
+                    const next = {...current}
                     delete next.stations
                     return next
                 })
@@ -210,7 +227,7 @@ export function SensumMap({ token }: { token: string }) {
         if (!station) return
 
         setSidebarOpen(true)
-        setSelectedStation({ station, channels: [], measurementsByChannel: {} })
+        setSelectedStation({station, channels: [], measurementsByChannel: {}})
         setStationDetailsLoading(true)
         setStationDetailsError(null)
 
@@ -249,7 +266,7 @@ export function SensumMap({ token }: { token: string }) {
             .sort((a, b) => getLayerRenderSortIndex(a) - getLayerRenderSortIndex(b))
             .flatMap((layer) => layerData[layer]?.features ?? [])
 
-        const geoJson: SensumGeoJson = { type: "FeatureCollection", features }
+        const geoJson: SensumGeoJson = {type: "FeatureCollection", features}
 
         downloadTextFile(
             "sensum-visible-layers.geojson",
@@ -269,7 +286,7 @@ export function SensumMap({ token }: { token: string }) {
 
         setLoadingLayers((current) => new Set(current).add(importKey))
         setErrors((current) => {
-            const next = { ...current }
+            const next = {...current}
             delete next[importKey]
             return next
         })
@@ -308,7 +325,7 @@ export function SensumMap({ token }: { token: string }) {
     }
 
     function handleMapClick(lat: number, lng: number) {
-        setPendingStation({ lat, lng })
+        setPendingStation({lat, lng})
         setAddStationError(null)
         setSidebarOpen(true)
         setSelectedStation(null)
@@ -333,7 +350,7 @@ export function SensumMap({ token }: { token: string }) {
             // Force reload of stations layer
             setStations([])
             setLayerData((current) => {
-                const next = { ...current }
+                const next = {...current}
                 delete next.stations
                 return next
             })
@@ -344,6 +361,23 @@ export function SensumMap({ token }: { token: string }) {
             setAddStationError(error instanceof Error ? error.message : "Failed to create station")
         } finally {
             setAddStationLoading(false)
+        }
+    }
+
+    async function handleDeleteStation(stationId: number) {
+        if (!confirm("Are you sure you want to delete this station?")) return
+        try {
+            await deleteStation(stationId)
+            setSelectedStation(null)
+            // reload stations
+            setStations([])
+            setLayerData((current) => {
+                const next = {...current}
+                delete next.stations
+                return next
+            })
+        } catch (e) {
+            console.error("Delete failed", e)
         }
     }
 
@@ -372,8 +406,8 @@ export function SensumMap({ token }: { token: string }) {
 
     return (
         <div
-            className="-m-6 flex h-[calc(100vh-3.5rem)] w-full overflow-hidden bg-background"
-            style={{ cursor: drawingMode ? "crosshair" : undefined }}
+            className="flex h-[calc(100vh-3.5rem)] w-full overflow-hidden bg-background"
+            style={{cursor: drawingMode ? "crosshair" : undefined}}
         >
             <div ref={mapShellRef} className="relative h-full min-w-0 flex-1 overflow-hidden">
                 <MapContainer
@@ -383,7 +417,7 @@ export function SensumMap({ token }: { token: string }) {
                     preferCanvas={false}
                     className="h-full w-full"
                 >
-                    <ResizeMapOnSidebarChange sidebarOpen={sidebarOpen} />
+                    <ResizeMapOnSidebarChange sidebarOpen={sidebarOpen}/>
                     <MapClickHandler
                         addMode={addMode}
                         simMode={sim.active && sim.step === "draw"}
@@ -403,11 +437,11 @@ export function SensumMap({ token }: { token: string }) {
                         const renderedData =
                             layer === "stations"
                                 ? {
-                                      ...data,
-                                      features: data.features.filter((feature) =>
-                                          visibleStationSources.has(getStationSource(feature))
-                                      ),
-                                  }
+                                    ...data,
+                                    features: data.features.filter((feature) =>
+                                        visibleStationSources.has(getStationSource(feature))
+                                    ),
+                                }
                                 : data
 
                         const geoJsonKey =
@@ -453,9 +487,10 @@ export function SensumMap({ token }: { token: string }) {
                     <button
                         type="button"
                         onClick={() => setSidebarOpen(true)}
-                        className="absolute right-4 top-4 z-[1000] rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-900 shadow-lg hover:bg-gray-100 dark:border-[#4A4D50] dark:bg-[#2B2B2B] dark:text-[#D4D4D4] dark:hover:bg-[#1E1E1E]"
+                        className="absolute right-4 top-4 z-[1000] flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-card text-foreground shadow-lg hover:bg-muted hover:border-accent hover:text-accent transition-colors"
+                        title="Show sidebar"
                     >
-                        Show sidebar
+                        <PanelRightOpen size={22}/>
                     </button>
                 )}
 
@@ -470,18 +505,25 @@ export function SensumMap({ token }: { token: string }) {
                     mapContainerRef={mapShellRef}
                 />
 
-                <MapLegend mapContainerRef={mapShellRef} />
+                <MapLegend mapContainerRef={mapShellRef}/>
 
                 <ErrorBanner
                     errors={errors}
                     onDismiss={(key: string) =>
-                        setErrors((e) => { const n = { ...e }; delete n[key]; return n })
+                        setErrors((e) => {
+                            const n = {...e};
+                            delete n[key];
+                            return n
+                        })
                     }
                 />
             </div>
 
-            {sidebarOpen && (
-                sim.active ? (
+            <div
+                className="h-full shrink-0 overflow-hidden transition-all duration-300 ease-in-out"
+                style={{width: sidebarOpen ? "430px" : "0px"}}
+            >
+                {sim.active ? (
                     <SimulationPanel
                         token={token}
                         step={sim.step}
@@ -496,7 +538,16 @@ export function SensumMap({ token }: { token: string }) {
                         onRemovePoint={sim.removePoint}
                         onReset={sim.reset}
                         onConfirm={sim.confirm}
-                        onRun={sim.run}
+                        onRun={async () => {
+                            await sim.run(token)
+                            // reload stations layer
+                            setStations([])
+                            setLayerData((current) => {
+                                const next = {...current}
+                                delete next.stations
+                                return next
+                            })
+                        }}
                         onConfigChange={sim.setConfig}
                         onClose={sim.stop}
                         onRunAnother={sim.start}
@@ -517,10 +568,17 @@ export function SensumMap({ token }: { token: string }) {
                         addStationError={addStationError}
                         onSaveStation={handleSaveStation}
                         onCancelAddStation={handleCancelAddStation}
-                        onToggleSim={() => { setAddMode(false); setPendingStation(null); setAddStationError(null); sim.start(); setSidebarOpen(true) }}
+                        onDeleteStation={handleDeleteStation}
+                        onToggleSim={() => {
+                            setAddMode(false);
+                            setPendingStation(null);
+                            setAddStationError(null);
+                            sim.start();
+                            setSidebarOpen(true)
+                        }}
                     />
-                )
-            )}
+                )}
+            </div>
         </div>
     )
 }

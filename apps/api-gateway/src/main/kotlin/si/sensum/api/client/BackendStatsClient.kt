@@ -3,6 +3,8 @@ package si.sensum.api.client
 import si.sensum.shared.http.ServiceHttpClient
 import si.sensum.shared.models.stats.MeasurementRangeStatsDto
 import si.sensum.shared.models.stats.OverviewStatsDto
+import si.sensum.shared.models.stats.StationSummaryDto
+import si.sensum.shared.models.stats.StationTimeRangeDto
 
 internal class BackendStatsClient(
     private val backend: ServiceHttpClient
@@ -11,8 +13,24 @@ internal class BackendStatsClient(
         return backend.get("/api/v1/stats/overview")
     }
 
-    suspend fun getMeasurementsInRange(from: String, to: String): MeasurementRangeStatsDto {
-        return backend.get("/api/v1/stats/measurements/range?from=${enc(from)}&to=${enc(to)}")
+    suspend fun getMeasurementsInRange(
+        from: String,
+        to: String,
+        stationId: Long? = null
+    ): MeasurementRangeStatsDto {
+        val url = buildString {
+            append("/api/v1/stats/measurements/range?from=${enc(from)}&to=${enc(to)}")
+            if (stationId != null) append("&stationId=$stationId")
+        }
+        return backend.get(url)
+    }
+
+    suspend fun getStations(): List<StationSummaryDto> {
+        return backend.get("/api/v1/stats/stations")
+    }
+
+    suspend fun getStationTimeRange(stationId: Long): StationTimeRangeDto {
+        return backend.get("/api/v1/stats/stations/$stationId/timerange")
     }
 
     private fun enc(value: String): String =

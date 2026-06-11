@@ -1,18 +1,21 @@
-import type { ChannelDto, CreateStationCommand, MeasurementDto, SensumGeoJson, StationDto } from "./types"
+import type {ChannelDto, CreateStationCommand, MeasurementDto, SensumGeoJson, StationDto} from "./types"
 
 const API_BASE = "/sensum-api/v1"
 
 async function fetchJson<T>(url: string): Promise<T> {
-    const response = await fetch(url, { credentials: "include" })
+    const response = await fetch(url, {credentials: "include"})
     if (!response.ok) throw new Error(`HTTP ${response.status}`)
     return response.json()
 }
 
-async function postJson<T>(url: string, body: unknown): Promise<T> {
+async function postJson<T>(url: string, body: unknown, token?: string): Promise<T> {
+    const headers: Record<string, string> = {"Content-Type": "application/json"}
+    if (token) headers["Authorization"] = `Bearer ${token}`
+
     const response = await fetch(url, {
         credentials: "include",
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify(body),
     })
     if (!response.ok) {
@@ -65,7 +68,7 @@ export type DslProcessResult = {
 }
 
 export function processDsl(source: string): Promise<DslProcessResult> {
-    return postJson(`${API_BASE}/dsl/process`, { source })
+    return postJson(`${API_BASE}/dsl/process`, {source})
 }
 
 export type SimulateRequest = {
@@ -73,6 +76,7 @@ export type SimulateRequest = {
     count?: number
     prefix?: string
     channelKinds?: string[]
+    polygon?: number[][]
     stationId?: number
     channelIds?: number[]
     from: string
@@ -80,6 +84,24 @@ export type SimulateRequest = {
     intervalMinutes: number
 }
 
-export function runSimulation(request: SimulateRequest): Promise<unknown> {
-    return postJson("/sensum-sim", request)
+export function runSimulation(request: SimulateRequest, token?: string): Promise<unknown> {
+    return postJson("/api/v1/simulator/generate-and-save", request, token)
+}
+
+export type StationTimeRangeDto = {
+    from: string | null
+    to: string | null
+}
+
+export function fetchStationTimeRange(stationId: number): Promise<StationTimeRangeDto> {
+    return fetchJson(`${API_BASE}/stats/stations/${stationId}/timerange`)
+}
+
+export function deleteStation(stationId: number): Promise<void> {
+    return fetch(`${API_BASE}/stations/${stationId}`, {
+        method: "DELETE",
+        credentials: "include",
+    }).then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    })
 }

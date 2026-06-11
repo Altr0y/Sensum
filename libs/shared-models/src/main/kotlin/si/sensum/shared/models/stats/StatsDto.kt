@@ -56,3 +56,18 @@ data class MeasurementRangeStatsDto(
     val series: List<ChannelSeriesDto>,
     val table: List<RecentMeasurementDto>
 )
+
+@Serializable
+data class StationSummaryDto(
+    val id: Long,
+    val name: String
+)
+
+
+@Serializable
+data class StationTimeRangeDto(
+    @Serializable(with = OffsetDateTimeIsoSerializer::class)
+    val from: OffsetDateTime?,
+    @Serializable(with = OffsetDateTimeIsoSerializer::class)
+    val to: OffsetDateTime?
+)

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import type { PendingStationPoint } from "./types"
+import type { PendingStationPoint } from "../shared/types"
 
 type Props = {
     pending: PendingStationPoint

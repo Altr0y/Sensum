@@ -120,6 +120,14 @@ class StationService(
         ).toDto()
     }
 
+    fun deleteStation(stationId: Long): Boolean = ServiceLogger.call(
+        service = "station",
+        operation = "deleteStation",
+        details = "stationId=$stationId"
+    ) {
+        stationRepository.delete(stationId)
+    }
+
     fun getStationsByMunicipality(
         municipalityId: Int
     ): List<StationDto> = ServiceLogger.call(

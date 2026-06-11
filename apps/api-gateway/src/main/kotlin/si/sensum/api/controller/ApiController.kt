@@ -21,6 +21,9 @@ private fun Route.publicControllers(
         authService = dependencies.authService,
         jwtTokenService = dependencies.jwtTokenService
     )
+    statsController(
+        statsService = dependencies.statsService
+    )
 }
 
 private fun Route.protectedControllers(
@@ -60,10 +63,6 @@ private fun Route.protectedControllers(
 
     simulatorController(
         simulatorService = dependencies.simulatorService
-    )
-
-    statsController(
-        statsService = dependencies.statsService
     )
 
     dataImportController(

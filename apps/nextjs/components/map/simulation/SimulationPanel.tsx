@@ -1,10 +1,10 @@
 "use client"
-import { CheckCircle2, Minus, RotateCcw, Trash2, X } from "lucide-react"
-import type { StationDto, ChannelDto } from "../types"
-import type { SimStep, SimConfig, SimResult } from "./types"
-import { SIM_MIN_POINTS, SIM_MAX_POINTS } from "./useSimulation"
-import { SimulationForm } from "./SimulationForm"
-import { SimulationResult } from "./SimulationResult"
+import {CheckCircle2, Minus, RotateCcw, Trash2, X} from "lucide-react"
+import type {StationDto, ChannelDto} from "../shared/types"
+import type {SimStep, SimConfig, SimResult} from "./types"
+import {SIM_MIN_POINTS, SIM_MAX_POINTS} from "./useSimulation"
+import {SimulationForm} from "./SimulationForm"
+import {SimulationResult} from "./SimulationResult"
 
 interface Props {
     token: string
@@ -20,7 +20,7 @@ interface Props {
     onRemovePoint: (index: number) => void
     onReset: () => void
     onConfirm: () => void
-    onRun: () => void
+    onRun: (token?: string) => void
     onConfigChange: (c: SimConfig) => void
     onClose: () => void
     onRunAnother: () => void
@@ -29,21 +29,22 @@ interface Props {
 const STEPS: SimStep[] = ["draw", "configure", "result"]
 
 export function SimulationPanel({
-    token,
-    step, points, stationsInArea, channelsByStation,
-    config, loading, error, result,
-    onRemoveLast, onRemovePoint, onReset, onConfirm, onRun, onConfigChange,
-    onClose, onRunAnother,
-}: Props) {
+                                    token,
+                                    step, points, stationsInArea, channelsByStation,
+                                    config, loading, error, result,
+                                    onRemoveLast, onRemovePoint, onReset, onConfirm, onRun, onConfigChange,
+                                    onClose, onRunAnother,
+                                }: Props) {
     const stepLabel =
         step === "draw"
             ? "Click the map to place polygon vertices"
             : step === "configure"
-            ? "Configure generation parameters"
-            : "Measurements generated"
+                ? "Configure generation parameters"
+                : "Measurements generated"
 
     return (
-        <aside className="h-full w-[430px] shrink-0 flex flex-col border-l border-border bg-card text-foreground shadow-xl overflow-hidden">
+        <aside
+            className="h-full w-[430px] shrink-0 flex flex-col border-l border-border bg-card text-foreground shadow-xl overflow-hidden">
             <div className="shrink-0 border-b border-border p-4">
                 <div className="flex items-start justify-between gap-3">
                     <div>
@@ -57,7 +58,7 @@ export function SimulationPanel({
                         title="Close simulation"
                         className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0"
                     >
-                        <X size={16} />
+                        <X size={16}/>
                     </button>
                 </div>
 
@@ -70,8 +71,8 @@ export function SimulationPanel({
                                 step === s
                                     ? "bg-[#E8A838]"
                                     : i < STEPS.indexOf(step)
-                                    ? "bg-[#4CAF7D]"
-                                    : "bg-border",
+                                        ? "bg-[#4CAF7D]"
+                                        : "bg-border",
                             ].join(" ")}
                         />
                     ))}
@@ -100,7 +101,7 @@ export function SimulationPanel({
                     />
                 )}
                 {step === "result" && result && (
-                    <SimulationResult token={token} result={result} onRunAnother={onRunAnother} />
+                    <SimulationResult token={token} result={result} onRunAnother={onRunAnother}/>
                 )}
             </div>
         </aside>
@@ -108,12 +109,12 @@ export function SimulationPanel({
 }
 
 function DrawStep({
-    points,
-    onRemoveLast,
-    onRemovePoint,
-    onReset,
-    onConfirm,
-}: {
+                      points,
+                      onRemoveLast,
+                      onRemovePoint,
+                      onReset,
+                      onConfirm,
+                  }: {
     points: [number, number][]
     onRemoveLast: () => void
     onRemovePoint: (index: number) => void
@@ -133,7 +134,7 @@ function DrawStep({
                     </span>
                 </div>
                 <div className="flex gap-1">
-                    {Array.from({ length: SIM_MAX_POINTS }).map((_, i) => (
+                    {Array.from({length: SIM_MAX_POINTS}).map((_, i) => (
                         <div
                             key={i}
                             className={[
@@ -167,21 +168,21 @@ function DrawStep({
                     disabled={points.length === 0}
                     className="flex items-center gap-1.5 px-3 py-2 text-xs rounded-lg border border-border bg-background text-foreground hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 >
-                    <Minus size={13} /> Undo last
+                    <Minus size={13}/> Undo last
                 </button>
                 <button
                     onClick={onReset}
                     disabled={points.length === 0}
                     className="flex items-center gap-1.5 px-3 py-2 text-xs rounded-lg border border-border bg-background text-foreground hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 >
-                    <RotateCcw size={13} /> Reset
+                    <RotateCcw size={13}/> Reset
                 </button>
                 <button
                     onClick={onConfirm}
                     disabled={!canConfirm}
                     className="ml-auto flex items-center gap-1.5 px-4 py-2 text-xs rounded-lg bg-[#E8A838] text-[#1E1E1E] font-medium hover:bg-[#d4962e] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 >
-                    <CheckCircle2 size={13} /> Confirm area
+                    <CheckCircle2 size={13}/> Confirm area
                 </button>
             </div>
 
@@ -212,7 +213,7 @@ function DrawStep({
                                     className="opacity-0 group-hover:opacity-100 p-0.5 rounded text-muted-foreground hover:text-[#CF6679] transition-all"
                                     title="Remove vertex"
                                 >
-                                    <Trash2 size={12} />
+                                    <Trash2 size={12}/>
                                 </button>
                             </div>
                         ))}

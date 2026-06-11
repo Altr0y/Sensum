@@ -1,6 +1,7 @@
 package si.sensum.simulator
 
 import si.sensum.geodsl.ast.ChannelKind
+import si.sensum.geodsl.ast.PointNode
 import java.time.LocalDateTime
 
 sealed class SimulateRequest {
@@ -12,6 +13,7 @@ sealed class SimulateRequest {
         val channelKinds: List<ChannelKind>,
         val regionName: String? = null,
         val municipalityName: String? = null,
+        val polygon: List<PointNode>? = null,
         val from: LocalDateTime,
         val to: LocalDateTime,
         val intervalMinutes: Long = 60L

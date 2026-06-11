@@ -1,9 +1,9 @@
 "use client"
 import { useState, useCallback } from "react"
-import type { StationDto, ChannelDto } from "../types"
+import type { StationDto, ChannelDto } from "../shared/types"
 import type { SimStep, SimConfig, SimResult } from "./types"
 import { stationsInsidePolygon, makeDefaultConfig, localInputToIso } from "./utils"
-import { fetchChannels, runSimulation } from "../api"
+import { fetchChannels, runSimulation } from "../shared/api"
 
 export const SIM_MIN_POINTS = 3
 export const SIM_MAX_POINTS = 10
@@ -75,7 +75,7 @@ export function useSimulation(allStations: StationDto[]) {
         setStep("configure")
     }, [allStations, points])
 
-    const run = useCallback(async () => {
+    const run = useCallback(async (token?: string) => {
         setLoading(true)
         setError(null)
         try {
@@ -95,7 +95,7 @@ export function useSimulation(allStations: StationDto[]) {
                             from,
                             to,
                             intervalMinutes: config.intervalMinutes,
-                        })
+                        }, token)
                     )
                 )
             } else {
@@ -104,17 +104,16 @@ export function useSimulation(allStations: StationDto[]) {
                     count: config.stationCount,
                     prefix: config.prefix,
                     channelKinds: config.channelKinds,
+                    polygon: points.map(([lat, lng]) => [lng, lat]),
                     from,
                     to,
                     intervalMinutes: config.intervalMinutes,
-                })
+                }, token)
             }
 
             setResult({
                 mode: hasExisting ? "existing" : "new",
-                stationCount: hasExisting
-                    ? stationsInArea.length
-                    : config.stationCount,
+                stationCount: hasExisting ? stationsInArea.length : config.stationCount,
                 from: config.from,
                 to: config.to,
             })

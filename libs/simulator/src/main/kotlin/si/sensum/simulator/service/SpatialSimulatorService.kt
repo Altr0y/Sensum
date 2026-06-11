@@ -29,7 +29,8 @@ class SpatialSimulatorService(
     }
 
     private fun handleFull(request: SimulateRequest.Full): List<StationWithContext> {
-        val polygon = resolvePolygon(request.regionName, request.municipalityName)
+        val polygon = request.polygon
+            ?: resolvePolygon(request.regionName, request.municipalityName)
         return (1..request.count).map { i ->
             val location = if (polygon != null)
                 SpatialUtils.randomPointInPolygon(polygon)

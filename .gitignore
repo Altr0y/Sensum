@@ -6,3 +6,4 @@ build/
 .env
 /apps/nextjs/public/geojson/
 /test-data/
+CLAUDE.md
