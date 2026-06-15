@@ -30,14 +30,23 @@ fun Route.configureStatsRoutes(
             }
         }
 
+        get("/stations/{stationId}/channels") {
+            val stationId = call.requireLongPathParameter("stationId")
+            call.respondOk {
+                statsService.getChannelsForStation(stationId)
+            }
+        }
+
         get("/measurements/range") {
             val (from, to) = call.requireDateRangeQuery()
             val stationId = call.parameters["stationId"]?.toLongOrNull()
+            val channelId = call.parameters["channelId"]?.toLongOrNull()
             call.respondOk {
                 statsService.measurementsInRange(
                     from = from,
                     to = to,
-                    stationId = stationId
+                    stationId = stationId,
+                    channelId = channelId
                 )
             }
         }

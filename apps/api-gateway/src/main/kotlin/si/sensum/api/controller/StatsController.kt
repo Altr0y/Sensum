@@ -30,6 +30,14 @@ internal fun Route.statsController(
             }
         }
 
+        get("/stations/{stationId}/channels") {
+            val stationId = call.parameters["stationId"]?.toLongOrNull()
+                ?: return@get call.respond(HttpStatusCode.BadRequest)
+            call.respondOk {
+                statsService.getChannelsForStation(stationId)
+            }
+        }
+
         get("/stations/{stationId}/timerange") {
             val stationId = call.parameters["stationId"]?.toLongOrNull()
                 ?: return@get call.respond(HttpStatusCode.BadRequest)
@@ -42,8 +50,9 @@ internal fun Route.statsController(
             val from = call.requireStringQueryParameter("from")
             val to = call.requireStringQueryParameter("to")
             val stationId = call.parameters["stationId"]?.toLongOrNull()
+            val channelId = call.parameters["channelId"]?.toLongOrNull()
             call.respondOk {
-                statsService.getMeasurementsInRange(from = from, to = to, stationId = stationId)
+                statsService.getMeasurementsInRange(from = from, to = to, stationId = stationId, channelId = channelId)
             }
         }
     }

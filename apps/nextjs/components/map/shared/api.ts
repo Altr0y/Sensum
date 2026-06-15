@@ -26,6 +26,23 @@ async function postJson<T>(url: string, body: unknown, token?: string): Promise<
     return response.json()
 }
 
+async function patchJson<T>(url: string, body: unknown, token?: string): Promise<T> {
+    const headers: Record<string, string> = {"Content-Type": "application/json"}
+    if (token) headers["Authorization"] = `Bearer ${token}`
+    const response = await fetch(url, {
+        credentials: "include",
+        method: "PATCH",
+        headers,
+        body: JSON.stringify(body),
+    })
+    if (!response.ok) {
+        const text = await response.text().catch(() => "")
+        const apiMessage = tryParseApiError(text)
+        throw new Error(apiMessage ?? `HTTP ${response.status}${text ? `: ${text}` : ""}`)
+    }
+    return response.json()
+}
+
 function tryParseApiError(body: string): string | null {
     try {
         const parsed = JSON.parse(body)
@@ -60,6 +77,30 @@ export function fetchMeasurements(
 
 export function createStation(command: CreateStationCommand): Promise<StationDto> {
     return postJson(`${API_BASE}/stations`, command)
+}
+
+export function createChannels(
+    stationId: number,
+    kinds: string[],
+    token: string
+): Promise<ChannelDto[]> {
+    return postJson(`${API_BASE}/stations/${stationId}/channels`, {kinds}, token)
+}
+
+export type UpdateStationPatch = {
+    name?: string
+    description?: string
+    serialNumber?: string
+    latitude?: number
+    longitude?: number
+}
+
+export function updateStation(
+    stationId: number,
+    patch: UpdateStationPatch,
+    token: string
+): Promise<StationDto> {
+    return patchJson(`${API_BASE}/stations/${stationId}`, patch, token)
 }
 
 export type DslProcessResult = {

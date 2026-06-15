@@ -12,6 +12,8 @@ import si.sensum.backend.service.StationService
 import si.sensum.shared.ktor.validation.requireIntPathParameter
 import si.sensum.shared.ktor.validation.requireLongPathParameter
 import si.sensum.shared.models.stations.CreateStationCommand
+import io.ktor.server.routing.patch
+import si.sensum.shared.models.stations.UpdateStationCommand
 
 fun Route.configureStationRoutes(
     stationService: StationService
@@ -52,6 +54,13 @@ fun Route.configureStationRoutes(
             } else {
                 call.respond(HttpStatusCode.NotFound)
             }
+        }
+
+        patch("/{stationId}") {
+            val stationId = call.requireLongPathParameter("stationId")
+            val command = call.receive<UpdateStationCommand>()
+            val updated = stationService.updateStation(stationId, command)
+            call.respond(HttpStatusCode.OK, updated)
         }
     }
 

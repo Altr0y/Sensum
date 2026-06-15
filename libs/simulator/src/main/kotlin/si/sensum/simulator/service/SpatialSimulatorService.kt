@@ -9,6 +9,7 @@ import si.sensum.geodsl.lexer.Lexer
 import si.sensum.geodsl.parser.Parser
 import si.sensum.geodsl.spatial.SpatialUtils
 import si.sensum.simulator.config.StationConfigFactory
+import si.sensum.simulator.engine.RandomWalkGenerator
 
 class SpatialSimulatorService(
     private val floodZonesDir: String,
@@ -108,21 +109,36 @@ class SpatialSimulatorService(
     }
 
     private fun handleMeasurementsOnly(request: SimulateRequest.MeasurementsOnly): List<StationWithContext> {
+        val channels = request.channels.map { spec ->
+            val config = StationConfigFactory.buildChannelConfig(
+                channelId = spec.channelId,
+                kind = spec.kind,
+                floodRisk = null,
+                nearRiver = false
+            )
+            val generator = RandomWalkGenerator(config)
+            val measurements = StationConfigFactory.generateMeasurements(
+                generator = generator,
+                from = request.from,
+                to = request.to,
+                intervalMinutes = request.intervalMinutes,
+                floodRisk = null
+            )
+            ChannelNode(
+                id = spec.channelId,
+                name = config.name,
+                kind = spec.kind,
+                unit = config.unit,
+                measurements = measurements
+            )
+        }
         return listOf(
             StationWithContext(
                 station = StationNode(
                     id = request.stationId,
                     name = "",
                     location = PointNode(0.0, 0.0),
-                    channels = request.channelIds.map { channelId ->
-                        ChannelNode(
-                            id = channelId,
-                            name = "",
-                            kind = ChannelKind.WATER_LEVEL,
-                            unit = "",
-                            measurements = emptyList()
-                        )
-                    }
+                    channels = channels
                 ),
                 floodRisk = null,
                 nearRiver = false

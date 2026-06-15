@@ -31,7 +31,17 @@ data class OverviewStatsDto(
     val measurementsBySource: List<CountByLabelDto>,
     val channelsByUnit: List<CountByLabelDto>,
     val activeAlarms: Long,
-    val recentMeasurements: List<RecentMeasurementDto>
+    val recentMeasurements: List<RecentMeasurementDto>,
+    val recentStations: List<RecentStationDto>
+)
+
+@Serializable
+data class RecentStationDto(
+    val id: Long,
+    val name: String,
+    val source: String,
+    @Serializable(with = OffsetDateTimeIsoSerializer::class)
+    val createdAt: OffsetDateTime?
 )
 
 @Serializable
@@ -63,6 +73,11 @@ data class StationSummaryDto(
     val name: String
 )
 
+@Serializable
+data class ChannelSummaryDto(
+    val id: Long,
+    val name: String
+)
 
 @Serializable
 data class StationTimeRangeDto(

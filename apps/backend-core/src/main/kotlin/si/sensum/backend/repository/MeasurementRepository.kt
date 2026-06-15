@@ -154,6 +154,20 @@ class MeasurementRepository {
         }
     }
 
+    fun deleteByChannelAndRange(
+        channelId: Int,
+        from: LocalDateTime,
+        to: LocalDateTime
+    ) {
+        DatabaseTransaction.run {
+            MeasurementTable.deleteWhere {
+                (MeasurementTable.channelId eq channelId) and
+                        (MeasurementTable.dateTime greaterEq from) and
+                        (MeasurementTable.dateTime lessEq to)
+            }
+        }
+    }
+
     fun replaceAllFromDtos(
         measurements: List<MeasurementDto>,
         source: DataSourceDto

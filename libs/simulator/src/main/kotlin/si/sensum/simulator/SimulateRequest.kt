@@ -34,9 +34,14 @@ sealed class SimulateRequest {
     ) : SimulateRequest()
 
     // 4. Samo meritve - obstoječa postaja + obstoječi kanali
+    data class ChannelSpec(
+        val channelId: Int,
+        val kind: ChannelKind
+    )
+
     data class MeasurementsOnly(
         val stationId: Int,
-        val channelIds: List<Int>,
+        val channels: List<ChannelSpec>,
         val from: LocalDateTime,
         val to: LocalDateTime,
         val intervalMinutes: Long = 60L

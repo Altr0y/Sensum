@@ -1,6 +1,7 @@
 import type { Feature, GeoJsonProperties, Geometry } from "geojson"
 import type { SensumGeoJson } from "../shared/types"
 
+
 export const layerLabels: Record<string, string> = {
     stations: "Stations",
     rivers: "Rivers",
@@ -49,6 +50,14 @@ export const stationSourceBadges: Record<string, string> = {
     DSL: "D",
     SIM: "S",
     UNKNOWN: "",
+}
+
+export const stationSourceColors: Record<string, string> = {
+    SWS: "#3b82f6",
+    MANUAL: "#9ca3af",
+    DSL: "#a855f7",
+    SIM: "#eab308",
+    UNKNOWN: "#eab308",
 }
 
 export const defaultVisibleStationSources = new Set<string>(stationSources)
@@ -137,4 +146,44 @@ export function normalizeLayerData(geojson: SensumGeoJson, layer: string): Sensu
             },
         })),
     }
+}
+
+export type LayerGroup = {
+    id: string
+    label: string
+    layers: string[]
+    isStationLike?: boolean
+}
+
+export const layerGroups: LayerGroup[] = [
+    {
+        id: "stations",
+        label: "Stations",
+        layers: ["stations"],
+    },
+    {
+        id: "geographical",
+        label: "Geographical",
+        layers: ["rivers", "lakes", "regions", "municipalities"],
+    },
+    {
+        id: "flood_zones",
+        label: "Flood zones",
+        layers: ["floods_often", "floods_rare", "floods_very_rare"],
+    },
+    {
+        id: "imported",
+        label: "Imported layers",
+        layers: [],
+    },
+]
+
+export const layerShortLabels: Record<string, string> = {
+    floods_often: "Frequent",
+    floods_rare: "Rare",
+    floods_very_rare: "Very rare",
+    rivers: "Rivers",
+    lakes: "Lakes",
+    regions: "Regions",
+    municipalities: "Municipalities",
 }

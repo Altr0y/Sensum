@@ -5,6 +5,7 @@ import si.sensum.api.client.BackendStationClient
 import si.sensum.shared.models.stations.CreateStationCommand
 import si.sensum.shared.models.stations.StationDto
 import si.sensum.api.domain.ApiPrincipal
+import si.sensum.shared.models.stations.UpdateStationCommand
 
 internal class StationService(
     private val stations: BackendStationClient
@@ -104,6 +105,17 @@ internal class StationService(
         operation = "deleteStation"
     ) {
         stations.deleteStation(stationId)
+    }
+
+    suspend fun updateStation(
+        principal: ApiPrincipal,
+        stationId: Long,
+        command: UpdateStationCommand
+    ): StationDto = ServiceLogger.suspendCall(
+        service = "station",
+        operation = "updateStation"
+    ) {
+        stations.updateStation(stationId, command)
     }
 
     private fun StationDto.toGeoJsonFeature(): StationGeoJsonFeatureDto {

@@ -18,3 +18,8 @@ data class ChannelDto(
     val unit: String? = null,
     val source: DataSourceDto = DataSourceDto.UNKNOWN
 )
+
+@Serializable
+data class CreateChannelsRequest(
+    val kinds: List<String>
+)
