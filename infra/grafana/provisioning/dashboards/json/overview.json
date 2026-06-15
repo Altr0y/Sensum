@@ -1,244 +1,592 @@
 {
-  "id": null,
-  "uid": "sensum-overview",
-  "title": "Overview",
-  "tags": ["sensum"],
-  "timezone": "browser",
-  "schemaVersion": 38,
-  "version": 4,
-  "refresh": "30s",
-  "time": { "from": "now-7d", "to": "now" },
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
   "panels": [
     {
-      "id": 1,
-      "type": "stat",
-      "title": "Postaje",
-      "gridPos": { "h": 4, "w": 8, "x": 0, "y": 0 },
-      "datasource": { "type": "marcusolsson-json-datasource", "uid": "sensum-stats-api" },
-      "options": {
-        "reduceOptions": { "calcs": ["lastNotNull"] },
-        "orientation": "auto",
-        "textMode": "auto",
-        "colorMode": "value",
-        "graphMode": "none"
+      "datasource": {
+        "type": "marcusolsson-json-datasource",
+        "uid": "sensum-stats-api"
       },
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "thresholds" },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [{ "color": "blue", "value": null }]
-          }
-        }
-      },
-      "targets": [
-        {
-          "datasource": { "type": "marcusolsson-json-datasource", "uid": "sensum-stats-api" },
-          "urlPath": "/overview",
-          "method": "GET",
-          "fields": [
-            { "jsonPath": "$.stationCount", "name": "Postaje", "type": "number" }
-          ],
-          "refId": "A"
-        }
-      ]
-    },
-    {
-      "id": 2,
-      "type": "stat",
-      "title": "Kanali",
-      "gridPos": { "h": 4, "w": 8, "x": 8, "y": 0 },
-      "datasource": { "type": "marcusolsson-json-datasource", "uid": "sensum-stats-api" },
-      "options": {
-        "reduceOptions": { "calcs": ["lastNotNull"] },
-        "orientation": "auto",
-        "textMode": "auto",
-        "colorMode": "value",
-        "graphMode": "none"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "thresholds" },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [{ "color": "green", "value": null }]
-          }
-        }
-      },
-      "targets": [
-        {
-          "datasource": { "type": "marcusolsson-json-datasource", "uid": "sensum-stats-api" },
-          "urlPath": "/overview",
-          "method": "GET",
-          "fields": [
-            { "jsonPath": "$.channelCount", "name": "Kanali", "type": "number" }
-          ],
-          "refId": "A"
-        }
-      ]
-    },
-    {
-      "id": 3,
-      "type": "stat",
-      "title": "Meritve",
-      "gridPos": { "h": 4, "w": 8, "x": 16, "y": 0 },
-      "datasource": { "type": "marcusolsson-json-datasource", "uid": "sensum-stats-api" },
-      "options": {
-        "reduceOptions": { "calcs": ["lastNotNull"] },
-        "orientation": "auto",
-        "textMode": "auto",
-        "colorMode": "value",
-        "graphMode": "none"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "thresholds" },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [{ "color": "orange", "value": null }]
-          }
-        }
-      },
-      "targets": [
-        {
-          "datasource": { "type": "marcusolsson-json-datasource", "uid": "sensum-stats-api" },
-          "urlPath": "/overview",
-          "method": "GET",
-          "fields": [
-            { "jsonPath": "$.measurementCount", "name": "Meritve", "type": "number" }
-          ],
-          "refId": "A"
-        }
-      ]
-    },
-    {
-      "id": 4,
-      "type": "piechart",
-      "title": "Meritve po viru",
-      "gridPos": { "h": 9, "w": 10, "x": 0, "y": 4 },
-      "datasource": { "type": "marcusolsson-json-datasource", "uid": "sensum-stats-api" },
-      "options": {
-        "pieType": "pie",
-        "legend": { "displayMode": "table", "placement": "right", "values": ["value", "percent"] }
-      },
-      "targets": [
-        {
-          "datasource": { "type": "marcusolsson-json-datasource", "uid": "sensum-stats-api" },
-          "urlPath": "/overview",
-          "method": "GET",
-          "fields": [
-            { "jsonPath": "$.measurementsBySource[*].label", "name": "Vir", "type": "string" },
-            { "jsonPath": "$.measurementsBySource[*].count", "name": "Število", "type": "number" }
-          ],
-          "refId": "A"
-        }
-      ]
-    },
-    {
-      "id": 5,
-      "type": "piechart",
-      "title": "Kanali po enoti",
-      "gridPos": { "h": 9, "w": 10, "x": 10, "y": 4 },
-      "datasource": { "type": "marcusolsson-json-datasource", "uid": "sensum-stats-api" },
-      "options": {
-        "pieType": "donut",
-        "legend": { "displayMode": "table", "placement": "right", "values": ["value", "percent"] }
-      },
-      "targets": [
-        {
-          "datasource": { "type": "marcusolsson-json-datasource", "uid": "sensum-stats-api" },
-          "urlPath": "/overview",
-          "method": "GET",
-          "fields": [
-            { "jsonPath": "$.channelsByUnit[*].label", "name": "Enota", "type": "string" },
-            { "jsonPath": "$.channelsByUnit[*].count", "name": "Število", "type": "number" }
-          ],
-          "refId": "A"
-        }
-      ]
-    },
-    {
-      "id": 6,
-      "type": "stat",
-      "title": "Kanali v alarmu",
-      "gridPos": { "h": 9, "w": 4, "x": 20, "y": 4 },
-      "datasource": { "type": "marcusolsson-json-datasource", "uid": "sensum-stats-api" },
-      "options": {
-        "reduceOptions": { "calcs": ["lastNotNull"] },
-        "orientation": "auto",
-        "textMode": "auto",
-        "colorMode": "background",
-        "graphMode": "none"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "thresholds" },
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "green", "value": null },
-              { "color": "red", "value": 1 }
+              {
+                "color": "blue",
+                "value": 0
+              }
             ]
           }
-        }
+        },
+        "overrides": []
       },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.4.2",
       "targets": [
         {
-          "datasource": { "type": "marcusolsson-json-datasource", "uid": "sensum-stats-api" },
-          "urlPath": "/overview",
-          "method": "GET",
+          "datasource": {
+            "type": "marcusolsson-json-datasource",
+            "uid": "sensum-stats-api"
+          },
           "fields": [
-            { "jsonPath": "$.activeAlarms", "name": "Alarmi", "type": "number" }
+            {
+              "jsonPath": "$.stationCount",
+              "name": "Postaje",
+              "type": "number"
+            }
           ],
-          "refId": "A"
+          "method": "GET",
+          "refId": "A",
+          "urlPath": "/overview"
         }
-      ]
+      ],
+      "title": "Postaje",
+      "type": "stat"
     },
     {
-      "id": 7,
-      "type": "table",
-      "title": "Zadnje meritve",
-      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 13 },
-      "datasource": { "type": "marcusolsson-json-datasource", "uid": "sensum-stats-api" },
-      "options": {
-        "sortBy": [{ "displayName": "Time", "desc": true }],
-        "footer": { "show": false }
+      "datasource": {
+        "type": "marcusolsson-json-datasource",
+        "uid": "sensum-stats-api"
       },
       "fieldConfig": {
-        "defaults": { "custom": { "filterable": true } },
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 6,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.4.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "marcusolsson-json-datasource",
+            "uid": "sensum-stats-api"
+          },
+          "fields": [
+            {
+              "jsonPath": "$.channelCount",
+              "name": "Kanali",
+              "type": "number"
+            }
+          ],
+          "method": "GET",
+          "refId": "A",
+          "urlPath": "/overview"
+        }
+      ],
+      "title": "Kanali",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "marcusolsson-json-datasource",
+        "uid": "sensum-stats-api"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "orange",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 12,
+        "y": 0
+      },
+      "id": 3,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.4.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "marcusolsson-json-datasource",
+            "uid": "sensum-stats-api"
+          },
+          "fields": [
+            {
+              "jsonPath": "$.measurementCount",
+              "name": "Meritve",
+              "type": "number"
+            }
+          ],
+          "method": "GET",
+          "refId": "A",
+          "urlPath": "/overview"
+        }
+      ],
+      "title": "Meritve",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "marcusolsson-json-datasource",
+        "uid": "sensum-stats-api"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "#E8A838",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 10
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 18,
+        "y": 0
+      },
+      "id": 6,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.4.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "marcusolsson-json-datasource",
+            "uid": "sensum-stats-api"
+          },
+          "fields": [
+            {
+              "jsonPath": "$.activeAlarms",
+              "name": "Kanali v alarmu",
+              "type": "number"
+            }
+          ],
+          "method": "GET",
+          "refId": "A",
+          "urlPath": "/overview"
+        }
+      ],
+      "title": "Kanali v alarmu",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "marcusolsson-json-datasource",
+        "uid": "sensum-stats-api"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": false,
+            "footer": {
+              "reducers": []
+            },
+            "inspect": false
+          },
+          "mappings": [
+            {
+              "options": {
+                "null": {
+                  "text": "-"
+                }
+              },
+              "type": "special"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          }
+        },
         "overrides": [
           {
-            "matcher": { "id": "byName", "options": "Status" },
+            "matcher": {
+              "id": "byName",
+              "options": "Vir"
+            },
             "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "mode": "gradient",
+                  "type": "color-background"
+                }
+              },
               {
                 "id": "mappings",
                 "value": [
-                  { "type": "value", "options": { "false": { "text": "ALARM", "color": "red" }, "true": { "text": "OK", "color": "green" } } }
+                  {
+                    "options": {
+                      "DSL": {
+                        "color": "#a855f7",
+                        "index": 2
+                      },
+                      "MANUAL": {
+                        "color": "#9ca3af",
+                        "index": 1
+                      },
+                      "SIM": {
+                        "color": "#eab308",
+                        "index": 3
+                      },
+                      "SWS": {
+                        "color": "#3b82f6",
+                        "index": 0
+                      },
+                      "UNKNOWN": {
+                        "color": "#eab308",
+                        "index": 4
+                      }
+                    },
+                    "type": "value"
+                  }
                 ]
               },
-              { "id": "custom.displayMode", "value": "color-background" }
+              {
+                "id": "custom.width",
+                "value": 120
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Ustvarjeno"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeFromNow"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "ID"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 90
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Datum"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 163
+              }
             ]
           }
         ]
       },
+      "gridPos": {
+        "h": 11,
+        "w": 12,
+        "x": 0,
+        "y": 6
+      },
+      "id": 7,
+      "options": {
+        "cellHeight": "md",
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "ID"
+          }
+        ]
+      },
+      "pluginVersion": "12.4.2",
       "targets": [
         {
-          "datasource": { "type": "marcusolsson-json-datasource", "uid": "sensum-stats-api" },
-          "urlPath": "/overview",
-          "method": "GET",
+          "datasource": {
+            "type": "marcusolsson-json-datasource",
+            "uid": "sensum-stats-api"
+          },
           "fields": [
-            { "jsonPath": "$.recentMeasurements[*].dateTime", "name": "Time", "type": "time" },
-            { "jsonPath": "$.recentMeasurements[*].station", "name": "Postaja", "type": "string" },
-            { "jsonPath": "$.recentMeasurements[*].serialNumber", "name": "Serijska št.", "type": "string" },
-            { "jsonPath": "$.recentMeasurements[*].channel", "name": "Kanal", "type": "string" },
-            { "jsonPath": "$.recentMeasurements[*].unit", "name": "Enota", "type": "string" },
-            { "jsonPath": "$.recentMeasurements[*].value", "name": "Vrednost", "type": "number" },
-            { "jsonPath": "$.recentMeasurements[*].status", "name": "Status", "type": "boolean" },
-            { "jsonPath": "$.recentMeasurements[*].source", "name": "Vir", "type": "string" }
+            {
+              "jsonPath": "$.recentStations[*].id",
+              "name": "ID",
+              "type": "number"
+            },
+            {
+              "jsonPath": "$.recentStations[*].name",
+              "name": "Ime",
+              "type": "string"
+            },
+            {
+              "jsonPath": "$.recentStations[*].source",
+              "name": "Vir",
+              "type": "string"
+            },
+            {
+              "jsonPath": "$.recentStations[*].createdAt",
+              "name": "Datum",
+              "type": "time"
+            },
+            {
+              "jsonPath": "$.recentStations[*].createdAt",
+              "name": "Ustvarjeno",
+              "type": "time"
+            }
           ],
-          "refId": "A"
+          "method": "GET",
+          "refId": "A",
+          "urlPath": "/overview"
         }
-      ]
+      ],
+      "title": "Nazadnje ustvarjene postaje",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "marcusolsson-json-datasource",
+        "uid": "sensum-stats-api"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            }
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 12,
+        "x": 12,
+        "y": 6
+      },
+      "id": 8,
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "values": [
+            "value",
+            "percent"
+          ]
+        },
+        "pieType": "donut",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "sort": "desc",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.4.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "marcusolsson-json-datasource",
+            "uid": "sensum-stats-api"
+          },
+          "fields": [
+            {
+              "jsonPath": "$.measurementsBySource[*].label",
+              "name": "Vir",
+              "type": "string"
+            },
+            {
+              "jsonPath": "$.measurementsBySource[*].count",
+              "name": "Število",
+              "type": "number"
+            }
+          ],
+          "method": "GET",
+          "refId": "A",
+          "urlPath": "/overview"
+        }
+      ],
+      "title": "Meritve po viru",
+      "type": "piechart"
     }
-  ]
+  ],
+  "preload": false,
+  "refresh": "30s",
+  "schemaVersion": 42,
+  "tags": [
+    "sensum"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-7d",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Overview",
+  "uid": "sensum-overview",
+  "version": 5,
+  "weekStart": ""
 }

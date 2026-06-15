@@ -11,12 +11,14 @@ internal class StatsService(
 
     suspend fun getStations() = statsClient.getStations()
 
+    suspend fun getChannelsForStation(stationId: Long) = statsClient.getChannelsForStation(stationId)
     suspend fun getStationTimeRange(stationId: Long) = statsClient.getStationTimeRange(stationId)
 
     suspend fun getMeasurementsInRange(
         from: String,
         to: String,
-        stationId: Long? = null
+        stationId: Long? = null,
+        channelId: Long? = null
     ): MeasurementRangeStatsDto =
-        statsClient.getMeasurementsInRange(from = from, to = to, stationId = stationId)
+        statsClient.getMeasurementsInRange(from = from, to = to, stationId = stationId, channelId = channelId)
 }

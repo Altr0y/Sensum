@@ -38,7 +38,7 @@ object StationConfigFactory {
         )
     }
 
-    private fun generateMeasurements(
+    fun generateMeasurements(
         generator: RandomWalkGenerator,
         from: LocalDateTime,
         to: LocalDateTime,
@@ -70,12 +70,14 @@ object StationConfigFactory {
 
     private fun determineStatus(value: Double, floodRisk: String?): MeasurementStatus {
         return when (floodRisk) {
-            "often"     -> if (value > 4.0) MeasurementStatus.CRITICAL
+            "often" -> if (value > 4.0) MeasurementStatus.CRITICAL
             else if (value > 2.5) MeasurementStatus.WARNING
             else MeasurementStatus.OK
-            "rare"      -> if (value > 3.0) MeasurementStatus.WARNING
+
+            "rare" -> if (value > 3.0) MeasurementStatus.WARNING
             else MeasurementStatus.OK
-            else        -> MeasurementStatus.OK
+
+            else -> MeasurementStatus.OK
         }
     }
 
@@ -87,8 +89,8 @@ object StationConfigFactory {
     ): ChannelConfig = when (kind) {
         ChannelKind.WATER_LEVEL -> waterLevelConfig(channelId, floodRisk, nearRiver)
         ChannelKind.TEMPERATURE -> temperatureConfig(channelId)
-        ChannelKind.RAINFALL    -> rainfallConfig(channelId, floodRisk)
-        ChannelKind.FLOW_RATE   -> flowRateConfig(channelId, floodRisk, nearRiver)
+        ChannelKind.RAINFALL -> rainfallConfig(channelId, floodRisk)
+        ChannelKind.FLOW_RATE -> flowRateConfig(channelId, floodRisk, nearRiver)
     }
 
     private fun waterLevelConfig(
@@ -97,12 +99,14 @@ object StationConfigFactory {
         nearRiver: Boolean
     ): ChannelConfig {
         val (mean, std, min, max) = when (floodRisk) {
-            "often"     -> if (nearRiver) listOf(3.5, 0.8, 0.5, 6.0)
-            else           listOf(2.5, 0.6, 0.3, 5.0)
-            "rare"      -> if (nearRiver) listOf(2.0, 0.5, 0.2, 4.0)
-            else           listOf(1.5, 0.4, 0.1, 3.0)
+            "often" -> if (nearRiver) listOf(3.5, 0.8, 0.5, 6.0)
+            else listOf(2.5, 0.6, 0.3, 5.0)
+
+            "rare" -> if (nearRiver) listOf(2.0, 0.5, 0.2, 4.0)
+            else listOf(1.5, 0.4, 0.1, 3.0)
+
             "very_rare" -> listOf(1.0, 0.3, 0.1, 2.5)
-            else        -> listOf(0.8, 0.2, 0.1, 1.5)
+            else -> listOf(0.8, 0.2, 0.1, 1.5)
         }
         return ChannelConfig(
             channelId = channelId,
@@ -147,10 +151,10 @@ object StationConfigFactory {
         unit = "m³/s",
         generatorType = GeneratorType.RANDOM_WALK,
         mean = when (floodRisk) {
-            "often"     -> if (nearRiver) 85.0 else 50.0
-            "rare"      -> 30.0
+            "often" -> if (nearRiver) 85.0 else 50.0
+            "rare" -> 30.0
             "very_rare" -> 15.0
-            else        -> 8.0
+            else -> 8.0
         },
         std = 10.0,
         minAbsolute = 0.5,

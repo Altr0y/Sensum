@@ -2,6 +2,7 @@ package si.sensum.api.service
 
 import si.sensum.api.client.BackendChannelClient
 import si.sensum.shared.models.channels.ChannelDto
+import si.sensum.shared.models.channels.CreateChannelsRequest
 
 internal class ChannelService(
     private val channels: BackendChannelClient
@@ -24,5 +25,12 @@ internal class ChannelService(
         }
 
         return channels.getChannelsByStation(stationId)
+    }
+
+    suspend fun createChannels(stationId: Long, request: CreateChannelsRequest): List<ChannelDto> {
+        require(stationId > 0) {
+            "Station id must be positive"
+        }
+        return channels.createChannels(stationId, request)
     }
 }

@@ -40,16 +40,16 @@
             "barAlignment": 0,
             "barWidthFactor": 0.6,
             "drawStyle": "line",
-            "fillOpacity": 8,
-            "gradientMode": "none",
+            "fillOpacity": 25,
+            "gradientMode": "opacity",
             "hideFrom": {
               "legend": false,
               "tooltip": false,
               "viz": false
             },
             "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 2,
+            "lineInterpolation": "smooth",
+            "lineWidth": 3,
             "pointSize": 5,
             "scaleDistribution": {
               "type": "linear"
@@ -94,7 +94,7 @@
           "calcs": [],
           "displayMode": "list",
           "placement": "bottom",
-          "showLegend": true
+          "showLegend": false
         },
         "tooltip": {
           "hideZeros": false,
@@ -135,6 +135,10 @@
             [
               "stationId",
               "${stationId}"
+            ],
+            [
+              "channelId",
+              "${channelId}"
             ]
           ],
           "queryParams": "from=${__from:date:iso}&to=${__to:date:iso}",
@@ -142,7 +146,7 @@
           "urlPath": "/measurements/range"
         }
       ],
-      "title": "Meritve skozi čas",
+      "title": "Meritve skozi cas - ${stationId:text} / ${channelId:text}",
       "type": "timeseries"
     },
     {
@@ -163,6 +167,10 @@
               {
                 "color": "blue",
                 "value": 0
+              },
+              {
+                "color": "#5794F2",
+                "value": 1
               }
             ]
           }
@@ -170,7 +178,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 4,
+        "h": 6,
         "w": 8,
         "x": 0,
         "y": 14
@@ -178,7 +186,7 @@
       "id": 2,
       "options": {
         "colorMode": "value",
-        "graphMode": "none",
+        "graphMode": "area",
         "justifyMode": "auto",
         "orientation": "auto",
         "percentChangeColorMode": "standard",
@@ -196,6 +204,7 @@
       "pluginVersion": "12.4.2",
       "targets": [
         {
+          "cacheDurationSeconds": 300,
           "datasource": {
             "type": "marcusolsson-json-datasource",
             "uid": "sensum-stats-api"
@@ -208,6 +217,24 @@
             }
           ],
           "method": "GET",
+          "params": [
+            [
+              "from",
+              "${__from:date:iso}"
+            ],
+            [
+              "to",
+              "${__to:date:iso}"
+            ],
+            [
+              "stationId",
+              "${stationId}"
+            ],
+            [
+              "channelId",
+              "${channelId}"
+            ]
+          ],
           "queryParams": "from=${__from:date:iso}&to=${__to:date:iso}",
           "refId": "A",
           "urlPath": "/measurements/range"
@@ -234,6 +261,10 @@
               {
                 "color": "green",
                 "value": 0
+              },
+              {
+                "color": "#73BF69",
+                "value": 1
               }
             ]
           }
@@ -241,7 +272,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 4,
+        "h": 6,
         "w": 8,
         "x": 8,
         "y": 14
@@ -249,7 +280,7 @@
       "id": 3,
       "options": {
         "colorMode": "value",
-        "graphMode": "none",
+        "graphMode": "area",
         "justifyMode": "auto",
         "orientation": "auto",
         "percentChangeColorMode": "standard",
@@ -267,6 +298,7 @@
       "pluginVersion": "12.4.2",
       "targets": [
         {
+          "cacheDurationSeconds": 300,
           "datasource": {
             "type": "marcusolsson-json-datasource",
             "uid": "sensum-stats-api"
@@ -279,6 +311,24 @@
             }
           ],
           "method": "GET",
+          "params": [
+            [
+              "from",
+              "${__from:date:iso}"
+            ],
+            [
+              "to",
+              "${__to:date:iso}"
+            ],
+            [
+              "stationId",
+              "${stationId}"
+            ],
+            [
+              "channelId",
+              "${channelId}"
+            ]
+          ],
           "queryParams": "from=${__from:date:iso}&to=${__to:date:iso}",
           "refId": "A",
           "urlPath": "/measurements/range"
@@ -305,6 +355,10 @@
               {
                 "color": "orange",
                 "value": 0
+              },
+              {
+                "color": "#FF9830",
+                "value": 1
               }
             ]
           }
@@ -312,7 +366,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 4,
+        "h": 6,
         "w": 8,
         "x": 16,
         "y": 14
@@ -320,7 +374,7 @@
       "id": 4,
       "options": {
         "colorMode": "value",
-        "graphMode": "none",
+        "graphMode": "area",
         "justifyMode": "auto",
         "orientation": "auto",
         "percentChangeColorMode": "standard",
@@ -338,6 +392,7 @@
       "pluginVersion": "12.4.2",
       "targets": [
         {
+          "cacheDurationSeconds": 300,
           "datasource": {
             "type": "marcusolsson-json-datasource",
             "uid": "sensum-stats-api"
@@ -350,6 +405,24 @@
             }
           ],
           "method": "GET",
+          "params": [
+            [
+              "from",
+              "${__from:date:iso}"
+            ],
+            [
+              "to",
+              "${__to:date:iso}"
+            ],
+            [
+              "stationId",
+              "${stationId}"
+            ],
+            [
+              "channelId",
+              "${channelId}"
+            ]
+          ],
           "queryParams": "from=${__from:date:iso}&to=${__to:date:iso}",
           "refId": "A",
           "urlPath": "/measurements/range"
@@ -357,143 +430,6 @@
       ],
       "title": "Max vrednost",
       "type": "stat"
-    },
-    {
-      "datasource": {
-        "type": "marcusolsson-json-datasource",
-        "uid": "sensum-stats-api"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "custom": {
-            "align": "auto",
-            "cellOptions": {
-              "type": "auto"
-            },
-            "filterable": true,
-            "footer": {
-              "reducers": []
-            },
-            "inspect": false
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          }
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Status"
-            },
-            "properties": [
-              {
-                "id": "mappings",
-                "value": [
-                  {
-                    "options": {
-                      "false": {
-                        "color": "red",
-                        "text": "ALARM"
-                      },
-                      "true": {
-                        "color": "green",
-                        "text": "OK"
-                      }
-                    },
-                    "type": "value"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      "gridPos": {
-        "h": 12,
-        "w": 24,
-        "x": 0,
-        "y": 18
-      },
-      "id": 6,
-      "options": {
-        "cellHeight": "sm",
-        "showHeader": true,
-        "sortBy": [
-          {
-            "desc": true,
-            "displayName": "Time"
-          }
-        ]
-      },
-      "pluginVersion": "12.4.2",
-      "targets": [
-        {
-          "datasource": {
-            "type": "marcusolsson-json-datasource",
-            "uid": "sensum-stats-api"
-          },
-          "fields": [
-            {
-              "jsonPath": "$.table[*].dateTime",
-              "name": "Time",
-              "type": "time"
-            },
-            {
-              "jsonPath": "$.table[*].station",
-              "name": "Postaja",
-              "type": "string"
-            },
-            {
-              "jsonPath": "$.table[*].serialNumber",
-              "name": "Serijska št.",
-              "type": "string"
-            },
-            {
-              "jsonPath": "$.table[*].channel",
-              "name": "Kanal",
-              "type": "string"
-            },
-            {
-              "jsonPath": "$.table[*].unit",
-              "name": "Enota",
-              "type": "string"
-            },
-            {
-              "jsonPath": "$.table[*].value",
-              "name": "Vrednost",
-              "type": "number"
-            },
-            {
-              "jsonPath": "$.table[*].status",
-              "name": "Status",
-              "type": "boolean"
-            },
-            {
-              "jsonPath": "$.table[*].source",
-              "name": "Vir",
-              "type": "string"
-            }
-          ],
-          "method": "GET",
-          "queryParams": "from=${__from:date:iso}&to=${__to:date:iso}",
-          "refId": "A",
-          "urlPath": "/measurements/range"
-        }
-      ],
-      "title": "Meritve",
-      "type": "table"
     }
   ],
   "preload": false,
@@ -506,36 +442,84 @@
     "list": [
       {
         "current": {
-          "text": "5",
-          "value": "5"
+          "text": "Maribor-Multi 1",
+          "value": "28"
         },
         "datasource": {
-          "type": "marcusolsson-json-datasource",
-          "uid": "sensum-stats-api"
+          "type": "yesoreyeram-infinity-datasource",
+          "uid": "cfp4qgyxkjcw0b"
         },
         "definition": "",
         "label": "Station",
         "name": "stationId",
         "options": [],
         "query": {
-          "cacheDurationSeconds": 300,
-          "fields": [
-            {
-              "jsonPath": "$[*].id",
-              "type": "number"
-            },
-            {
-              "jsonPath": "$[*].name",
-              "language": "jsonpath",
-              "name": "",
-              "type": "string"
+          "infinityQuery": {
+            "columns": [],
+            "data": "values\nfoo\nbar\nbaz",
+            "filters": [],
+            "format": "table",
+            "parser": "backend",
+            "refId": "",
+            "root_selector": "",
+            "source": "url",
+            "type": "json",
+            "url": "http://api-gateway:8080/api/v1/stats/stations",
+            "url_options": {
+              "data": "",
+              "method": "GET"
             }
-          ],
-          "method": "GET",
-          "queryParams": "",
-          "urlPath": "/stations"
+          },
+          "meta": {
+            "textField": "name",
+            "valueField": "id"
+          },
+          "queryType": "infinity",
+          "refId": "variable"
         },
-        "refresh": 1,
+        "refresh": 2,
+        "regex": "",
+        "regexApplyTo": "value",
+        "type": "query"
+      },
+      {
+        "current": {
+          "text": "Temperature",
+          "value": "31"
+        },
+        "datasource": {
+          "type": "yesoreyeram-infinity-datasource",
+          "uid": "cfp4qgyxkjcw0b"
+        },
+        "definition": "",
+        "label": "Channel",
+        "name": "channelId",
+        "options": [],
+        "query": {
+          "infinityQuery": {
+            "columns": [],
+            "data": "values\nfoo\nbar\nbaz",
+            "filters": [],
+            "format": "table",
+            "parser": "backend",
+            "refId": "",
+            "root_selector": "",
+            "source": "url",
+            "type": "json",
+            "url": "http://api-gateway:8080/api/v1/stats/stations/${stationId}/channels",
+            "url_options": {
+              "data": "",
+              "method": "GET"
+            }
+          },
+          "meta": {
+            "textField": "name",
+            "valueField": "id"
+          },
+          "queryType": "infinity",
+          "refId": "variable"
+        },
+        "refresh": 2,
         "regex": "",
         "regexApplyTo": "value",
         "type": "query"
@@ -550,6 +534,6 @@
   "timezone": "browser",
   "title": "Meritve",
   "uid": "sensum-measurements",
-  "version": 2,
+  "version": 16,
   "weekStart": ""
 }

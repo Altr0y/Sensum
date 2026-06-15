@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server"
+import {NextRequest, NextResponse} from "next/server"
 
 const API_GATEWAY_URL =
     process.env.API_INTERNAL_BASE_URL ?? "http://localhost:8080"
@@ -13,14 +13,14 @@ async function proxyRequest(
     request: NextRequest,
     context: RouteContext
 ) {
-    const { path } = await context.params
+    const {path} = await context.params
 
     const token = request.cookies.get("sensum_token")?.value
 
     if (!token) {
         return NextResponse.json(
-            { error: "Missing authentication token" },
-            { status: 401 }
+            {error: "Missing authentication token"},
+            {status: 401}
         )
     }
 
@@ -87,6 +87,13 @@ export async function PUT(
 }
 
 export async function DELETE(
+    request: NextRequest,
+    context: RouteContext
+) {
+    return proxyRequest(request, context)
+}
+
+export async function PATCH(
     request: NextRequest,
     context: RouteContext
 ) {
