@@ -10,18 +10,16 @@ import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 
 internal object SwsMeasurementsResponseParser {
-
     private val swsLocalFormatter: DateTimeFormatter =
         DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
 
-    fun xmlToMeasurements(xml: String): List<MeasurementDto> {
+    fun xmlToMeasurements(xml: String, elementName: String = "Measurements"): List<MeasurementDto> {
         val document = SwsXmlDocumentParser.parse(
             xml = xml,
             responseName = "measurements"
         )
-
         return document
-            .elementsByTagName("Measurements")
+            .elementsByTagName(elementName)
             .map(::parseMeasurement)
     }
 

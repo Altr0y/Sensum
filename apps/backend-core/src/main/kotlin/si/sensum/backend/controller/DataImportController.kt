@@ -68,5 +68,13 @@ fun Route.configureDataImportRoutes(
                 message = service.importSwsMeasurements(command)
             )
         }
+
+        post("/sws/modbus-measurements") {
+            val command = call.receive<SwsImportCommand>()
+            call.respond(
+                status = HttpStatusCode.Created,
+                message = service.importSwsModbusMeasurements(command)
+            )
+        }
     }
 }

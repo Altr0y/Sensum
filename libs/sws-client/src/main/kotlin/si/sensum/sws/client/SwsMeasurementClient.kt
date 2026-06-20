@@ -116,4 +116,18 @@ internal class SwsMeasurementClient(
             parser = SwsMeasurementsResponseParser::xmlToMeasurements
         )
     }
+
+    suspend fun getModbusStationMeasurements(
+        session: SwsSession,
+        query: SwsStationMeasurementQuery
+    ): List<MeasurementDto> {
+        return operationExecutor.executeAndParse(
+            session = session,
+            operation = SwsOperations.simple(
+                methodName = "GetModbusStationMeasurements",
+                parameters = query.asParameters()
+            ),
+            parser = { xml -> SwsMeasurementsResponseParser.xmlToMeasurements(xml, elementName = "ModbusMeasurements") }
+        )
+    }
 }
