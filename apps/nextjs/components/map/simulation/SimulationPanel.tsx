@@ -24,6 +24,7 @@ interface Props {
     onConfigChange: (c: SimConfig) => void
     onClose: () => void
     onRunAnother: () => void
+    onSelectStation: (stationId: number) => void
 }
 
 const STEPS: SimStep[] = ["draw", "configure", "result"]
@@ -33,7 +34,7 @@ export function SimulationPanel({
                                     step, points, stationsInArea, channelsByStation,
                                     config, loading, error, result,
                                     onRemoveLast, onRemovePoint, onReset, onConfirm, onRun, onConfigChange,
-                                    onClose, onRunAnother,
+                                    onClose, onRunAnother, onSelectStation,
                                 }: Props) {
     const stepLabel =
         step === "draw"
@@ -98,10 +99,15 @@ export function SimulationPanel({
                         error={error}
                         onConfigChange={onConfigChange}
                         onRun={onRun}
+                        onSelectStation={onSelectStation}
                     />
                 )}
                 {step === "result" && result && (
-                    <SimulationResult token={token} result={result} onRunAnother={onRunAnother}/>
+                    <SimulationResult
+                        result={result}
+                        onRunAnother={onRunAnother}
+                        onSelectStation={onSelectStation}
+                    />
                 )}
             </div>
         </aside>

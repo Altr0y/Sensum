@@ -13,6 +13,7 @@ interface Props {
     onConfigChange: (c: SimConfig) => void
     onRun: () => void
     regenerateMode?: boolean
+    onSelectStation?: (stationId: number) => void
 }
 
 const INTERVAL_OPTIONS = [
@@ -32,6 +33,7 @@ export function SimulationForm({
                                    onConfigChange,
                                    onRun,
                                    regenerateMode = false,
+                                   onSelectStation,
                                }: Props) {
     const hasExisting = stationsInArea.length > 0
     const singleStation = regenerateMode ? stationsInArea[0] : null
@@ -113,17 +115,20 @@ export function SimulationForm({
                     </p>
                     <div className="space-y-1 max-h-28 overflow-y-auto">
                         {stationsInArea.map((s) => (
-                            <div
+                            <button
                                 key={s.stationId}
-                                className="flex items-center justify-between text-xs"
+                                type="button"
+                                onClick={() => onSelectStation?.(s.stationId)}
+                                disabled={!onSelectStation}
+                                className="flex w-full items-center justify-between text-xs rounded px-1.5 py-1 -mx-1.5 hover:bg-[#4CAF7D]/10 transition-colors disabled:hover:bg-transparent text-left"
                             >
-                                <span className="text-foreground">
-                                    {s.name ?? `Station ${s.stationId}`}
-                                </span>
+                            <span className="text-foreground">
+                                {s.name ?? `Station ${s.stationId}`}
+                            </span>
                                 <span className="text-muted-foreground">
-                                    {channelsByStation[s.stationId]?.length ?? "?"} ch.
-                                </span>
-                            </div>
+                                {channelsByStation[s.stationId]?.length ?? "?"} ch.
+                            </span>
+                            </button>
                         ))}
                     </div>
                     <p className="text-xs text-muted-foreground">
