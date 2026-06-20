@@ -45,6 +45,22 @@ export type MeasurementDto = {
     status: number | string
 }
 
+export type SimulatedStationDto = {
+    stationId: number
+    name: string
+    latitude: number
+    longitude: number
+    floodRisk: string | null
+    nearRiver: boolean
+    channels: {
+        channelId: number
+        name: string
+        kind: string
+        unit: string
+        measurementCount: number
+    }[]
+}
+
 export type SelectedStationDetails = {
     station: StationDto
     channels: ChannelDto[]

@@ -137,6 +137,10 @@ class StationRepository {
             }
         }
 
+        UserStationTable.deleteWhere {
+            UserStationTable.stationId eq stationId
+        }
+
         StationTable.deleteWhere {
             StationTable.id eq stationId
         } > 0
