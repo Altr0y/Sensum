@@ -9,7 +9,7 @@ import {
     fetchChannels,
     fetchMeasurements,
     fetchStations,
-    fetchStationsGeoJson,
+    fetchStationsGeoJson, importDsl,
     processDsl
 } from "../shared/api"
 import {AlertTriangle, X, PanelRightOpen, Trash2} from "lucide-react"
@@ -142,6 +142,12 @@ export function SensumMap({token}: { token: string }) {
     const [stationDetailsLoading, setStationDetailsLoading] = useState(false)
     const [stationDetailsError, setStationDetailsError] = useState<string | null>(null)
     const [sidebarOpen, setSidebarOpen] = useState(true)
+
+    const [lastDslSource, setLastDslSource] = useState<string | null>(null)
+    const [dslSaveLoading, setDslSaveLoading] = useState(false)
+    const [dslSaveResult, setDslSaveResult] = useState<string | null>(null)
+    const [dslSaveError, setDslSaveError] = useState<string | null>(null)
+    const [lastImportKey, setLastImportKey] = useState<string | null>(null)
 
     const [addMode, setAddMode] = useState(false)
     const [pendingStation, setPendingStation] = useState<PendingStationPoint | null>(null)
@@ -316,7 +322,17 @@ export function SensumMap({token}: { token: string }) {
     }
 
     async function openStationDetails(stationId: number) {
-        const station = stations.find((item) => item.stationId === stationId)
+        let station = stations.find((item) => item.stationId === stationId)
+        if (!station) {
+            // morda stations state se ni osvezen (npr. takoj po generiranju) - fetch sveze
+            try {
+                const freshStations = await fetchStations()
+                setStations(freshStations)
+                station = freshStations.find((item) => item.stationId === stationId)
+            } catch {
+                // ignore, spodnji `if (!station) return` bo obravnaval
+            }
+        }
         if (!station) return
 
         setSidebarOpen(true)
@@ -396,9 +412,13 @@ export function SensumMap({token}: { token: string }) {
         if (!file) return
 
         const source = await file.text()
+        setLastDslSource(source)
+        setDslSaveResult(null)
+        setDslSaveError(null)
         event.target.value = ""
 
         const importKey = `imported_${Date.now()}`
+        setLastImportKey(importKey)
 
         setLoadingLayers((current) => new Set(current).add(importKey))
         setErrors((current) => {
@@ -431,6 +451,35 @@ export function SensumMap({token}: { token: string }) {
                 next.delete(importKey)
                 return next
             })
+        }
+    }
+
+    async function handleConfirmDslImport() {
+        if (!lastDslSource) return
+        setDslSaveLoading(true)
+        setDslSaveError(null)
+        try {
+            const result = await importDsl(lastDslSource, token)
+            setDslSaveResult(result.message)
+            setStations([])
+            setLayerData((current) => {
+                const next = {...current}
+                delete next.stations
+                if (lastImportKey) delete next[lastImportKey]
+                return next
+            })
+            setVisibleLayers((current) => {
+                if (!lastImportKey) return current
+                const next = new Set(current)
+                next.delete(lastImportKey)
+                return next
+            })
+            setLastDslSource(null)
+            setLastImportKey(null)
+        } catch (error) {
+            setDslSaveError(error instanceof Error ? error.message : "Failed to save DSL import")
+        } finally {
+            setDslSaveLoading(false)
         }
     }
 
@@ -700,6 +749,11 @@ export function SensumMap({token}: { token: string }) {
                     visibleStationSources={visibleStationSources}
                     onToggleStationSource={toggleStationSource}
                     mapContainerRef={mapShellRef}
+                    hasPendingDslImport={lastDslSource !== null}
+                    onConfirmDslImport={handleConfirmDslImport}
+                    dslSaveLoading={dslSaveLoading}
+                    dslSaveResult={dslSaveResult}
+                    dslSaveError={dslSaveError}
                 />
 
                 <MapLegend mapContainerRef={mapShellRef}/>
@@ -737,8 +791,9 @@ export function SensumMap({token}: { token: string }) {
                         onConfirm={sim.confirm}
                         onRun={async () => {
                             await sim.run(token)
-                            // reload stations layer
-                            setStations([])
+                            // reload stations layer in pocakaj da se konca
+                            const freshStations = await fetchStations()
+                            setStations(freshStations)
                             setLayerData((current) => {
                                 const next = {...current}
                                 delete next.stations
@@ -748,6 +803,11 @@ export function SensumMap({token}: { token: string }) {
                         onConfigChange={sim.setConfig}
                         onClose={sim.stop}
                         onRunAnother={sim.start}
+                        onSelectStation={(stationId) => {
+                            sim.stop()
+                            setSelectedStationIds(new Set([stationId]))
+                            openStationDetails(stationId)
+                        }}
                     />
                 ) : (
                     <StationSidebar

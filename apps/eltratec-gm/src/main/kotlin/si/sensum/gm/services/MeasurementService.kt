@@ -77,6 +77,26 @@ internal class MeasurementService(
         }
     }
 
+    suspend fun getModbusStationMeasurements(
+        session: SwsSession,
+        stationId: Long,
+        query: MeasurementRangeQuery
+    ): List<MeasurementDto> {
+        return logged(
+            operation = "getModbusStationMeasurements",
+            details = "stationId=$stationId ${query.details()}"
+        ) {
+            soapClient.getModbusStationMeasurements(
+                session = session,
+                stationId = stationId,
+                datetimeFrom = query.datetimeFrom,
+                datetimeTo = query.datetimeTo
+            )
+        }
+    }
+
+
+
     suspend fun getStationMeasurementsDetailed(
         session: SwsSession,
         stationId: Long,

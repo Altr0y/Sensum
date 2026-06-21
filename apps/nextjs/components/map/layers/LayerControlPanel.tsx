@@ -23,6 +23,11 @@ type Props = {
     visibleStationSources: Set<string>
     onToggleStationSource: (source: string) => void
     mapContainerRef: React.RefObject<HTMLDivElement | null>
+    hasPendingDslImport: boolean
+    onConfirmDslImport: () => void
+    dslSaveLoading: boolean
+    dslSaveResult: string | null
+    dslSaveError: string | null
 }
 
 const PANEL_WIDTH = 320
@@ -37,6 +42,11 @@ export function LayerControlPanel({
                                       visibleStationSources,
                                       onToggleStationSource,
                                       mapContainerRef,
+                                      hasPendingDslImport,
+                                      onConfirmDslImport,
+                                      dslSaveLoading,
+                                      dslSaveResult,
+                                      dslSaveError,
                                   }: Props) {
     const [position, setPosition] = useState<PanelPosition>({x: 16, y: 16})
     const [collapsed, setCollapsed] = useState(false)
@@ -144,6 +154,27 @@ export function LayerControlPanel({
             {!collapsed && (
                 <div className="max-h-[calc(100vh-12rem)] overflow-y-auto p-4">
                     <div className="space-y-2">
+                        {hasPendingDslImport && importedLayers.length > 0 && (
+                            <div className="rounded-md border border-[#E8A838]/40 bg-[#E8A838]/10 p-2 space-y-1.5">
+                                <p className="text-[11px] font-medium text-[#E8A838]">
+                                    Pending DSL import
+                                </p>
+                                <p className="text-[10px] text-gray-600 dark:text-[#BBBBBB] leading-snug">
+                                    Layers are previewed only. Save to add data to the database.
+                                </p>
+                                <button
+                                    type="button"
+                                    onClick={onConfirmDslImport}
+                                    disabled={dslSaveLoading}
+                                    className="w-full rounded-md bg-[#E8A838] text-[#1E1E1E] py-1 text-[11px] font-medium hover:bg-[#d4962e] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                >
+                                    {dslSaveLoading ? "Saving..." : "Save to database"}
+                                </button>
+                                {dslSaveError && (
+                                    <p className="text-[10px] text-[#CF6679]">{dslSaveError}</p>
+                                )}
+                            </div>
+                        )}
                         {layerGroups.map((group) => {
                             const layers = group.id === "imported" ? importedLayers : group.layers
                             const isExpanded = expandedGroups.has(group.id)

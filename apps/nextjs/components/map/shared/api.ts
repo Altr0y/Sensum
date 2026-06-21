@@ -1,4 +1,11 @@
-import type {ChannelDto, CreateStationCommand, MeasurementDto, SensumGeoJson, StationDto} from "./types"
+import type {
+    ChannelDto,
+    CreateStationCommand,
+    MeasurementDto,
+    SensumGeoJson,
+    StationDto,
+    SimulatedStationDto
+} from "./types"
 
 const API_BASE = "/sensum-api/v1"
 
@@ -71,8 +78,8 @@ export function fetchMeasurements(
     to: string
 ): Promise<MeasurementDto[]> {
     return fetchJson(
-        `${API_BASE}/measurements/range?channelId=${channelId}&from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`
-    )
+        `${API_BASE}/stats/measurements/range?channelId=${channelId}&from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`
+    ).then((result: any) => result.table ?? [])
 }
 
 export function createStation(command: CreateStationCommand): Promise<StationDto> {
@@ -112,6 +119,19 @@ export function processDsl(source: string): Promise<DslProcessResult> {
     return postJson(`${API_BASE}/dsl/process`, {source})
 }
 
+export type DslImportResult = {
+    source: string
+    stationCount: number
+    channelCount: number
+    measurementCount: number
+    userStationCount: number
+    message: string
+}
+
+export function importDsl(source: string, token: string): Promise<DslImportResult> {
+    return postJson(`${API_BASE}/data/import/dsl`, {source}, token)
+}
+
 export type SimulateRequest = {
     mode: "full" | "measurements_only"
     count?: number
@@ -125,7 +145,7 @@ export type SimulateRequest = {
     intervalMinutes: number
 }
 
-export function runSimulation(request: SimulateRequest, token?: string): Promise<unknown> {
+export function runSimulation(request: SimulateRequest, token?: string): Promise<SimulatedStationDto[]> {
     return postJson("/api/v1/simulator/generate-and-save", request, token)
 }
 

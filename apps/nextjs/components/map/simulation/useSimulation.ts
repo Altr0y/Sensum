@@ -1,9 +1,9 @@
 "use client"
-import { useState, useCallback } from "react"
-import type { StationDto, ChannelDto } from "../shared/types"
-import type { SimStep, SimConfig, SimResult } from "./types"
-import { stationsInsidePolygon, makeDefaultConfig, localInputToIso } from "./utils"
-import { fetchChannels, runSimulation } from "../shared/api"
+import {useState, useCallback} from "react"
+import type {StationDto, ChannelDto, SimulatedStationDto} from "../shared/types"
+import type {SimStep, SimConfig, SimResult, SimResultStation} from "./types"
+import {stationsInsidePolygon, makeDefaultConfig, localInputToIso} from "./utils"
+import {fetchChannels, runSimulation} from "../shared/api"
 
 export const SIM_MIN_POINTS = 3
 export const SIM_MAX_POINTS = 10
@@ -83,6 +83,8 @@ export function useSimulation(allStations: StationDto[]) {
             const from = localInputToIso(config.from)
             const to = localInputToIso(config.to)
 
+            let createdStations: SimResultStation[]
+
             if (hasExisting) {
                 await Promise.all(
                     stationsInArea.map((s) =>
@@ -98,8 +100,12 @@ export function useSimulation(allStations: StationDto[]) {
                         }, token)
                     )
                 )
+                createdStations = stationsInArea.map((s) => ({
+                    stationId: s.stationId,
+                    name: s.name ?? `Station ${s.stationId}`,
+                }))
             } else {
-                await runSimulation({
+                const created = await runSimulation({
                     mode: "full",
                     count: config.stationCount,
                     prefix: config.prefix,
@@ -109,6 +115,10 @@ export function useSimulation(allStations: StationDto[]) {
                     to,
                     intervalMinutes: config.intervalMinutes,
                 }, token)
+                createdStations = created.map((s) => ({
+                    stationId: s.stationId,
+                    name: s.name,
+                }))
             }
 
             setResult({
@@ -116,6 +126,7 @@ export function useSimulation(allStations: StationDto[]) {
                 stationCount: hasExisting ? stationsInArea.length : config.stationCount,
                 from: config.from,
                 to: config.to,
+                stations: createdStations,
             })
             setStep("result")
         } catch (e) {

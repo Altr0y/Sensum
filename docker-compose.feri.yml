@@ -31,12 +31,12 @@ services:
     ports:
       - "${GM_PORT:-8081}:8081"
     environment:
-      JAVA_TOOL_OPTIONS: "-Xms128m -Xmx384m"
+      JAVA_TOOL_OPTIONS: "-Xms128m -Xmx1536m"
 
       GM_PORT: ${GM_PORT:-8081}
       GM_HOST: ${GM_HOST:-0.0.0.0}
 
-      SWS_BASE_URL: ${SWS_BASE_URL:-https://smart.eltratec.com/SmartWebDev/SmartWebService.asmx}
+      SWS_BASE_URL: ${SWS_BASE_URL:-https://smart.eltratec.com/SmartWeb3/SmartWebService.asmx}
       SWS_TIMEOUT_MILLIS: ${SWS_TIMEOUT_MILLIS:-30000}
 
       GM_AUTH_TOKEN_TTL_HOURS: ${GM_AUTH_TOKEN_TTL_HOURS:-8}
@@ -76,8 +76,8 @@ services:
       GM_SERVICE_JWT_AUDIENCE: ${GM_SERVICE_JWT_AUDIENCE:-sensum-eltratec-gm}
       GM_SERVICE_JWT_TTL_SECONDS: ${GM_SERVICE_JWT_TTL_SECONDS:-60}
 
-      SWS_USERNAME: ${SWS_USERNAME:-sensum}
-      SWS_PASSWORD: ${SWS_PASSWORD:-sensum}
+      SWS_USERNAME: ${SWS_USERNAME:-radart}
+      SWS_PASSWORD: ${SWS_PASSWORD:-TestRadar1}
 
       SENSUM_GEO_RESOURCES_DIR: /app/resources/geo/geojson
     depends_on:

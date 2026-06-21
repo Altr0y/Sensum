@@ -197,6 +197,52 @@ class DataImportService(
             )
         }
 
+    suspend fun importSwsModbusMeasurements(command: SwsImportCommand): DataImportResult =
+        ServiceLogger.suspendCall(
+            service = "data-import",
+            operation = "importSwsModbusMeasurements",
+            details = "stationId=${command.stationId}"
+        ) {
+            val stationId = command.stationId
+                ?: error("stationId is required for SWS Modbus measurement import")
+
+            val datetimeFrom = command.datetimeFrom
+                ?: error("datetimeFrom is required for SWS Modbus measurement import")
+
+            val datetimeTo = command.datetimeTo
+                ?: error("datetimeTo is required for SWS Modbus measurement import")
+
+            val gmSessionToken = loginToGm()
+
+            val allowedChannelIds = setOf(127, 128, 129, 130, 131, 132)
+
+            val measurements = gmClient
+                .getModbusStationMeasurements(
+                    gmSessionToken = gmSessionToken,
+                    stationId = stationId,
+                    from = datetimeFrom,
+                    to = datetimeTo
+                )
+                .filter { it.channelId in allowedChannelIds }
+                .map { measurement -> measurement.copy(source = DataSourceDto.SWS) }
+
+            val counts = importRepository.upsertAll(
+                userId = command.userId,
+                customerId = command.customerId,
+                source = DataSourceDto.SWS,
+                stations = emptyList(),
+                channels = emptyList(),
+                measurements = measurements
+            )
+
+            DataImportResult(
+                source = DataSourceDto.SWS,
+                measurementCount = counts.measurementCount,
+                measurements = measurements.take(100),
+                message = "SWS Modbus measurements imported (${measurements.size} rows)."
+            )
+        }
+
     private fun importPlain(command: DataImportCommand): DataImportResult {
         val counts = importRepository.upsertAll(
             userId = command.userId,

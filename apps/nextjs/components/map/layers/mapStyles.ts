@@ -34,6 +34,29 @@ function stationIcon(source: string | null | undefined, isSelected: boolean): L.
     })
 }
 
+function previewStationIcon(): L.DivIcon {
+    const size = 36
+    const html = `<div style="
+        width:${size}px;height:${size}px;
+        border-radius:50%;
+        background:#E8A838;
+        border:3px dashed #1E1E1E;
+        box-shadow:0 0 0 6px rgba(232,168,56,0.3), 0 2px 6px rgba(0,0,0,0.5);
+        display:flex;align-items:center;justify-content:center;
+        font-size:9px;font-weight:800;font-family:'JetBrains Mono',monospace;
+        color:#1E1E1E;
+        line-height:1;
+        text-align:center;
+        user-select:none;
+    ">NEW</div>`
+    return L.divIcon({
+        html,
+        className: "",
+        iconSize: [size, size],
+        iconAnchor: [size / 2, size / 2],
+    })
+}
+
 export function getStyle(feature?: Feature<Geometry, GeoJsonProperties>) {
     const layer = getLayer(feature)
 
@@ -72,6 +95,9 @@ export function pointToLayer(
     moveModeStationId?: number | null
 ) {
     const layer = getLayer(feature)
+    const featureType = String(feature.properties?.type ?? "")
+    const isPreviewStation = layer !== "stations" && featureType === "station"
+
     if (layer === "stations") {
         const source = feature.properties?.source as string | null | undefined
         const stationId = Number(feature.properties?.stationId ?? feature.properties?.id)
@@ -83,6 +109,14 @@ export function pointToLayer(
             draggable: isMoveTarget,
         })
     }
+
+    if (isPreviewStation) {
+        return L.marker(latlng, {
+            icon: previewStationIcon(),
+            pane: "markerPane",
+        })
+    }
+
     return L.circleMarker(latlng, {
         radius: 5,
         color: "#111827",
@@ -106,6 +140,20 @@ export function bindFeatureActions(
         const type = String(props.type ?? "-")
         const sourceFile = String(props.sourceFile ?? "-")
         const risk = props.risk ? `<br/><b>Risk:</b> ${props.risk}` : ""
+        const featureLayer = getLayer(feature)
+        const isPreviewStation = type === "station" && featureLayer !== "stations"
+
+        if (isPreviewStation) {
+            layer.bindTooltip(`${name} (preview - not saved)`, {
+                className: "sensum-station-tooltip",
+                direction: "top",
+                offset: [0, -18],
+            })
+            if ("bringToFront" in layer && typeof layer.bringToFront === "function") {
+                layer.bringToFront()
+            }
+            return
+        }
 
         if (type === "station") {
             const stationId = Number(props.stationId ?? props.id)
