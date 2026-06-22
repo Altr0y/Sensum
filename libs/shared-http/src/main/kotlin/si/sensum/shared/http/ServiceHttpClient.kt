@@ -12,6 +12,7 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
+import io.ktor.client.request.patch
 import io.ktor.http.isSuccess
 
 class ServiceHttpClient(
@@ -126,6 +127,27 @@ class ServiceHttpClient(
             )
         }
 
+        return response.body()
+    }
+
+    suspend inline fun <reified T> patch(
+        path: String,
+        body: Any,
+        bearerToken: String? = null
+    ): T {
+        val response = httpClient.patch(fullUrl(path)) {
+            contentType(ContentType.Application.Json)
+            bearerToken?.let {
+                header(HttpHeaders.Authorization, "Bearer $it")
+            }
+            setBody(body)
+        }
+        if (!response.status.isSuccess()) {
+            throw ServiceHttpException(
+                statusCode = response.status,
+                responseBody = response.bodyAsText()
+            )
+        }
         return response.body()
     }
 

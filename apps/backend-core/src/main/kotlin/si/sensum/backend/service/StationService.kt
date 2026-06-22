@@ -4,6 +4,7 @@ import si.sensum.backend.mapper.toDto
 import si.sensum.backend.repository.StationRepository
 import si.sensum.shared.models.stations.CreateStationCommand
 import si.sensum.shared.models.stations.StationDto
+import si.sensum.shared.models.stations.UpdateStationCommand
 
 class StationService(
     private val stationRepository: StationRepository
@@ -126,6 +127,26 @@ class StationService(
         details = "stationId=$stationId"
     ) {
         stationRepository.delete(stationId)
+    }
+
+    fun updateStation(
+        stationId: Long,
+        command: UpdateStationCommand
+    ): StationDto = ServiceLogger.call(
+        service = "station",
+        operation = "updateStation",
+        details = "stationId=$stationId"
+    ) {
+        val updated = stationRepository.update(
+            stationId = stationId,
+            name = command.name?.takeIf { it.isNotBlank() },
+            description = command.description,
+            serialNumber = command.serialNumber,
+            latitude = command.latitude,
+            longitude = command.longitude
+        ) ?: error("Station not found")
+
+        updated.toDto()
     }
 
     fun getStationsByMunicipality(

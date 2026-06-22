@@ -1,4 +1,11 @@
-import type {ChannelDto, CreateStationCommand, MeasurementDto, SensumGeoJson, StationDto} from "./types"
+import type {
+    ChannelDto,
+    CreateStationCommand,
+    MeasurementDto,
+    SensumGeoJson,
+    StationDto,
+    SimulatedStationDto
+} from "./types"
 
 const API_BASE = "/sensum-api/v1"
 
@@ -15,6 +22,23 @@ async function postJson<T>(url: string, body: unknown, token?: string): Promise<
     const response = await fetch(url, {
         credentials: "include",
         method: "POST",
+        headers,
+        body: JSON.stringify(body),
+    })
+    if (!response.ok) {
+        const text = await response.text().catch(() => "")
+        const apiMessage = tryParseApiError(text)
+        throw new Error(apiMessage ?? `HTTP ${response.status}${text ? `: ${text}` : ""}`)
+    }
+    return response.json()
+}
+
+async function patchJson<T>(url: string, body: unknown, token?: string): Promise<T> {
+    const headers: Record<string, string> = {"Content-Type": "application/json"}
+    if (token) headers["Authorization"] = `Bearer ${token}`
+    const response = await fetch(url, {
+        credentials: "include",
+        method: "PATCH",
         headers,
         body: JSON.stringify(body),
     })
@@ -54,12 +78,36 @@ export function fetchMeasurements(
     to: string
 ): Promise<MeasurementDto[]> {
     return fetchJson(
-        `${API_BASE}/measurements/range?channelId=${channelId}&from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`
-    )
+        `${API_BASE}/stats/measurements/range?channelId=${channelId}&from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`
+    ).then((result: any) => result.table ?? [])
 }
 
 export function createStation(command: CreateStationCommand): Promise<StationDto> {
     return postJson(`${API_BASE}/stations`, command)
+}
+
+export function createChannels(
+    stationId: number,
+    kinds: string[],
+    token: string
+): Promise<ChannelDto[]> {
+    return postJson(`${API_BASE}/stations/${stationId}/channels`, {kinds}, token)
+}
+
+export type UpdateStationPatch = {
+    name?: string
+    description?: string
+    serialNumber?: string
+    latitude?: number
+    longitude?: number
+}
+
+export function updateStation(
+    stationId: number,
+    patch: UpdateStationPatch,
+    token: string
+): Promise<StationDto> {
+    return patchJson(`${API_BASE}/stations/${stationId}`, patch, token)
 }
 
 export type DslProcessResult = {
@@ -69,6 +117,19 @@ export type DslProcessResult = {
 
 export function processDsl(source: string): Promise<DslProcessResult> {
     return postJson(`${API_BASE}/dsl/process`, {source})
+}
+
+export type DslImportResult = {
+    source: string
+    stationCount: number
+    channelCount: number
+    measurementCount: number
+    userStationCount: number
+    message: string
+}
+
+export function importDsl(source: string, token: string): Promise<DslImportResult> {
+    return postJson(`${API_BASE}/data/import/dsl`, {source}, token)
 }
 
 export type SimulateRequest = {
@@ -84,7 +145,7 @@ export type SimulateRequest = {
     intervalMinutes: number
 }
 
-export function runSimulation(request: SimulateRequest, token?: string): Promise<unknown> {
+export function runSimulation(request: SimulateRequest, token?: string): Promise<SimulatedStationDto[]> {
     return postJson("/api/v1/simulator/generate-and-save", request, token)
 }
 

@@ -2,25 +2,16 @@ package si.sensum.backend.repository
 
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.toJavaLocalDateTime
-import org.jetbrains.exposed.v1.core.ResultRow
-import org.jetbrains.exposed.v1.core.SortOrder
-import org.jetbrains.exposed.v1.core.and
-import org.jetbrains.exposed.v1.core.eq
-import org.jetbrains.exposed.v1.core.JoinType
-import org.jetbrains.exposed.v1.core.greaterEq
-import org.jetbrains.exposed.v1.core.lessEq
+import org.jetbrains.exposed.v1.core.*
 import org.jetbrains.exposed.v1.jdbc.Query
 import org.jetbrains.exposed.v1.jdbc.andWhere
 import org.jetbrains.exposed.v1.jdbc.selectAll
+import org.jetbrains.exposed.v1.jdbc.transactions.TransactionManager
 import si.sensum.backend.database.ChannelTable
 import si.sensum.backend.database.DatabaseTransaction
 import si.sensum.backend.database.MeasurementTable
 import si.sensum.backend.database.StationTable
-import si.sensum.shared.models.stats.ChannelSeriesDto
-import si.sensum.shared.models.stats.CountByLabelDto
-import si.sensum.shared.models.stats.RecentMeasurementDto
-import si.sensum.shared.models.stats.StationSummaryDto
-import si.sensum.shared.models.stats.TimeSeriesPointDto
+import si.sensum.shared.models.stats.*
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import kotlin.math.round
@@ -46,6 +37,18 @@ class StatsRepository {
                 name = it[StationTable.alias]
             )
         }
+    }
+
+    fun getChannelsForStation(stationId: Long): List<ChannelSummaryDto> = DatabaseTransaction.run {
+        ChannelTable
+            .selectAll()
+            .where { ChannelTable.stationId eq stationId }
+            .map {
+                ChannelSummaryDto(
+                    id = it[ChannelTable.id].toLong(),
+                    name = it[ChannelTable.name]
+                )
+            }
     }
 
     fun stationTimeRange(stationId: Long): Pair<OffsetDateTime?, OffsetDateTime?> = DatabaseTransaction.run {
@@ -84,17 +87,45 @@ class StatsRepository {
             .sortedByDescending { it.count }
     }
 
-    fun alarmCountSince(since: LocalDateTime): Long = DatabaseTransaction.run {
-        MeasurementTable
+    fun activeAlarmCount(): Long = DatabaseTransaction.run {
+        val sql = """
+        SELECT COUNT(*) FROM (
+            SELECT DISTINCT ON (channel_id) channel_id, status
+            FROM measurements
+            ORDER BY channel_id, date_time DESC
+        ) latest
+        WHERE latest.status = false
+    """.trimIndent()
+
+        var count = 0L
+        TransactionManager.current().exec(sql) { rs: java.sql.ResultSet ->
+            if (rs.next()) {
+                count = rs.getLong(1)
+            }
+        }
+        count
+    }
+
+    fun getRecentStations(limit: Int = 5): List<RecentStationDto> = DatabaseTransaction.run {
+        StationTable
             .selectAll()
-            .where { (MeasurementTable.status eq false) and (MeasurementTable.dateTime greaterEq since) }
-            .count()
+            .orderBy(StationTable.id, SortOrder.DESC)
+            .limit(limit)
+            .map {
+                RecentStationDto(
+                    id = it[StationTable.id],
+                    name = it[StationTable.alias],
+                    source = it[StationTable.dataSource],
+                    createdAt = it[StationTable.createdAt]?.toDtoDateTime()
+                )
+            }
     }
 
     fun alarmCountInRange(
         from: LocalDateTime,
         to: LocalDateTime,
-        stationId: Long? = null
+        stationId: Long? = null,
+        channelId: Long? = null
     ): Long = DatabaseTransaction.run {
         var query = joinedQuery()
             .where {
@@ -105,18 +136,26 @@ class StatsRepository {
         if (stationId != null) {
             query = query.andWhere { ChannelTable.stationId eq stationId }
         }
+        if (channelId != null) {
+            query = query.andWhere { ChannelTable.id eq channelId.toInt() }
+        }
         query.count()
     }
 
     fun aggregateInRange(
         from: LocalDateTime,
         to: LocalDateTime,
-        stationId: Long? = null
+        stationId: Long? = null,
+        channelId: Long? = null
     ): Triple<Double?, Double?, Double?> = DatabaseTransaction.run {
+
         var query = joinedQuery()
             .where { (MeasurementTable.dateTime greaterEq from) and (MeasurementTable.dateTime lessEq to) }
         if (stationId != null) {
             query = query.andWhere { ChannelTable.stationId eq stationId }
+        }
+        if (channelId != null) {
+            query = query.andWhere { ChannelTable.id eq channelId.toInt() }
         }
         val values = query.map { it[MeasurementTable.value].toDouble() }
         if (values.isEmpty()) Triple(null, null, null)
@@ -134,12 +173,16 @@ class StatsRepository {
         from: LocalDateTime,
         to: LocalDateTime,
         limit: Int,
-        stationId: Long? = null
+        stationId: Long? = null,
+        channelId: Long? = null
     ): List<RecentMeasurementDto> = DatabaseTransaction.run {
         var query = joinedQuery()
             .where { (MeasurementTable.dateTime greaterEq from) and (MeasurementTable.dateTime lessEq to) }
         if (stationId != null) {
             query = query.andWhere { ChannelTable.stationId eq stationId }
+        }
+        if (channelId != null) {
+            query = query.andWhere { ChannelTable.id eq channelId.toInt() }
         }
         query.orderBy(MeasurementTable.dateTime to SortOrder.DESC)
             .limit(limit)
@@ -149,12 +192,16 @@ class StatsRepository {
     fun seriesInRange(
         from: LocalDateTime,
         to: LocalDateTime,
-        stationId: Long? = null
+        stationId: Long? = null,
+        channelId: Long? = null
     ): List<ChannelSeriesDto> = DatabaseTransaction.run {
         var query = joinedQuery()
             .where { (MeasurementTable.dateTime greaterEq from) and (MeasurementTable.dateTime lessEq to) }
         if (stationId != null) {
             query = query.andWhere { ChannelTable.stationId eq stationId }
+        }
+        if (channelId != null) {
+            query = query.andWhere { ChannelTable.id eq channelId.toInt() }
         }
         query.orderBy(MeasurementTable.dateTime to SortOrder.ASC)
             .map { row ->

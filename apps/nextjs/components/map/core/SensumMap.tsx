@@ -9,10 +9,10 @@ import {
     fetchChannels,
     fetchMeasurements,
     fetchStations,
-    fetchStationsGeoJson,
+    fetchStationsGeoJson, importDsl,
     processDsl
 } from "../shared/api"
-import {AlertTriangle, X, PanelRightOpen} from "lucide-react"
+import {AlertTriangle, X, PanelRightOpen, Trash2} from "lucide-react"
 import {useSimulation} from "../simulation/useSimulation"
 import {PolygonDrawOverlay} from "./PolygonDrawOverlay"
 import {SimulationPanel} from "../simulation/SimulationPanel"
@@ -97,29 +97,64 @@ function MapClickHandler({
     return null
 }
 
+const LAYERS_STORAGE_KEY = "sensum-visible-layers"
+const STATION_SOURCES_STORAGE_KEY = "sensum-visible-station-sources"
+
+function loadStoredSet(key: string, fallback: Set<string>): Set<string> {
+    if (typeof window === "undefined") return fallback
+    try {
+        const raw = window.localStorage.getItem(key)
+        if (!raw) return fallback
+        const arr = JSON.parse(raw)
+        if (Array.isArray(arr)) return new Set(arr)
+    } catch {
+        // ignore
+    }
+    return fallback
+}
+
+function saveStoredSet(key: string, value: Set<string>) {
+    if (typeof window === "undefined") return
+    try {
+        window.localStorage.setItem(key, JSON.stringify(Array.from(value)))
+    } catch {
+        // ignore
+    }
+}
+
 export function SensumMap({token}: { token: string }) {
     const mapShellRef = useRef<HTMLDivElement | null>(null)
 
     const [layerData, setLayerData] = useState<Record<string, SensumGeoJson>>({})
     const [visibleLayers, setVisibleLayers] = useState<Set<string>>(
-        () => new Set(defaultVisibleLayers)
+        () => loadStoredSet(LAYERS_STORAGE_KEY, new Set(defaultVisibleLayers))
     )
     const [loadingLayers, setLoadingLayers] = useState<Set<string>>(() => new Set())
     const [errors, setErrors] = useState<Record<string, string>>({})
     const [visibleStationSources, setVisibleStationSources] = useState<Set<string>>(
-        () => new Set(defaultVisibleStationSources)
+        () => loadStoredSet(STATION_SOURCES_STORAGE_KEY, new Set(defaultVisibleStationSources))
     )
 
     const [stations, setStations] = useState<StationDto[]>([])
     const [selectedStation, setSelectedStation] = useState<SelectedStationDetails | null>(null)
+    const [selectedStationIds, setSelectedStationIds] = useState<Set<number>>(new Set())
+    const [bulkDeleteLoading, setBulkDeleteLoading] = useState(false)
     const [stationDetailsLoading, setStationDetailsLoading] = useState(false)
     const [stationDetailsError, setStationDetailsError] = useState<string | null>(null)
     const [sidebarOpen, setSidebarOpen] = useState(true)
+
+    const [lastDslSource, setLastDslSource] = useState<string | null>(null)
+    const [dslSaveLoading, setDslSaveLoading] = useState(false)
+    const [dslSaveResult, setDslSaveResult] = useState<string | null>(null)
+    const [dslSaveError, setDslSaveError] = useState<string | null>(null)
+    const [lastImportKey, setLastImportKey] = useState<string | null>(null)
 
     const [addMode, setAddMode] = useState(false)
     const [pendingStation, setPendingStation] = useState<PendingStationPoint | null>(null)
     const [addStationLoading, setAddStationLoading] = useState(false)
     const [addStationError, setAddStationError] = useState<string | null>(null)
+    const [moveModeStationId, setMoveModeStationId] = useState<number | null>(null)
+    const [editCoords, setEditCoords] = useState<{ latitude: number, longitude: number } | null>(null)
 
     const sim = useSimulation(stations)
 
@@ -206,6 +241,52 @@ export function SensumMap({token}: { token: string }) {
             })
     }, [visibleLayers, layerData.stations, loadingLayers])
 
+    useEffect(() => {
+        if (selectedStationIds.size === 1) {
+            const [onlyId] = selectedStationIds
+            if (selectedStation?.station.stationId !== onlyId) {
+                openStationDetails(onlyId)
+            }
+        } else if (selectedStationIds.size === 0 && selectedStation) {
+            setSelectedStation(null)
+        } else if (selectedStationIds.size > 1 && selectedStation) {
+            setSelectedStation(null)
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [selectedStationIds])
+
+    useEffect(() => {
+        function handleKeyDown(e: KeyboardEvent) {
+            if ((e.key === "Delete" || e.key === "Backspace") && selectedStationIds.size > 1) {
+                const target = e.target as HTMLElement
+                if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") return
+                e.preventDefault()
+                handleBulkDelete()
+            }
+        }
+
+        window.addEventListener("keydown", handleKeyDown)
+        return () => window.removeEventListener("keydown", handleKeyDown)
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [selectedStationIds])
+
+    useEffect(() => {
+        setMoveModeStationId(null)
+        setEditCoords(null)
+    }, [selectedStation?.station.stationId])
+
+    useEffect(() => {
+        saveStoredSet(LAYERS_STORAGE_KEY, visibleLayers)
+    }, [visibleLayers])
+
+    useEffect(() => {
+        saveStoredSet(STATION_SOURCES_STORAGE_KEY, visibleStationSources)
+    }, [visibleStationSources])
+
+    function handleStationMoved(stationId: number, lat: number, lng: number) {
+        setEditCoords({latitude: lat, longitude: lng})
+    }
+
     function toggleLayer(layer: string) {
         setVisibleLayers((current) => {
             const next = new Set(current)
@@ -222,8 +303,36 @@ export function SensumMap({token}: { token: string }) {
         })
     }
 
+    function handleStationClick(stationId: number, isMultiSelect: boolean) {
+        if (isMultiSelect) {
+            setSelectedStationIds((current) => {
+                const next = new Set(current)
+                if (next.has(stationId)) {
+                    next.delete(stationId)
+                } else {
+                    next.add(stationId)
+                }
+                return next
+            })
+            // ce po toggle ostane samo 1 ali 0, posodobi tudi single-detail sidebar
+            return
+        }
+        setSelectedStationIds(new Set([stationId]))
+        openStationDetails(stationId)
+    }
+
     async function openStationDetails(stationId: number) {
-        const station = stations.find((item) => item.stationId === stationId)
+        let station = stations.find((item) => item.stationId === stationId)
+        if (!station) {
+            // morda stations state se ni osvezen (npr. takoj po generiranju) - fetch sveze
+            try {
+                const freshStations = await fetchStations()
+                setStations(freshStations)
+                station = freshStations.find((item) => item.stationId === stationId)
+            } catch {
+                // ignore, spodnji `if (!station) return` bo obravnaval
+            }
+        }
         if (!station) return
 
         setSidebarOpen(true)
@@ -261,6 +370,29 @@ export function SensumMap({token}: { token: string }) {
         }
     }
 
+    async function handleBulkDelete() {
+        if (selectedStationIds.size === 0) return
+        if (!confirm(`Are you sure you want to delete ${selectedStationIds.size} stations?`)) return
+        setBulkDeleteLoading(true)
+        try {
+            for (const id of selectedStationIds) {
+                await deleteStation(id)
+            }
+            setSelectedStationIds(new Set())
+            setSelectedStation(null)
+            setStations([])
+            setLayerData((current) => {
+                const next = {...current}
+                delete next.stations
+                return next
+            })
+        } catch (e) {
+            console.error("Bulk delete failed", e)
+        } finally {
+            setBulkDeleteLoading(false)
+        }
+    }
+
     function exportVisibleGeoJson() {
         const features = Array.from(visibleLayers)
             .sort((a, b) => getLayerRenderSortIndex(a) - getLayerRenderSortIndex(b))
@@ -280,9 +412,13 @@ export function SensumMap({token}: { token: string }) {
         if (!file) return
 
         const source = await file.text()
+        setLastDslSource(source)
+        setDslSaveResult(null)
+        setDslSaveError(null)
         event.target.value = ""
 
         const importKey = `imported_${Date.now()}`
+        setLastImportKey(importKey)
 
         setLoadingLayers((current) => new Set(current).add(importKey))
         setErrors((current) => {
@@ -318,6 +454,35 @@ export function SensumMap({token}: { token: string }) {
         }
     }
 
+    async function handleConfirmDslImport() {
+        if (!lastDslSource) return
+        setDslSaveLoading(true)
+        setDslSaveError(null)
+        try {
+            const result = await importDsl(lastDslSource, token)
+            setDslSaveResult(result.message)
+            setStations([])
+            setLayerData((current) => {
+                const next = {...current}
+                delete next.stations
+                if (lastImportKey) delete next[lastImportKey]
+                return next
+            })
+            setVisibleLayers((current) => {
+                if (!lastImportKey) return current
+                const next = new Set(current)
+                next.delete(lastImportKey)
+                return next
+            })
+            setLastDslSource(null)
+            setLastImportKey(null)
+        } catch (error) {
+            setDslSaveError(error instanceof Error ? error.message : "Failed to save DSL import")
+        } finally {
+            setDslSaveLoading(false)
+        }
+    }
+
     function handleToggleAddMode() {
         setAddMode((current) => !current)
         setPendingStation(null)
@@ -329,6 +494,22 @@ export function SensumMap({token}: { token: string }) {
         setAddStationError(null)
         setSidebarOpen(true)
         setSelectedStation(null)
+    }
+
+    function handleStationUpdated(updated: StationDto) {
+        setSelectedStation((current) =>
+            current ? {...current, station: updated} : current
+        )
+        setStations([])
+        setLayerData((current) => {
+            const next = {...current}
+            delete next.stations
+            return next
+        })
+    }
+
+    function onExitMoveMode() {
+        setMoveModeStationId(null)
     }
 
     async function handleSaveStation(name: string, description: string, serialNumber: string) {
@@ -378,6 +559,42 @@ export function SensumMap({token}: { token: string }) {
             })
         } catch (e) {
             console.error("Delete failed", e)
+        }
+    }
+
+    async function refreshSelectedStationMeasurements() {
+        if (!selectedStation) return
+        const stationId = selectedStation.station.stationId
+        setStationDetailsLoading(true)
+        setStationDetailsError(null)
+        try {
+            const channels = await fetchChannels(stationId)
+            const now = new Date()
+            const to = formatApiLocalDateTime(now)
+            const fromDate = new Date(now)
+            fromDate.setDate(fromDate.getDate() - 7)
+            const from = formatApiLocalDateTime(fromDate)
+
+            const measurementsByChannelEntries = await Promise.all(
+                channels.map(async (channel) => {
+                    const measurements = await fetchMeasurements(channel.channelId, from, to)
+                    return [channel.channelId, measurements.slice(-10).reverse()] as const
+                })
+            )
+
+            setSelectedStation((current) =>
+                current ? {
+                    ...current,
+                    channels,
+                    measurementsByChannel: Object.fromEntries(measurementsByChannelEntries),
+                } : current
+            )
+        } catch (error) {
+            setStationDetailsError(
+                error instanceof Error ? error.message : "Failed to refresh measurements"
+            )
+        } finally {
+            setStationDetailsLoading(false)
         }
     }
 
@@ -434,6 +651,8 @@ export function SensumMap({token}: { token: string }) {
                         const data = layerData[layer]
                         if (!data) return null
 
+                        if (layer === "stations" && visibleStationSources.size === 0) return null
+
                         const renderedData =
                             layer === "stations"
                                 ? {
@@ -446,7 +665,7 @@ export function SensumMap({token}: { token: string }) {
 
                         const geoJsonKey =
                             layer === "stations"
-                                ? `${layer}:${Array.from(visibleStationSources).sort().join(",")}`
+                                ? `${layer}:${Array.from(visibleStationSources).sort().join(",")}:${Array.from(selectedStationIds).sort().join(",")}:${moveModeStationId ?? "none"}`
                                 : `${layer}:${drawingMode}`
 
                         return (
@@ -455,8 +674,10 @@ export function SensumMap({token}: { token: string }) {
                                 data={renderedData}
                                 style={getStyle}
                                 interactive={layer === "stations" || !drawingMode}
-                                pointToLayer={pointToLayer}
-                                onEachFeature={bindFeatureActions(openStationDetails)}
+                                pointToLayer={(feature, latlng) =>
+                                    pointToLayer(feature, latlng, selectedStationIds, moveModeStationId)
+                                }
+                                onEachFeature={bindFeatureActions(handleStationClick, handleStationMoved, moveModeStationId)}
                             />
                         )
                     })}
@@ -483,6 +704,31 @@ export function SensumMap({token}: { token: string }) {
                     />
                 </MapContainer>
 
+                {selectedStationIds.size > 1 && (
+                    <div
+                        className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[1000] flex items-center gap-3 rounded-lg border border-border bg-card px-4 py-2.5 shadow-lg">
+        <span className="text-sm font-medium text-foreground">
+            {selectedStationIds.size} stations selected
+        </span>
+                        <button
+                            type="button"
+                            onClick={handleBulkDelete}
+                            disabled={bulkDeleteLoading}
+                            className="flex items-center gap-1.5 rounded-md bg-destructive px-3 py-1.5 text-sm font-medium text-white transition-colors hover:opacity-90 disabled:opacity-50"
+                        >
+                            <Trash2 size={16}/>
+                            {bulkDeleteLoading ? "Deleting..." : "Delete selected"}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setSelectedStationIds(new Set())}
+                            className="text-sm text-muted-foreground hover:text-foreground"
+                        >
+                            <X size={18}/>
+                        </button>
+                    </div>
+                )}
+
                 {!sidebarOpen && (
                     <button
                         type="button"
@@ -503,6 +749,11 @@ export function SensumMap({token}: { token: string }) {
                     visibleStationSources={visibleStationSources}
                     onToggleStationSource={toggleStationSource}
                     mapContainerRef={mapShellRef}
+                    hasPendingDslImport={lastDslSource !== null}
+                    onConfirmDslImport={handleConfirmDslImport}
+                    dslSaveLoading={dslSaveLoading}
+                    dslSaveResult={dslSaveResult}
+                    dslSaveError={dslSaveError}
                 />
 
                 <MapLegend mapContainerRef={mapShellRef}/>
@@ -540,8 +791,9 @@ export function SensumMap({token}: { token: string }) {
                         onConfirm={sim.confirm}
                         onRun={async () => {
                             await sim.run(token)
-                            // reload stations layer
-                            setStations([])
+                            // reload stations layer in pocakaj da se konca
+                            const freshStations = await fetchStations()
+                            setStations(freshStations)
                             setLayerData((current) => {
                                 const next = {...current}
                                 delete next.stations
@@ -551,13 +803,21 @@ export function SensumMap({token}: { token: string }) {
                         onConfigChange={sim.setConfig}
                         onClose={sim.stop}
                         onRunAnother={sim.start}
+                        onSelectStation={(stationId) => {
+                            sim.stop()
+                            setSelectedStationIds(new Set([stationId]))
+                            openStationDetails(stationId)
+                        }}
                     />
                 ) : (
                     <StationSidebar
                         selectedStation={selectedStation}
                         stationDetailsLoading={stationDetailsLoading}
                         stationDetailsError={stationDetailsError}
-                        onCloseStation={() => setSelectedStation(null)}
+                        onCloseStation={() => {
+                            setSelectedStation(null)
+                            setSelectedStationIds(new Set())
+                        }}
                         onHideSidebar={() => setSidebarOpen(false)}
                         onExportGeoJson={exportVisibleGeoJson}
                         onImportDsl={handleSensumDslImport}
@@ -569,6 +829,16 @@ export function SensumMap({token}: { token: string }) {
                         onSaveStation={handleSaveStation}
                         onCancelAddStation={handleCancelAddStation}
                         onDeleteStation={handleDeleteStation}
+                        token={token}
+                        onRegenerateComplete={refreshSelectedStationMeasurements}
+                        onStationUpdated={handleStationUpdated}
+                        moveModeStationId={moveModeStationId}
+                        onToggleMoveMode={() => setMoveModeStationId((current) =>
+                            current === selectedStation?.station.stationId ? null : (selectedStation?.station.stationId ?? null)
+                        )}
+                        editCoords={editCoords}
+                        onClearEditCoords={() => setEditCoords(null)}
+                        onExitMoveMode={onExitMoveMode}
                         onToggleSim={() => {
                             setAddMode(false);
                             setPendingStation(null);

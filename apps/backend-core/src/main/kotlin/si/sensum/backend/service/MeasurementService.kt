@@ -5,12 +5,14 @@ import kotlinx.datetime.number
 import kotlinx.datetime.toKotlinLocalDateTime
 import si.sensum.backend.domain.measurement.MeasurementEntity
 import si.sensum.backend.repository.MeasurementRepository
-import si.sensum.shared.models.common.DataSourceDto
 import si.sensum.shared.models.measurements.MeasurementDto
 import si.sensum.simulator.SimulatorService as MeasurementSimulatorService
+import si.sensum.backend.repository.ChannelRepository
+import si.sensum.shared.models.common.DataSourceDto
 
 class MeasurementService(
     private val repository: MeasurementRepository,
+    private val channelRepository: ChannelRepository,
     private val simulator: MeasurementSimulatorService = MeasurementSimulatorService()
 ) {
     fun getAllMeasurements(): List<MeasurementDto> = ServiceLogger.call(
@@ -29,11 +31,16 @@ class MeasurementService(
         operation = "getMeasurements",
         details = "channelId=$channelId from=$from to=$to"
     ) {
-        if (simulator.isRealDataAvailable(from.toJava(), to.toJava())) {
+        if (isProtectedFromSimulation(channelId) || simulator.isRealDataAvailable(from.toJava(), to.toJava())) {
             repository.findByChannelAndRange(channelId, from, to)
         } else {
             getOrGenerateMeasurements(channelId, from, to)
         }
+    }
+
+    private fun isProtectedFromSimulation(channelId: Int): Boolean {
+        val channel = channelRepository.findById(channelId) ?: return false
+        return channel.source == DataSourceDto.SWS
     }
 
     fun createMeasurement(

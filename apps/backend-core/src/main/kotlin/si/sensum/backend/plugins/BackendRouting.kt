@@ -82,7 +82,8 @@ fun Application.configureBackendRouting(
     )
 
     val measurementService = MeasurementService(
-        repository = measurementRepository
+        repository = measurementRepository,
+        channelRepository = channelRepository
     )
 
     val measurementRefreshService = MeasurementRefreshService(

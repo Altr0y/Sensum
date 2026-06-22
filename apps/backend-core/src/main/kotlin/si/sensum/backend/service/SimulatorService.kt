@@ -54,6 +54,32 @@ class SimulatorService(
         val request = buildRequest(dto)
         val contexts = spatialSimulatorService.handle(request)
 
+        if (dto.mode == "measurements_only") {
+            return@call contexts.map { context ->
+                val station = context.station
+                val from = LocalDateTime.parse(dto.from!!).toKotlinLocalDateTime()
+                val to = LocalDateTime.parse(dto.to!!).toKotlinLocalDateTime()
+
+                station.channels.forEach { channel ->
+                    measurementRepository.deleteByChannelAndRange(channel.id, from, to)
+
+                    val measurements = channel.measurements.map { m ->
+                        MeasurementEntity(
+                            id = 0,
+                            channelId = channel.id,
+                            dateTime = LocalDateTime.parse(m.datetime).toKotlinLocalDateTime(),
+                            value = m.value.toFloat(),
+                            status = false,
+                            source = DataSourceDto.SIM
+                        )
+                    }
+                    measurementRepository.batchInsert(measurements)
+                }
+
+                station.toDto(floodRisk = null, nearRiver = false)
+            }
+        }
+
         contexts.map { context ->
             val station = context.station
 
@@ -157,14 +183,25 @@ class SimulatorService(
                 channelKinds = kinds
             )
 
-            "measurements_only" -> SimulateRequest.MeasurementsOnly(
-                stationId = dto.stationId
-                    ?: error("stationId required for measurements_only"),
-                channelIds = dto.channelIds,
-                from = from,
-                to = to,
-                intervalMinutes = dto.intervalMinutes
-            )
+            "measurements_only" -> {
+                val channelIds = dto.channelIds
+                val channels = channelIds.mapNotNull { id ->
+                    channelRepository.findById(id)?.let { ch ->
+                        SimulateRequest.ChannelSpec(
+                            channelId = ch.id,
+                            kind = ch.unit.toChannelKind()
+                        )
+                    }
+                }
+                SimulateRequest.MeasurementsOnly(
+                    stationId = dto.stationId
+                        ?: error("stationId required for measurements_only"),
+                    channels = channels,
+                    from = from,
+                    to = to,
+                    intervalMinutes = dto.intervalMinutes
+                )
+            }
 
             else -> error("Unknown simulator mode: ${dto.mode}")
         }
@@ -201,5 +238,13 @@ class SimulatorService(
                 )
             }
         )
+    }
+
+    private fun MeasurementUnit.toChannelKind(): ChannelKind = when (this) {
+        MeasurementUnit.CELSIUS -> ChannelKind.TEMPERATURE
+        MeasurementUnit.METERS -> ChannelKind.WATER_LEVEL
+        MeasurementUnit.PERCENT -> ChannelKind.RAINFALL
+        MeasurementUnit.VOLT -> ChannelKind.FLOW_RATE
+        MeasurementUnit.UNKNOWN -> ChannelKind.WATER_LEVEL
     }
 }

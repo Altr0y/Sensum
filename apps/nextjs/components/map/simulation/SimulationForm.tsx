@@ -1,8 +1,8 @@
 "use client"
-import { Loader2 } from "lucide-react"
-import type { StationDto, ChannelDto } from "../shared/types"
-import type { SimConfig, ChannelKind } from "./types"
-import { ALL_CHANNEL_KINDS, CHANNEL_KIND_LABELS } from "./types"
+import {Loader2} from "lucide-react"
+import type {StationDto, ChannelDto} from "../shared/types"
+import type {SimConfig, ChannelKind} from "./types"
+import {ALL_CHANNEL_KINDS, CHANNEL_KIND_LABELS} from "./types"
 
 interface Props {
     stationsInArea: StationDto[]
@@ -12,29 +12,38 @@ interface Props {
     error: string | null
     onConfigChange: (c: SimConfig) => void
     onRun: () => void
+    regenerateMode?: boolean
+    onSelectStation?: (stationId: number) => void
 }
 
 const INTERVAL_OPTIONS = [
-    { value: 15, label: "15 min" },
-    { value: 30, label: "30 min" },
-    { value: 60, label: "1 hour" },
-    { value: 360, label: "6 hours" },
-    { value: 1440, label: "1 day" },
+    {value: 15, label: "15 min"},
+    {value: 30, label: "30 min"},
+    {value: 60, label: "1 hour"},
+    {value: 360, label: "6 hours"},
+    {value: 1440, label: "1 day"},
 ]
 
 export function SimulationForm({
-    stationsInArea,
-    channelsByStation,
-    config,
-    loading,
-    error,
-    onConfigChange,
-    onRun,
-}: Props) {
+                                   stationsInArea,
+                                   channelsByStation,
+                                   config,
+                                   loading,
+                                   error,
+                                   onConfigChange,
+                                   onRun,
+                                   regenerateMode = false,
+                                   onSelectStation,
+                               }: Props) {
     const hasExisting = stationsInArea.length > 0
+    const singleStation = regenerateMode ? stationsInArea[0] : null
+    const singleStationChannels = singleStation
+        ? channelsByStation[singleStation.stationId] ?? []
+        : []
+    const needsChannelKinds = regenerateMode && singleStationChannels.length === 0
 
     function update<K extends keyof SimConfig>(key: K, value: SimConfig[K]) {
-        onConfigChange({ ...config, [key]: value })
+        onConfigChange({...config, [key]: value})
     }
 
     function toggleKind(kind: ChannelKind) {
@@ -49,29 +58,77 @@ export function SimulationForm({
         config.from &&
         config.to &&
         config.from < config.to &&
-        (hasExisting ||
-            (config.stationCount >= 1 && config.channelKinds.length >= 1))
+        (regenerateMode
+            ? (needsChannelKinds ? config.channelKinds.length >= 1 : true)
+            : (hasExisting ||
+                (config.stationCount >= 1 && config.channelKinds.length >= 1)))
 
     return (
         <div className="p-4 space-y-5">
-            {hasExisting ? (
+            {regenerateMode && singleStation ? (
+                <div className="rounded-lg border border-[#4CAF7D]/30 bg-[#4CAF7D]/10 p-3 space-y-3">
+                    <div className="flex items-center justify-between text-xs">
+                        <span className="font-medium text-foreground">
+                            {singleStation.name ?? `Station ${singleStation.stationId}`}
+                        </span>
+                        <span className="text-muted-foreground">
+                            {singleStationChannels.length} ch.
+                        </span>
+                    </div>
+                    {needsChannelKinds ? (
+                        <>
+                            <p className="text-xs text-muted-foreground">
+                                This station has no channels yet. Select channel types below to create and generate data
+                                for them.
+                            </p>
+                            <div>
+                                <span className="text-xs text-muted-foreground">Channel types</span>
+                                <div className="mt-1.5 grid grid-cols-2 gap-1.5">
+                                    {ALL_CHANNEL_KINDS.map((kind) => (
+                                        <button
+                                            key={kind}
+                                            type="button"
+                                            onClick={() => toggleKind(kind)}
+                                            className={[
+                                                "px-2 py-1.5 rounded-md text-xs text-left transition-colors border",
+                                                config.channelKinds.includes(kind)
+                                                    ? "border-[#E8A838] bg-[#E8A838]/10 text-[#E8A838]"
+                                                    : "border-border bg-background text-muted-foreground hover:text-foreground hover:bg-muted",
+                                            ].join(" ")}
+                                        >
+                                            {CHANNEL_KIND_LABELS[kind]}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </>
+                    ) : (
+                        <p className="text-xs text-muted-foreground">
+                            Measurements will be regenerated for all existing channels.
+                        </p>
+                    )}
+                </div>
+            ) : hasExisting ? (
                 <div className="rounded-lg border border-[#4CAF7D]/30 bg-[#4CAF7D]/10 p-3 space-y-2">
                     <p className="text-xs font-medium text-[#4CAF7D]">
                         Stations in area ({stationsInArea.length})
                     </p>
                     <div className="space-y-1 max-h-28 overflow-y-auto">
                         {stationsInArea.map((s) => (
-                            <div
+                            <button
                                 key={s.stationId}
-                                className="flex items-center justify-between text-xs"
+                                type="button"
+                                onClick={() => onSelectStation?.(s.stationId)}
+                                disabled={!onSelectStation}
+                                className="flex w-full items-center justify-between text-xs rounded px-1.5 py-1 -mx-1.5 hover:bg-[#4CAF7D]/10 transition-colors disabled:hover:bg-transparent text-left"
                             >
-                                <span className="text-foreground">
-                                    {s.name ?? `Station ${s.stationId}`}
-                                </span>
+                            <span className="text-foreground">
+                                {s.name ?? `Station ${s.stationId}`}
+                            </span>
                                 <span className="text-muted-foreground">
-                                    {channelsByStation[s.stationId]?.length ?? "?"} ch.
-                                </span>
-                            </div>
+                                {channelsByStation[s.stationId]?.length ?? "?"} ch.
+                            </span>
+                            </button>
                         ))}
                     </div>
                     <p className="text-xs text-muted-foreground">
@@ -185,7 +242,7 @@ export function SimulationForm({
             >
                 {loading ? (
                     <>
-                        <Loader2 size={14} className="animate-spin" />
+                        <Loader2 size={14} className="animate-spin"/>
                         Generating…
                     </>
                 ) : (

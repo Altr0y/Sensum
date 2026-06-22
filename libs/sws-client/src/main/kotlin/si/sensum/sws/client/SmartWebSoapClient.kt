@@ -136,6 +136,24 @@ class SmartWebSoapClient(
         )
     }
 
+    suspend fun getModbusStationMeasurements(
+        session: SwsSession,
+        stationId: Long,
+        datetimeFrom: String,
+        datetimeTo: String
+    ): List<MeasurementDto> {
+        return measurementsClient.getModbusStationMeasurements(
+            session = session,
+            query = SwsStationMeasurementQuery(
+                stationId = stationId,
+                range = dateTimeRange(
+                    datetimeFrom = datetimeFrom,
+                    datetimeTo = datetimeTo
+                )
+            )
+        )
+    }
+
     suspend fun getStationMeasurementsDetailed(
         session: SwsSession,
         stationId: Long,

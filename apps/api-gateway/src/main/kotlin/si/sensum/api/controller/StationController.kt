@@ -10,6 +10,8 @@ import si.sensum.api.service.StationService
 import si.sensum.shared.ktor.response.respondOk
 import si.sensum.shared.ktor.validation.requireLongPathParameter
 import si.sensum.shared.models.stations.CreateStationCommand
+import io.ktor.server.routing.patch
+import si.sensum.shared.models.stations.UpdateStationCommand
 
 internal fun Route.stationController(
     stationService: StationService
@@ -66,6 +68,15 @@ internal fun Route.stationController(
             val stationId = call.requireLongPathParameter("stationId")
             call.respondOk {
                 stationService.deleteStation(principal, stationId)
+            }
+        }
+
+        patch("/{stationId}") {
+            val principal = call.requireAdminUser() ?: return@patch
+            val stationId = call.requireLongPathParameter("stationId")
+            val command = call.receive<UpdateStationCommand>()
+            call.respondOk {
+                stationService.updateStation(principal, stationId, command)
             }
         }
 

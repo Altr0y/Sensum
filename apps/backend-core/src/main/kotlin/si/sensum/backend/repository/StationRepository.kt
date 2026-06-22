@@ -6,7 +6,7 @@ import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.select
-import org.jetbrains.exposed.v1.jdbc.selectAll
+import org.jetbrains.exposed.v1.jdbc.update
 import si.sensum.backend.database.DatabaseTransaction
 import si.sensum.backend.database.StationTable
 import si.sensum.backend.database.UserStationTable
@@ -14,6 +14,7 @@ import si.sensum.backend.domain.station.StationEntity
 import si.sensum.backend.mapper.toDataSourceDto
 import si.sensum.shared.models.common.DataSourceDto
 import org.jetbrains.exposed.v1.core.inList
+import org.jetbrains.exposed.v1.jdbc.selectAll
 import si.sensum.backend.database.ChannelTable
 import si.sensum.backend.database.MeasurementTable
 
@@ -136,9 +137,40 @@ class StationRepository {
             }
         }
 
+        UserStationTable.deleteWhere {
+            UserStationTable.stationId eq stationId
+        }
+
         StationTable.deleteWhere {
             StationTable.id eq stationId
         } > 0
+    }
+
+    fun update(
+        stationId: Long,
+        name: String?,
+        description: String?,
+        serialNumber: String?,
+        latitude: Double?,
+        longitude: Double?
+    ): StationEntity? = DatabaseTransaction.run {
+        val current = findById(stationId) ?: return@run null
+
+        val newLatitude = latitude ?: current.latitude
+        val newLongitude = longitude ?: current.longitude
+
+        StationTable.update({ StationTable.id eq stationId }) {
+            name?.let { v -> it[StationTable.alias] = v }
+            description?.let { v -> it[StationTable.locationDescription] = v }
+            serialNumber?.let { v -> it[StationTable.serialNumber] = v }
+            if (latitude != null) it[StationTable.latitude] = latitude
+            if (longitude != null) it[StationTable.longitude] = longitude
+            if (latitude != null || longitude != null) {
+                it[StationTable.location] = "$newLatitude,$newLongitude"
+            }
+        }
+
+        findById(stationId)
     }
 
     private fun toStation(row: ResultRow): StationEntity {

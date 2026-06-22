@@ -1,3 +1,5 @@
+import type {SimulatedStationDto} from "../shared/types"
+
 export type SimStep = "draw" | "configure" | "result"
 
 export type ChannelKind = "water_level" | "temperature" | "rainfall" | "flow_rate"
@@ -25,9 +27,15 @@ export interface SimConfig {
     prefix: string
 }
 
+export interface SimResultStation {
+    stationId: number
+    name: string
+}
+
 export interface SimResult {
     mode: "existing" | "new"
     stationCount: number
     from: string
     to: string
+    stations: SimResultStation[]
 }

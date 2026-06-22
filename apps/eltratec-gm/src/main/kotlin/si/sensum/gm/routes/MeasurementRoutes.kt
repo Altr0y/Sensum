@@ -132,4 +132,23 @@ internal fun Route.measurementRoutes(
             }
         }
     }
+
+    route("/stations/{stationId}/modbus-measurements") {
+        // SWS: GetModbusStationMeasurements
+        // REST path: stationId
+        // REST query: from, to
+        // SWS fields: StationID, datetimeFrom, datetimeTo
+        get {
+            call.gmRouteCall(authService) { session ->
+                val stationId = call.requireLongPathParameter("stationId")
+                val query = call.receiveMeasurementRangeQuery()
+
+                measurementService.getModbusStationMeasurements(
+                    session = session,
+                    stationId = stationId,
+                    query = query
+                )
+            }
+        }
+    }
 }

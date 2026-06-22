@@ -40,6 +40,20 @@ class GmClient(
         )
     }
 
+    suspend fun getModbusStationMeasurements(
+        gmSessionToken: String,
+        stationId: Long,
+        from: String,
+        to: String
+    ): List<MeasurementDto> {
+        val encodedFrom = java.net.URLEncoder.encode(from, "UTF-8")
+        val encodedTo = java.net.URLEncoder.encode(to, "UTF-8")
+        return serviceHttpClient.get(
+            path = "/api/v1/gm/stations/$stationId/modbus-measurements?from=$encodedFrom&to=$encodedTo",
+            bearerToken = gmSessionToken
+        )
+    }
+
     suspend fun getChannels(
         gmSessionToken: String,
         stationId: Long
